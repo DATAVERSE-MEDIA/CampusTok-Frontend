@@ -142,3 +142,4 @@ Edit `tailwind.config.js` to customize the color scheme. The primary color is cu
 
 MIT
 
+# CapusTok-Frontend-
