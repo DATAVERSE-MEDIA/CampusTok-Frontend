@@ -7,11 +7,12 @@ const API_BASE_URL = env?.VITE_API_URL || 'https://talk-lgsa.onrender.com/api/v1
 // Create axios instance
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 10000,
+  timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   },
+  //withCredentials: true,
 })
 
 // Request interceptor for adding auth token
@@ -66,7 +67,7 @@ export const authApi = {
     apiClient.post('/auth/resend-verification-token', { email: data.email }),
 
   googleAuth:(code:any)=>
-    apiClient.post('/auth/google_token', { code }).then(res => res.data),
+    apiClient.post('/auth/google-token', { code }).then(res => res.data),
 }
 
 export const schoolApi = {

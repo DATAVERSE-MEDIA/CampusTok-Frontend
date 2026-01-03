@@ -161,6 +161,12 @@ export const useGoogleAuth = () => {
     },
     onError: (error) => {
       console.error('Google authentication failed:', error)
+      console.error('Error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        url: error.config?.url
+      })
       throw error
     }
   })

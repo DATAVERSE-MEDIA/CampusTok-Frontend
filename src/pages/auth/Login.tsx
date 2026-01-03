@@ -764,11 +764,16 @@
 //   )
 // }
 
+
+
+
+
+
+
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom' // Add useLocation
 import { User, Lock, ArrowLeft, ChevronDown } from 'lucide-react'
 import { useLogin, useGoogleAuth } from '../../hooks/useAuth'
-import { useAuthStore } from '../../store/useAuthStore'
 import React from 'react'
 
 const userTypes = [
@@ -777,9 +782,15 @@ const userTypes = [
   { value: 'general', label: 'General User' },
 ]
 
+// CRITICAL: Fix the redirect URI to match Google Cloud Console
+const env = (import.meta as any).env
+const GOOGLE_CLIENT_ID = env.VITE_APP_GOOGLE_CLIENT_ID || '742970125508-huruco1fq1l11jb0k8kikvsvdb24bkhq.apps.googleusercontent.com'
+const GOOGLE_REDIRECT_URI = `${window.location.origin}/auth/google/callback` // FIXED
+
 export default function Login() {
   const navigate = useNavigate()
-  const loginStore = useAuthStore(state => state.login)
+  const location = useLocation() // Add location hook
+  
   const [formData, setFormData] = useState({
     username: '',
     password: '',
@@ -789,69 +800,191 @@ export default function Login() {
   const [showUserTypeDropdown, setShowUserTypeDropdown] = useState(false)
   const [errors, setErrors] = useState({})
   const [isLoading, setIsLoading] = useState(false)
+  const [googleAuthInProgress, setGoogleAuthInProgress] = useState(false)
 
   const { mutate: login, isPending } = useLogin()
   const { mutate: googleAuth, isPending: isGoogleAuthPending } = useGoogleAuth()
 
-  // Handle Google OAuth callback
+  // Check if we're on the callback route
+  const isCallbackRoute = location.pathname === '/auth/google/callback'
+
+  // Handle Google callback when on callback route
   useEffect(() => {
-    const handleGoogleCallback = async (code: string, state: string) => {
-      try {
-        // Verify state to prevent CSRF
-        const savedState = localStorage.getItem('oauth_state')
-        if (state !== savedState) {
-          throw new Error('Invalid state parameter')
-        }
+    console.log('Login Component mounted')
+    console.log('Current URL:', window.location.href)
+    console.log('Redirect URI configured:', GOOGLE_REDIRECT_URI)
+    console.log('Current path:', location.pathname)
+    console.log('Is callback route?', isCallbackRoute)
 
-        // Use the mutation hook
-        googleAuth(code, {
-          onSuccess: (data) => {
-            console.log('Google login successful:', data)
-            
-            // Redirect based on user type or default
-            const userType = data.user?.userType || 'general'
-            redirectBasedOnUserType(userType)
-          },
-          onError: (error) => {
-            console.error('Google authentication error:', error)
-            alert(error.message || 'Failed to authenticate with Google')
-          },
-          onSettled: () => {
-            // Clean URL and localStorage
-            window.history.replaceState({}, document.title, window.location.pathname)
-            localStorage.removeItem('oauth_state')
-          }
-        })
-
-      } catch (error) {
-        console.error('Google callback error:', error)
-        alert(error.message || 'Failed to authenticate with Google')
-        
-        // Clean URL and localStorage
-        window.history.replaceState({}, document.title, window.location.pathname)
-        localStorage.removeItem('oauth_state')
-      }
+    if (isCallbackRoute) {
+      handleGoogleCallback()
     }
+  }, [isCallbackRoute, location.pathname])
 
+  const handleGoogleCallback = async () => {
+    console.log('handleGoogleCallback triggered - on callback route')
+    
     const urlParams = new URLSearchParams(window.location.search)
     const code = urlParams.get('code')
     const state = urlParams.get('state')
     const errorParam = urlParams.get('error')
+    const errorDescription = urlParams.get('error_description')
+
+    console.log('URL parameters:', { 
+      code, 
+      state, 
+      errorParam, 
+      errorDescription,
+      fullSearch: window.location.search
+    })
 
     if (errorParam) {
-      console.error('Google OAuth error:', errorParam)
-      alert(`Google login failed: ${errorParam}`)
-      // Clean URL
-      window.history.replaceState({}, document.title, window.location.pathname)
+      console.error('Google OAuth error:', { errorParam, errorDescription })
+      alert(`Google login failed: ${errorDescription || errorParam}`)
+      // Redirect back to login page
+      navigate('/login', { replace: true })
       return
     }
 
-    if (code && state) {
-      handleGoogleCallback(code, state)
+    if (!code || !state) {
+      console.error('Missing code or state parameters')
+      console.log('Full URL search:', window.location.search)
+      // Redirect back to login page
+      navigate('/login', { replace: true })
+      return
     }
-  }, [googleAuth, navigate])
 
-  // Helper function for redirect logic
+    try {
+      // Verify state to prevent CSRF
+      const savedState = localStorage.getItem('oauth_state')
+      console.log('Saved state:', savedState)
+      
+      if (!savedState) {
+        throw new Error('No OAuth state found. The login session may have expired.')
+      }
+
+      if (state !== savedState) {
+        console.error('State mismatch:', { received: state, saved: savedState })
+        throw new Error('Security error: Invalid state parameter.')
+      }
+
+      setGoogleAuthInProgress(true)
+
+      // Use the mutation hook
+      googleAuth(code, {
+        onSuccess: (data) => {
+          console.log('Google login successful:', data)
+          
+          // Store user data if needed
+          if (data.user) {
+            localStorage.setItem('user', JSON.stringify(data.user))
+          }
+
+          // Clean up
+          localStorage.removeItem('oauth_state')
+          
+          // Clean URL
+          window.history.replaceState({}, document.title, '/')
+          
+          // Redirect based on user type or default
+          const userType = data.user?.userType || 'general'
+          
+          if (userType === 'student') {
+            navigate('/student-dashboard', { replace: true })
+          } else if (userType === 'institution') {
+            navigate('/institution-dashboard', { replace: true })
+          } else {
+            navigate('/dashboard', { replace: true })
+          }
+        },
+        onError: (error) => {
+          console.error('Google authentication error:', error)
+          alert(error.response?.data?.message || error.message || 'Failed to authenticate with Google')
+          navigate('/login', { replace: true })
+        },
+        onSettled: () => {
+          setGoogleAuthInProgress(false)
+        }
+      })
+
+    } catch (error) {
+      console.error('Google callback processing error:', error)
+      alert(error.message || 'Failed to process Google authentication')
+      navigate('/login', { replace: true })
+      setGoogleAuthInProgress(false)
+    }
+  }
+
+  const handleGoogleLogin = () => {
+    // Prevent multiple clicks
+    if (googleAuthInProgress || isGoogleAuthPending) {
+      console.log('Google auth already in progress, ignoring click')
+      return
+    }
+    
+    console.log('=== Starting Google OAuth Flow ===')
+    console.log('Client ID:', GOOGLE_CLIENT_ID)
+    console.log('Redirect URI:', GOOGLE_REDIRECT_URI)
+    console.log('This MUST match Google Cloud Console exactly!')
+
+    // Generate and store a random state for CSRF protection
+    const state = Math.random().toString(36).substring(2, 15) + 
+                  Math.random().toString(36).substring(2, 15)
+    
+    localStorage.setItem('oauth_state', state)
+    console.log('Generated and saved state:', state)
+
+    // Set flag to track auth in progress
+    setGoogleAuthInProgress(true)
+
+    // Construct Google OAuth URL with proper parameters
+    const googleAuthUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth')
+    
+    // CRITICAL: These parameters must match Google Cloud Console exactly
+    const params = {
+      client_id: GOOGLE_CLIENT_ID,
+      redirect_uri: GOOGLE_REDIRECT_URI, // This must be EXACTLY: http://localhost:3000/auth/google/callback
+      response_type: 'code',
+      scope: 'openid profile email',
+      state: state,
+      access_type: 'online',
+      prompt: 'consent', // Show consent screen
+      include_granted_scopes: 'true'
+    }
+
+    Object.entries(params).forEach(([key, value]) => {
+      googleAuthUrl.searchParams.append(key, value)
+    })
+
+    console.log('=== Final Google OAuth URL ===')
+    console.log(googleAuthUrl.toString())
+    console.log('=== Redirecting to Google OAuth ===')
+    
+    // Store timestamp to detect if user cancelled
+    localStorage.setItem('oauth_start_time', Date.now().toString())
+    
+    // Redirect to Google OAuth
+    window.location.href = googleAuthUrl.toString()
+  }
+
+  // Check if user cancelled OAuth (optional)
+  useEffect(() => {
+    const checkForCancelledOAuth = () => {
+      const startTime = localStorage.getItem('oauth_start_time')
+      if (startTime && googleAuthInProgress && !isCallbackRoute) {
+        const elapsed = Date.now() - parseInt(startTime)
+        if (elapsed > 30000) { // 30 seconds
+          console.log('OAuth may have been cancelled by user')
+          setGoogleAuthInProgress(false)
+          localStorage.removeItem('oauth_start_time')
+        }
+      }
+    }
+
+    const interval = setInterval(checkForCancelledOAuth, 5000)
+    return () => clearInterval(interval)
+  }, [googleAuthInProgress, isCallbackRoute])
+
   const redirectBasedOnUserType = (userType: string) => {
     if (userType === 'student') {
       navigate('/student-dashboard')
@@ -860,48 +993,6 @@ export default function Login() {
     } else {
       navigate('/dashboard')
     }
-  }
-
-  const handleGoogleLogin = () => {
-    // Generate and store a random state for CSRF protection
-    const state = Math.random().toString(36).substring(2, 15)
-    localStorage.setItem('oauth_state', state)
-
-    // Construct Google OAuth URL
-    const googleAuthUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth')
-    
-    const params = {
-      client_id: process.env.REACT_APP_GOOGLE_CLIENT_ID || '',
-      redirect_uri: process.env.REACT_APP_GOOGLE_REDIRECT_URI || window.location.origin,
-      response_type: 'code',
-      scope: 'openid profile email',
-      state: state,
-      access_type: 'offline',
-      prompt: 'select_account' // Shows account selector
-    }
-
-    Object.entries(params).forEach(([key, value]) => {
-      googleAuthUrl.searchParams.append(key, value)
-    })
-
-    // Redirect to Google OAuth
-    window.location.href = googleAuthUrl.toString()
-  }
-
-  // Alternative: If you want a more comprehensive hook with more options
-  const handleGoogleLoginWithLoadingState = () => {
-    // Show loading state
-    setIsLoading(true)
-    
-    // Call the main function
-    handleGoogleLogin()
-    
-    // Set a timeout to reset loading if redirect doesn't happen
-    setTimeout(() => {
-      if (window.location.href.includes('localhost') || window.location.href.includes('yourdomain')) {
-        setIsLoading(false)
-      }
-    }, 5000)
   }
 
   const handleChange = (e) => {
@@ -969,6 +1060,24 @@ export default function Login() {
     )
   }
 
+  // If we're on the callback route, show loading screen
+  if (isCallbackRoute) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100">
+        <div className="text-center max-w-md p-8">
+          <div className="w-20 h-20 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-3">Completing Google Sign In</h2>
+          <p className="text-gray-600 mb-4">Please wait while we authenticate your account...</p>
+          {googleAuthInProgress ? (
+            <p className="text-sm text-gray-500 animate-pulse">Processing authentication...</p>
+          ) : (
+            <p className="text-sm text-gray-500">Redirecting...</p>
+          )}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen flex bg-black">
       {/* Left Panel - Primary Color */}
@@ -979,11 +1088,23 @@ export default function Login() {
       {/* Right Panel - Light Gray */}
       <div className="flex-1 bg-gray-100 flex items-center justify-center p-12">
         <div className="w-full max-w-md">
+          {/* Debug info - keep for now, remove in production */}
+          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-800">
+            <div className="font-semibold mb-1">Debug Info:</div>
+            <div>Current URL: {window.location.href}</div>
+            <div className="text-green-600 font-semibold">
+              Redirect URI: {GOOGLE_REDIRECT_URI}
+            </div>
+            <div className="text-sm mt-1">
+              This must match Google Cloud Console exactly!
+            </div>
+          </div>
+
           {/* Back Button */}
           <button
             onClick={() => navigate('/signup')}
             className="mb-6 w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center hover:bg-gray-300 transition-colors"
-            disabled={isLoading || isGoogleAuthPending}
+            disabled={isLoading || googleAuthInProgress}
           >
             <ArrowLeft className="w-5 h-5 text-gray-700" />
           </button>
@@ -999,7 +1120,7 @@ export default function Login() {
               <button
                 type="button"
                 onClick={() => setShowUserTypeDropdown(!showUserTypeDropdown)}
-                disabled={isLoading || isGoogleAuthPending}
+                disabled={isLoading || googleAuthInProgress}
                 className={`w-full px-4 py-3 bg-white rounded-lg border ${errors.userType ? 'border-red-500' : 'border-gray-300'} focus:outline-none focus:ring-2 focus:ring-primary flex items-center justify-between disabled:opacity-50 disabled:cursor-not-allowed`}
               >
                 <span className={formData.userType ? 'text-gray-900' : 'text-gray-400'}>
@@ -1040,7 +1161,7 @@ export default function Login() {
                 name="username"
                 value={formData.username}
                 onChange={handleChange}
-                disabled={isLoading || isGoogleAuthPending}
+                disabled={isLoading || googleAuthInProgress}
                 className={`w-full pl-12 pr-4 py-3 bg-white rounded-lg border ${errors.username ? 'border-red-500' : 'border-gray-300'} focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed`}
                 placeholder="Username or Email"
               />
@@ -1055,7 +1176,7 @@ export default function Login() {
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
-                disabled={isLoading || isGoogleAuthPending}
+                disabled={isLoading || googleAuthInProgress}
                 className={`w-full pl-12 pr-4 py-3 bg-white rounded-lg border ${errors.password ? 'border-red-500' : 'border-gray-300'} focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed`}
                 placeholder="Password"
               />
@@ -1069,7 +1190,7 @@ export default function Login() {
                 id="terms"
                 checked={agreedToTerms}
                 onChange={(e) => setAgreedToTerms(e.target.checked)}
-                disabled={isLoading || isGoogleAuthPending}
+                disabled={isLoading || googleAuthInProgress}
                 className="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary disabled:opacity-50"
               />
               <label htmlFor="terms" className="text-sm text-gray-700">
@@ -1078,7 +1199,7 @@ export default function Login() {
                   type="button"
                   className="underline text-gray-900"
                   onClick={() => alert('Terms & Conditions')}
-                  disabled={isLoading || isGoogleAuthPending}
+                  disabled={isLoading || googleAuthInProgress}
                 >
                   Terms & Condition
                 </button>
@@ -1088,7 +1209,7 @@ export default function Login() {
             {/* Login Button */}
             <button
               type="submit"
-              disabled={isLoading || isGoogleAuthPending}
+              disabled={isLoading || googleAuthInProgress}
               className="w-full bg-primary hover:bg-primary-800 text-white py-3 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? 'Logging in...' : 'Login'}
@@ -1108,11 +1229,14 @@ export default function Login() {
           {/* Google Login Button */}
           <button
             onClick={handleGoogleLogin}
-            disabled={isLoading || isGoogleAuthPending}
+            disabled={isLoading || googleAuthInProgress}
             className="w-full bg-white border-2 border-gray-300 text-gray-900 py-3 rounded-lg font-medium hover:bg-gray-50 transition-colors flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {(isGoogleAuthPending || isLoading) ? (
-              <span>Authenticating...</span>
+            {googleAuthInProgress ? (
+              <>
+                <div className="w-5 h-5 border-2 border-gray-300 border-t-primary rounded-full animate-spin"></div>
+                <span>Redirecting to Google...</span>
+              </>
             ) : (
               <>
                 <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -1144,7 +1268,7 @@ export default function Login() {
               <button
                 onClick={() => navigate('/signup')}
                 className="text-primary underline font-medium"
-                disabled={isLoading || isGoogleAuthPending}
+                disabled={isLoading || googleAuthInProgress}
               >
                 Sign up
               </button>

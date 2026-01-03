@@ -21,6 +21,7 @@ import Complaints from './pages/Complaints'
 import Notifications from './pages/Notifications'
 import StudentPortal from './pages/StudentPortal'
 import Settings from './pages/Settings'
+import GoogleCallback from './pages/auth/GoogleCallback'
 
 function ProtectedRoute({ children }) {
   const { isAuthenticated } = useAuthStore()
@@ -38,6 +39,7 @@ function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/create-account" element={<CreateAccount />} />
       <Route path="/user-type" element={<UserTypeSelection />} />
+      <Route path="/auth/google/callback" element={<GoogleCallback />} />
       
       {/* Main App Routes with Layout */}
       <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
