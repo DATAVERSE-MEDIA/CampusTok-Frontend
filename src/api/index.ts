@@ -64,6 +64,9 @@ export const authApi = {
 
   resendVerification:(data : any)=>
     apiClient.post('/auth/resend-verification-token', { email: data.email }),
+
+  googleAuth:(code:any)=>
+    apiClient.post('/auth/google_token', { code }).then(res => res.data),
 }
 
 export const schoolApi = {

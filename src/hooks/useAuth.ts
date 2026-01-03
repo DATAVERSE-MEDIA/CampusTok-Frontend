@@ -136,3 +136,32 @@ export const useResendVerification = () => {
       authApi.resendVerification(data).then(res => res.data)
   })
 }
+
+// hooks/useAuth.ts - Add this hook
+export const useGoogleAuth = () => {
+  const queryClient = useQueryClient()
+  const loginStore = useAuthStore(state => state.login)
+
+  return useMutation({
+    mutationFn: (code: string) =>
+       authApi.googleAuth(code).then(res => res.data),
+    onSuccess: (data) => {
+      // Update Zustand store
+      loginStore(data.user)
+      
+      // Save token if provided
+      if (data.token) {
+        localStorage.setItem('auth_token', data.token)
+      }
+      
+      // Invalidate user profile query
+      queryClient.invalidateQueries({ queryKey: authKeys.profile() })
+      
+      return data
+    },
+    onError: (error) => {
+      console.error('Google authentication failed:', error)
+      throw error
+    }
+  })
+}
