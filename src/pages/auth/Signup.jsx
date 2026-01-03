@@ -1,18 +1,24 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuthStore } from '../../store/useAuthStore'
+//import { useAuthStore } from '../../store/useAuthStore'
 import { Mail, Lock, User } from 'lucide-react'
+import { useRegister } from '../../hooks/useAuth'
 
 export default function Signup() {
   const navigate = useNavigate()
-  const { signup } = useAuthStore()
+ // const { signup } = useAuthStore()
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
     confirmPassword: ''
   })
-  const [errors, setErrors] = useState({})
+  const [errors, setErrors] = useState({});
+
+   // Use the hook properly - call it at the top level
+  const { mutate: register, isPending, error: apiError } = useRegister()
+
+
 
   const handleChange = (e) => {
     setFormData({
@@ -50,8 +56,28 @@ export default function Signup() {
       return
     }
 
-    signup(formData.email)
-    navigate('/verify-email')
+    //signup(formData.email)
+    const reqBody={
+      full_name : formData.name,
+      email: formData.email,
+      password:formData.password,
+      role:formData.role
+    }
+        // Call the mutation function
+    register(reqBody, {
+      onSuccess: (data) => {
+        console.log('Registration successful:', data)
+        navigate('/verify-email')
+      },
+      onError: (error) => {
+        console.error('Registration failed:', error)
+        // Handle API errors
+        setErrors({ 
+          submit: error?.message || 'Registration failed. Please try again.' 
+        })
+      }
+    })
+  
   }
 
   return (
@@ -121,9 +147,10 @@ export default function Signup() {
 
             <button
               type="submit"
-              className="w-full bg-primary hover:bg-primary-800 text-white py-3 rounded-lg font-medium transition-colors"
+              disabled={isPending}
+              className="w-full bg-primary hover:bg-primary-800 text-white py-3 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Continue
+             {isPending ? 'Creating account...' : 'Continue'}
             </button>
           </form>
 
@@ -137,17 +164,23 @@ export default function Signup() {
           </div>
 
           <div className="flex justify-center gap-4 mb-6">
-            <button className="w-12 h-12 rounded-full bg-white border border-gray-300 flex items-center justify-center hover:bg-gray-50 transition-colors">
+            <button 
+              disabled={isPending}
+              className="w-12 h-12 rounded-full bg-white border border-gray-300 flex items-center justify-center hover:bg-gray-50 transition-colors disabled:opacity-50">
               <span className="text-xl font-bold">G</span>
             </button>
-            <button className="w-12 h-12 rounded-full bg-black border border-gray-300 flex items-center justify-center hover:bg-gray-900 transition-colors">
+            <button 
+             type="button"
+             disabled={isPending}
+             className="w-12 h-12 rounded-full bg-black border border-gray-300 flex items-center justify-center hover:bg-gray-900 transition-colors disabled:opacity-50">
               <span className="text-white text-xl">🍎</span>
             </button>
           </div>
 
           <button
+            disabled={isPending}
             onClick={() => navigate('/')}
-            className="w-full bg-white border-2 border-gray-900 text-gray-900 py-3 rounded-lg font-medium hover:bg-gray-50 transition-colors mb-6"
+            className="w-full bg-white border-2 border-gray-900 text-gray-900 py-3 rounded-lg font-medium hover:bg-gray-50 transition-colors mb-6 disabled:opacity-50"
           >
             Explore as Visitor
           </button>
@@ -157,6 +190,7 @@ export default function Signup() {
             <button
               onClick={() => navigate('/login')}
               className="text-primary underline font-medium"
+              disabled={isPending}
             >
               Sign in
             </button>

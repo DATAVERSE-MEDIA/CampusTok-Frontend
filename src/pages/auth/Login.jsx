@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuthStore } from '../../store/useAuthStore'
+//import { useAuthStore } from '../../store/useAuthStore'
 import { User, Lock, ArrowLeft, ChevronDown } from 'lucide-react'
+import { useLogin } from '../../hooks/useAuth'
 
 const userTypes = [
   { value: 'student', label: 'Student' },
@@ -11,7 +12,7 @@ const userTypes = [
 
 export default function Login() {
   const navigate = useNavigate()
-  const { login } = useAuthStore()
+  // const { login } = useAuthStore()
   const [formData, setFormData] = useState({
     username: '',
     password: '',
@@ -21,6 +22,8 @@ export default function Login() {
   const [showUserTypeDropdown, setShowUserTypeDropdown] = useState(false)
   const [errors, setErrors] = useState({})
   const [isLoading, setIsLoading] = useState(false)
+
+  const { mutate: login, isPending, error } = useLogin()
 
   const handleChange = (e) => {
     setFormData({
@@ -63,25 +66,54 @@ export default function Login() {
       return
     }
 
-    setIsLoading(true)
-    // Simulate API call
-    setTimeout(() => {
-      login({
-        username: formData.username,
-        name: formData.username,
+    setIsLoading(true);
+    // Use the login mutation from React Query
+    login(
+      {
+        email: formData.username, // Usually APIs expect email not username
+        password: formData.password,
         userType: formData.userType
-      })
-      setIsLoading(false)
-      
-      // Redirect based on user type
-      if (formData.userType === 'student') {
-        navigate('/')
-      } else if (formData.userType === 'institution') {
-        navigate('/')
-      } else {
-        navigate('/')
+      },
+      {
+        onSuccess: (data) => {
+          // Handle successful login
+          console.log('Login successful:', data)
+          
+          // Redirect based on user type
+          if (formData.userType === 'student') {
+            navigate('/student-dashboard')
+          } else if (formData.userType === 'institution') {
+            navigate('/institution-dashboard')
+          } else {
+            navigate('/')
+          }
+        },
+        onError: (error) => {
+          // Handle login error
+          console.error('Login failed:', error)
+          alert(error?.message || 'Login failed. Please try again.')
+        }
       }
-    }, 1000)
+    )
+  
+    // Simulate API call
+    // setTimeout(() => {
+    //   login({
+    //     username: formData.username,
+    //     name: formData.username,
+    //     userType: formData.userType
+    //   })
+    //   setIsLoading(false)
+      
+    //   // Redirect based on user type
+    //   if (formData.userType === 'student') {
+    //     navigate('/')
+    //   } else if (formData.userType === 'institution') {
+    //     navigate('/')
+    //   } else {
+    //     navigate('/')
+    //   }
+    // }, 1000)
   }
 
   const handleGoogleLogin = () => {

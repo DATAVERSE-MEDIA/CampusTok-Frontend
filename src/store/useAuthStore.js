@@ -2,7 +2,7 @@ import { create } from 'zustand'
 
 export const useAuthStore = create((set) => ({
   user: null,
-  userType: null, // 'student' or 'institution'
+  userType: null, // 'student' or 'institution' or 'general'
   isAuthenticated: false,
   email: null,
   emailVerified: false,
@@ -21,7 +21,6 @@ export const useAuthStore = create((set) => ({
   verifyEmail: () => set({ 
     emailVerified: true 
   }),
-  
   selectProfile: (userType) => set({ 
     userType, 
     profileSelected: true 
