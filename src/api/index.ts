@@ -12,7 +12,7 @@ export const apiClient = axios.create({
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   },
-  //withCredentials: true,
+  withCredentials: true,
 })
 
 // Request interceptor for adding auth token
@@ -58,7 +58,7 @@ export const authApi = {
   resetPassword: (token: string, newPassword: string) =>
     apiClient.post('/auth/reset-password', { token, newPassword }),
   
-  getProfile: () => apiClient.get('/auth/profile'),
+  getProfile: () => apiClient.get('/auth/users/me'),
   
   updateProfile: (profileData: any) =>
     apiClient.put('/auth/profile', profileData),
