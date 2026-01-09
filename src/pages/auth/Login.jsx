@@ -11,7 +11,7 @@ const userTypes = [
 
 export default function Login() {
   const navigate = useNavigate()
-  const { login } = useAuthStore()
+  const { login, loading, error } = useAuthStore()
   const [formData, setFormData] = useState({
     username: '',
     password: '',
@@ -63,25 +63,14 @@ export default function Login() {
       return
     }
 
-    setIsLoading(true)
-    // Simulate API call
-    setTimeout(() => {
-      login({
-        username: formData.username,
-        name: formData.username,
-        userType: formData.userType
-      })
-      setIsLoading(false)
-      
-      // Redirect based on user type
-      if (formData.userType === 'student') {
-        navigate('/')
-      } else if (formData.userType === 'institution') {
-        navigate('/')
-      } else {
-        navigate('/')
-      }
-    }, 1000)
+    try {
+      await login({ email: formData.username, password: formData.password })
+      // Redirect after successful login
+      navigate('/')
+    } catch (err) {
+      // error is handled in store; keep simple UI feedback here
+      console.error('Login failed', err)
+    }
   }
 
   const handleGoogleLogin = () => {
@@ -204,11 +193,12 @@ export default function Login() {
             {/* Login Button */}
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={loading}
               className="w-full bg-primary hover:bg-primary-800 text-white py-3 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLoading ? 'Logging in...' : 'Login'}
+              {loading ? 'Logging in...' : 'Login'}
             </button>
+            {error && <p className="mt-2 text-sm text-red-600">{error.message || 'Login failed'}</p>}
           </form>
 
           {/* Divider */}

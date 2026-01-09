@@ -5,7 +5,7 @@ import { Mail, Lock, User } from 'lucide-react'
 
 export default function Signup() {
   const navigate = useNavigate()
-  const { signup } = useAuthStore()
+  const { signup, loading, error } = useAuthStore()
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -24,7 +24,7 @@ export default function Signup() {
     }
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     const newErrors = {}
 
@@ -50,8 +50,18 @@ export default function Signup() {
       return
     }
 
-    signup(formData.email)
-    navigate('/verify-email')
+    try {
+      // build payload according to API UserCreateGeneralModel
+      const payload = {
+        email: formData.email,
+        password: formData.password,
+        full_name: formData.name,
+      }
+      await signup(payload)
+      navigate('/verify-email')
+    } catch (err) {
+      console.error('Signup failed', err)
+    }
   }
 
   return (
@@ -121,10 +131,12 @@ export default function Signup() {
 
             <button
               type="submit"
-              className="w-full bg-primary hover:bg-primary-800 text-white py-3 rounded-lg font-medium transition-colors"
+              disabled={loading}
+              className="w-full bg-primary hover:bg-primary-800 text-white py-3 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Continue
+              {loading ? 'Creating account...' : 'Continue'}
             </button>
+            {error && <p className="mt-2 text-sm text-red-600">{error.message || 'Signup failed'}</p>}
           </form>
 
           <div className="relative my-6">

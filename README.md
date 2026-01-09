@@ -4,9 +4,9 @@ A modern React.js application for campus social networking, built with Vite, Tai
 
 ## Features
 
-### Authentication Flow
+-### Authentication Flow
 - **Signup** - User registration with email and password
-- **Email Verification** - 6-digit code verification (demo code: 123456)
+- **Email Verification** - 6-digit code verification (handled by backend)
 - **Profile Selection** - Choose between Student or Institution account
 - **Login** - Secure authentication
 - **Create Account** - Complete profile setup
@@ -112,8 +112,7 @@ frontend/
 
 ## Demo Credentials
 
-For testing the email verification:
-- Use verification code: **123456**
+For testing the email verification follow the backend email flow; do not use hardcoded tokens.
 
 ## API Integration
 
