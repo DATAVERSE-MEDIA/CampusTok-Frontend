@@ -1,109 +1,465 @@
+// import { useNavigate } from 'react-router-dom'
+// import { useAppStore } from '../store/useAppStore'
+// import { Heart, MessageCircle, Share2, BarChart3, MoreVertical } from 'lucide-react'
+
+// export default function LandingPage() {
+//   const navigate = useNavigate()
+//   const { selectedSchool } = useAppStore()
+
+//   return (
+//     <div className="flex-1 flex bg-white">
+//       {/* Main Content Area */}
+//       <div className="flex-1 overflow-y-auto">
+//         <div className="max-w-3xl mx-auto p-6">
+//           {/* Post */}
+//           <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+//             {/* Post Header */}
+//             <div className="p-4 flex items-start justify-between">
+//               <div className="flex items-center gap-3">
+//                 <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center relative">
+//                   <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center">
+//                     <span className="text-green-600 font-bold text-lg">U</span>
+//                   </div>
+//                 </div>
+//                 <div>
+//                   <h3 className="font-bold text-gray-900">
+//                     {selectedSchool ? selectedSchool.name : 'University of Lagos'}
+//                   </h3>
+//                   <p className="text-sm text-gray-600">
+//                     {selectedSchool?.address || 'University Road Lagos Mainland Akoka, Yaba, Lagos'}
+//                   </p>
+//                 </div>
+//               </div>
+//               <button className="p-2 hover:bg-gray-100 rounded-full">
+//                 <MoreVertical className="w-5 h-5 text-gray-400" />
+//               </button>
+//             </div>
+
+//             {/* Post Text */}
+//             <div className="px-4 pb-4">
+//               <p className="text-gray-900 leading-relaxed">
+//                 At the University of Lagos, a new electric bus was introduced to shuttle students around campus. 
+//                 Silent and eco-friendly, it quickly became a symbol of innovation, inspiring students wh...
+//               </p>
+//             </div>
+
+//             {/* Post Image */}
+//             <div className="w-full">
+//               <div className="w-full h-[600px] bg-gradient-to-br from-amber-50 to-amber-100 flex items-center justify-center relative overflow-hidden">
+//                 {/* Placeholder for the academic regalia image - you can replace this with actual image */}
+//                 <div className="w-full h-full flex items-center justify-center bg-amber-50">
+//                   <div className="text-center">
+//                     <div className="w-40 h-40 mx-auto mb-4 bg-red-600 rounded-full flex items-center justify-center shadow-lg">
+//                       <span className="text-7xl">👩‍🎓</span>
+//                     </div>
+//                     <p className="text-gray-600 text-sm">Academic Regalia - University of Lagos</p>
+//                     <p className="text-gray-500 text-xs mt-2">Replace with actual image from your assets</p>
+//                   </div>
+//                 </div>
+//               </div>
+//             </div>
+
+//             {/* Engagement Metrics */}
+//             <div className="px-4 py-4 border-t border-gray-200 flex items-center gap-6">
+//               <button className="flex items-center gap-2 text-gray-600 hover:text-red-600 transition-colors">
+//                 <Heart className="w-5 h-5" />
+//                 <span className="font-medium">11.7k</span>
+//               </button>
+//               <button className="flex items-center gap-2 text-gray-600 hover:text-blue-600 transition-colors">
+//                 <MessageCircle className="w-5 h-5" />
+//                 <span className="font-medium">500</span>
+//               </button>
+//               <button className="flex items-center gap-2 text-gray-600 hover:text-green-600 transition-colors">
+//                 <Share2 className="w-5 h-5" />
+//                 <span className="font-medium">1k</span>
+//               </button>
+//               <button className="flex items-center gap-2 text-gray-600 hover:text-primary transition-colors">
+//                 <BarChart3 className="w-5 h-5" />
+//                 <span className="font-medium">100k</span>
+//               </button>
+//             </div>
+//           </div>
+//         </div>
+//       </div>
+
+//       {/* Right Sidebar - Chatbot Widget */}
+//       <div className="w-80 bg-gray-900 p-6 flex items-start">
+//         <div className="bg-gray-800 rounded-lg p-6 w-full">
+//           <div className="flex items-center gap-3 mb-4">
+//             <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
+//               <span className="text-white text-xl">🤖</span>
+//             </div>
+//             <div>
+//               <h3 className="font-bold text-white">HI, I'm ChatBot</h3>
+//             </div>
+//           </div>
+//           <p className="text-gray-300 text-sm mb-6">
+//             You can ask me questions based on a particular institution.
+//           </p>
+//           <button
+//             onClick={() => navigate('/chatbot')}
+//             className="w-full bg-gray-700 hover:bg-gray-600 text-white py-3 rounded-lg font-medium transition-colors"
+//           >
+//             Use ChatBot
+//           </button>
+//         </div>
+//       </div>
+//     </div>
+//   )
+// }
+
+
 import { useNavigate } from 'react-router-dom'
 import { useAppStore } from '../store/useAppStore'
-import { Heart, MessageCircle, Share2, BarChart3, MoreVertical } from 'lucide-react'
+import { Heart, MessageCircle, Share2, BarChart3, MoreVertical, User } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { apiClient } from '../api'
 
 export default function LandingPage() {
   const navigate = useNavigate()
   const { selectedSchool } = useAppStore()
+  const [posts, setPosts] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [page, setPage] = useState(1)
+  const [hasMore, setHasMore] = useState(true)
+
+  // Fetch posts based on selected school
+  useEffect(() => {
+    fetchPosts()
+  }, [selectedSchool, page])
+
+  const fetchPosts = async () => {
+    setIsLoading(true)
+    setError(null)
+    
+    try {
+      const params = {
+        page,
+        limit: 10,
+        sortBy: 'created_at',
+        sortOrder: 'desc'
+      }
+
+      // If a school is selected, filter by school
+      if (selectedSchool?.id) {
+        params.filters = { school_id: selectedSchool.id }
+      }
+
+      const response = await apiClient.get('/posts', { params })
+      const newPosts = response.data.data || response.data
+      
+      if (page === 1) {
+        setPosts(newPosts)
+      } else {
+        setPosts(prev => [...prev, ...newPosts])
+      }
+      
+      // Check if there are more posts
+      setHasMore(newPosts.length > 0)
+    } catch (err) {
+      console.error('Error fetching posts:', err)
+      setError(err.message || 'Failed to load posts')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const loadMorePosts = () => {
+    if (!isLoading && hasMore) {
+      setPage(prev => prev + 1)
+    }
+  }
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffInHours = Math.floor((now - date) / (1000 * 60 * 60))
+    
+    if (diffInHours < 1) {
+      return 'Just now'
+    } else if (diffInHours < 24) {
+      return `${diffInHours}h ago`
+    } else {
+      return date.toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric',
+        year: 'numeric'
+      })
+    }
+  }
+
+  // Handle post engagement
+  const handleLike = async (postId) => {
+    try {
+      await apiClient.post(`/posts/${postId}/like`)
+      // Update local state
+      setPosts(prev => prev.map(post => 
+        post.id === postId 
+          ? { ...post, likes_count: (post.likes_count || 0) + 1, liked: true }
+          : post
+      ))
+    } catch (error) {
+      console.error('Error liking post:', error)
+    }
+  }
+
+  const handleComment = (postId) => {
+    // Navigate to comments or open comment modal
+    console.log('Open comments for post:', postId)
+  }
+
+  const handleShare = async (postId) => {
+    try {
+      await apiClient.post(`/posts/${postId}/share`)
+      setPosts(prev => prev.map(post => 
+        post.id === postId 
+          ? { ...post, shares_count: (post.shares_count || 0) + 1 }
+          : post
+      ))
+    } catch (error) {
+      console.error('Error sharing post:', error)
+    }
+  }
+
+  // Loading skeleton
+  if (isLoading && posts.length === 0) {
+    return (
+      <div className="flex-1 flex bg-white">
+        <div className="flex-1 overflow-y-auto">
+          <div className="max-w-3xl mx-auto p-6">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 animate-pulse">
+                <div className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-gray-300 rounded-full"></div>
+                    <div className="flex-1">
+                      <div className="h-4 bg-gray-300 rounded w-32 mb-2"></div>
+                      <div className="h-3 bg-gray-300 rounded w-24"></div>
+                    </div>
+                  </div>
+                </div>
+                <div className="px-4 pb-4">
+                  <div className="h-3 bg-gray-300 rounded w-full mb-2"></div>
+                  <div className="h-3 bg-gray-300 rounded w-3/4"></div>
+                </div>
+                <div className="w-full h-96 bg-gray-300"></div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <RightSidebar />
+      </div>
+    )
+  }
 
   return (
     <div className="flex-1 flex bg-white">
       {/* Main Content Area */}
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-3xl mx-auto p-6">
-          {/* Post */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
-            {/* Post Header */}
-            <div className="p-4 flex items-start justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center relative">
-                  <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center">
-                    <span className="text-green-600 font-bold text-lg">U</span>
-                  </div>
-                </div>
-                <div>
-                  <h3 className="font-bold text-gray-900">
-                    {selectedSchool ? selectedSchool.name : 'University of Lagos'}
-                  </h3>
-                  <p className="text-sm text-gray-600">
-                    {selectedSchool?.address || 'University Road Lagos Mainland Akoka, Yaba, Lagos'}
-                  </p>
-                </div>
-              </div>
-              <button className="p-2 hover:bg-gray-100 rounded-full">
-                <MoreVertical className="w-5 h-5 text-gray-400" />
-              </button>
-            </div>
+          {/* Welcome Header */}
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold text-gray-900">
+              {selectedSchool ? `${selectedSchool.name} Feed` : 'Campus Feed'}
+            </h1>
+            <p className="text-gray-600">
+              {selectedSchool 
+                ? `Latest posts from ${selectedSchool.name} community`
+                : 'Discover posts from campuses nationwide'
+              }
+            </p>
+          </div>
 
-            {/* Post Text */}
-            <div className="px-4 pb-4">
-              <p className="text-gray-900 leading-relaxed">
-                At the University of Lagos, a new electric bus was introduced to shuttle students around campus. 
-                Silent and eco-friendly, it quickly became a symbol of innovation, inspiring students wh...
+          {/* Posts */}
+          {posts.length === 0 && !isLoading ? (
+            <div className="text-center py-12">
+              <div className="w-24 h-24 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                <User className="w-12 h-12 text-gray-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">No posts yet</h3>
+              <p className="text-gray-600">
+                {selectedSchool 
+                  ? `Be the first to post in ${selectedSchool.name}`
+                  : 'Follow schools or create a post to get started'
+                }
               </p>
             </div>
-
-            {/* Post Image */}
-            <div className="w-full">
-              <div className="w-full h-[600px] bg-gradient-to-br from-amber-50 to-amber-100 flex items-center justify-center relative overflow-hidden">
-                {/* Placeholder for the academic regalia image - you can replace this with actual image */}
-                <div className="w-full h-full flex items-center justify-center bg-amber-50">
-                  <div className="text-center">
-                    <div className="w-40 h-40 mx-auto mb-4 bg-red-600 rounded-full flex items-center justify-center shadow-lg">
-                      <span className="text-7xl">👩‍🎓</span>
-                    </div>
-                    <p className="text-gray-600 text-sm">Academic Regalia - University of Lagos</p>
-                    <p className="text-gray-500 text-xs mt-2">Replace with actual image from your assets</p>
-                  </div>
+          ) : (
+            <>
+              {posts.map((post) => (
+                <PostCard 
+                  key={post.id} 
+                  post={post} 
+                  onLike={handleLike}
+                  onComment={handleComment}
+                  onShare={handleShare}
+                  formatDate={formatDate}
+                />
+              ))}
+              
+              {/* Load More Button */}
+              {hasMore && (
+                <div className="text-center mt-6">
+                  <button
+                    onClick={loadMorePosts}
+                    disabled={isLoading}
+                    className="btn-primary px-6 py-2 rounded-lg disabled:opacity-50"
+                  >
+                    {isLoading ? 'Loading...' : 'Load More Posts'}
+                  </button>
                 </div>
-              </div>
-            </div>
-
-            {/* Engagement Metrics */}
-            <div className="px-4 py-4 border-t border-gray-200 flex items-center gap-6">
-              <button className="flex items-center gap-2 text-gray-600 hover:text-red-600 transition-colors">
-                <Heart className="w-5 h-5" />
-                <span className="font-medium">11.7k</span>
-              </button>
-              <button className="flex items-center gap-2 text-gray-600 hover:text-blue-600 transition-colors">
-                <MessageCircle className="w-5 h-5" />
-                <span className="font-medium">500</span>
-              </button>
-              <button className="flex items-center gap-2 text-gray-600 hover:text-green-600 transition-colors">
-                <Share2 className="w-5 h-5" />
-                <span className="font-medium">1k</span>
-              </button>
-              <button className="flex items-center gap-2 text-gray-600 hover:text-primary transition-colors">
-                <BarChart3 className="w-5 h-5" />
-                <span className="font-medium">100k</span>
-              </button>
-            </div>
-          </div>
+              )}
+            </>
+          )}
         </div>
       </div>
 
       {/* Right Sidebar - Chatbot Widget */}
-      <div className="w-80 bg-gray-900 p-6 flex items-start">
-        <div className="bg-gray-800 rounded-lg p-6 w-full">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
-              <span className="text-white text-xl">🤖</span>
-            </div>
-            <div>
-              <h3 className="font-bold text-white">HI, I'm ChatBot</h3>
+      <RightSidebar navigate={navigate} />
+    </div>
+  )
+}
+
+// Post Card Component
+const PostCard = ({ post, onLike, onComment, onShare, formatDate }) => {
+  const [liked, setLiked] = useState(false)
+  const [likesCount, setLikesCount] = useState(post.likes_count || 0)
+
+  const handleLike = () => {
+    setLiked(!liked)
+    setLikesCount(prev => liked ? prev - 1 : prev + 1)
+    onLike(post.id)
+  }
+
+  return (
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+      {/* Post Header */}
+      <div className="p-4 flex items-start justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200">
+            {post.author?.profile_picture ? (
+              <img 
+                src={post.author.profile_picture} 
+                alt={post.author.full_name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-primary-500">
+                <span className="text-white font-bold">
+                  {post.author?.full_name?.charAt(0) || 'U'}
+                </span>
+              </div>
+            )}
+          </div>
+          <div>
+            <h3 className="font-bold text-gray-900">{post.author?.full_name || 'Anonymous'}</h3>
+            <div className="flex items-center gap-2">
+              <p className="text-sm text-gray-600">
+                {post.author?.role ? post.author.role.charAt(0).toUpperCase() + post.author.role.slice(1) : 'User'}
+              </p>
+              <span className="text-gray-400">•</span>
+              <p className="text-sm text-gray-500">
+                {formatDate(post.created_at || post.updated_at)}
+              </p>
             </div>
           </div>
-          <p className="text-gray-300 text-sm mb-6">
-            You can ask me questions based on a particular institution.
-          </p>
-          <button
-            onClick={() => navigate('/chatbot')}
-            className="w-full bg-gray-700 hover:bg-gray-600 text-white py-3 rounded-lg font-medium transition-colors"
-          >
-            Use ChatBot
-          </button>
         </div>
+        <button className="p-2 hover:bg-gray-100 rounded-full">
+          <MoreVertical className="w-5 h-5 text-gray-400" />
+        </button>
+      </div>
+
+      {/* Post Content */}
+      <div className="px-4 pb-4">
+        <p className="text-gray-900 leading-relaxed whitespace-pre-line">
+          {post.content}
+        </p>
+        
+        {/* Post Type Badge */}
+        {post.post_type && post.post_type !== 'post' && (
+          <span className="inline-block mt-2 px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+            {post.post_type.charAt(0).toUpperCase() + post.post_type.slice(1)}
+          </span>
+        )}
+      </div>
+
+      {/* Post Image/Media */}
+      {post.media_url && (
+        <div className="w-full">
+          <div className="w-full max-h-[600px] overflow-hidden">
+            <img 
+              src={post.media_url} 
+              alt="Post media"
+              className="w-full h-auto object-cover"
+              loading="lazy"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Engagement Metrics */}
+      <div className="px-4 py-4 border-t border-gray-200 flex items-center justify-between">
+        <div className="flex items-center gap-6">
+          <button 
+            onClick={handleLike}
+            className="flex items-center gap-2 text-gray-600 hover:text-red-600 transition-colors"
+          >
+            <Heart className={`w-5 h-5 ${liked ? 'fill-red-600 text-red-600' : ''}`} />
+            <span className="font-medium">{likesCount}</span>
+          </button>
+          <button 
+            onClick={() => onComment(post.id)}
+            className="flex items-center gap-2 text-gray-600 hover:text-blue-600 transition-colors"
+          >
+            <MessageCircle className="w-5 h-5" />
+            <span className="font-medium">{post.comments_count || 0}</span>
+          </button>
+          <button 
+            onClick={() => onShare(post.id)}
+            className="flex items-center gap-2 text-gray-600 hover:text-green-600 transition-colors"
+          >
+            <Share2 className="w-5 h-5" />
+            <span className="font-medium">{post.shares_count || 0}</span>
+          </button>
+          <div className="flex items-center gap-2 text-gray-600">
+            <BarChart3 className="w-5 h-5" />
+            <span className="font-medium">{post.views_count || 0}</span>
+          </div>
+        </div>
+        
+        {/* Privacy Badge */}
+        {post.privacy && (
+          <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-600">
+            {post.privacy.charAt(0).toUpperCase() + post.privacy.slice(1)}
+          </span>
+        )}
       </div>
     </div>
   )
 }
+
+// Right Sidebar Component
+const RightSidebar = ({ navigate }) => (
+  <div className="w-80 bg-gray-900 p-6 flex items-start">
+    <div className="bg-gray-800 rounded-lg p-6 w-full">
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
+          <span className="text-white text-xl">🤖</span>
+        </div>
+        <div>
+          <h3 className="font-bold text-white">HI, I'm ChatBot</h3>
+        </div>
+      </div>
+      <p className="text-gray-300 text-sm mb-6">
+        You can ask me questions based on a particular institution.
+      </p>
+      <button
+        onClick={() => navigate('/chatbot')}
+        className="w-full bg-gray-700 hover:bg-gray-600 text-white py-3 rounded-lg font-medium transition-colors"
+      >
+        Use ChatBot
+      </button>
+    </div>
+  </div>
+)

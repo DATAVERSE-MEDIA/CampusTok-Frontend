@@ -10,12 +10,12 @@ export default function VerifyEmail() {
   const [error, setError] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
   
-  const { mutate: verifyEmail, isPending, error: apiError } = useVerifyEmail() 
+  const { mutate: verifyEmail, isPending:isVerifying, error: verifyError } = useVerifyEmail() 
   const { mutate: resendVerification, isPending: isResending } = useResendVerification()
 
   useEffect(() => {
     if (!email) {
-      navigate('/signup')
+    //  navigate('/signup')
     }
   }, [email, navigate])
 

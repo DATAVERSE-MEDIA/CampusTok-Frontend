@@ -48,7 +48,7 @@ export const authApi = {
      apiClient.post('/auth/register', userData),
   
   verifyEmail: (token: string) =>
-    apiClient.post('/auth/verify-email', { token }),
+    apiClient.post(`/auth/verify-email?token=${token}`), //encodeURIComponent
   
   logout: () => apiClient.post('/auth/logout'),
   
