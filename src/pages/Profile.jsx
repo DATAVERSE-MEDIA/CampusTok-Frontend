@@ -567,7 +567,7 @@ const ProfilePictureUpload = ({
     <div className="relative">
       {/* Current Profile Picture */}
       <div className="relative group">
-        <div className="w-32 h-32 rounded-full border-4 border-white overflow-hidden bg-gradient-to-r from-primary-500 to-primary-700">
+        <div className="w-24 h-24 sm:w-28 sm:h-28 lg:w-32 lg:h-32 rounded-full border-2 sm:border-4 border-white overflow-hidden bg-gradient-to-r from-primary-500 to-primary-700">
           {currentPicture ? (
             <img 
               src={currentPicture} 
@@ -575,7 +575,7 @@ const ProfilePictureUpload = ({
               className="w-full h-full object-cover"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-white text-4xl font-bold">
+            <div className="w-full h-full flex items-center justify-center text-white text-2xl sm:text-3xl lg:text-4xl font-bold">
               {currentPicture ? '' : '?'}
             </div>
           )}
@@ -584,9 +584,9 @@ const ProfilePictureUpload = ({
         {/* Upload Button Overlay */}
         <button
           onClick={triggerFileInput}
-          className="absolute inset-0 w-32 h-32 rounded-full bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+          className="absolute inset-0 w-24 h-24 sm:w-28 sm:h-28 lg:w-32 lg:h-32 rounded-full bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
         >
-          <Camera className="w-8 h-8 text-white" />
+          <Camera className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8 text-white" />
         </button>
       </div>
 
@@ -782,32 +782,32 @@ export default function Profile() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto px-3 sm:px-4 lg:px-6 pb-20 lg:pb-6">
       {/* Upload Status Messages */}
       {uploadSuccess && (
-        <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2 text-green-700">
-          <Check className="w-5 h-5" />
+        <div className="mb-3 lg:mb-4 p-2.5 lg:p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2 text-green-700 text-sm lg:text-base">
+          <Check className="w-4 h-4 lg:w-5 lg:h-5 flex-shrink-0" />
           <span>Profile picture updated successfully!</span>
         </div>
       )}
       
       {uploadError && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-700">
-          <X className="w-5 h-5" />
+        <div className="mb-3 lg:mb-4 p-2.5 lg:p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-700 text-sm lg:text-base">
+          <X className="w-4 h-4 lg:w-5 lg:h-5 flex-shrink-0" />
           <span>{uploadError}</span>
         </div>
       )}
 
-      <div className="card mb-6">
+      <div className="card mb-4 lg:mb-6">
         {/* Cover Photo */}
-        <div className="h-48 bg-gradient-to-r from-primary-500 to-primary-700 rounded-t-lg mb-20 relative">
-          <button className="absolute top-4 right-4 btn-secondary flex items-center gap-2">
-            <Edit className="w-4 h-4" />
-            Edit Cover
+        <div className="h-32 sm:h-40 lg:h-48 bg-gradient-to-r from-primary-500 to-primary-700 rounded-t-lg mb-16 sm:mb-20 relative overflow-hidden">
+          <button className="absolute top-2 right-2 sm:top-4 sm:right-4 btn-secondary flex items-center gap-1.5 lg:gap-2 text-xs lg:text-sm px-2 lg:px-4 py-1.5 lg:py-2">
+            <Edit className="w-3 h-3 lg:w-4 lg:h-4" />
+            <span className="hidden sm:inline">Edit Cover</span>
           </button>
           
           {/* Profile Picture Upload Component */}
-          <div className="absolute -bottom-16 left-6">
+          <div className="absolute -bottom-12 sm:-bottom-16 left-3 sm:left-6">
             <ProfilePictureUpload
               currentPicture={currentProfilePicture}
               onUpload={handleUploadProfilePicture}
@@ -818,36 +818,36 @@ export default function Profile() {
         </div>
 
         {/* Profile Info */}
-        <div className="px-6 pb-6">
-          <div className="flex items-start justify-between mb-6">
-            <div className="flex items-start gap-4 ml-36"> {/* Added margin for profile picture */}
-              <div className="pt-4">
+        <div className="px-3 sm:px-4 lg:px-6 pb-4 lg:pb-6">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4 lg:mb-6">
+            <div className="flex flex-col sm:flex-row items-start gap-3 sm:gap-4 sm:ml-28 lg:ml-36 w-full sm:w-auto">
+              <div className="pt-0 sm:pt-4 w-full sm:w-auto">
                 {isEditing ? (
                   <input
                     type="text"
                     value={profileData.name}
                     onChange={(e) => setProfileData({...profileData, name: e.target.value})}
-                    className="text-3xl font-bold text-gray-900 mb-1 bg-gray-50 border border-gray-300 rounded px-3 py-1"
+                    className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-1 bg-gray-50 border border-gray-300 rounded px-2 lg:px-3 py-1 w-full sm:w-auto"
                   />
                 ) : (
-                  <h1 className="text-3xl font-bold text-gray-900 mb-1">{profileData.name}</h1>
+                  <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-1">{profileData.name}</h1>
                 )}
-                <p className="text-gray-600 mb-2">{profileData.username}</p>
+                <p className="text-sm lg:text-base text-gray-600 mb-2">{profileData.username}</p>
                 
                 {isEditing ? (
                   <textarea
                     value={profileData.bio}
                     onChange={(e) => setProfileData({...profileData, bio: e.target.value})}
-                    className="w-full text-gray-700 bg-gray-50 border border-gray-300 rounded px-3 py-2"
+                    className="w-full text-sm lg:text-base text-gray-700 bg-gray-50 border border-gray-300 rounded px-2 lg:px-3 py-2"
                     rows={3}
                   />
                 ) : (
-                  <p className="text-gray-700">{profileData.bio}</p>
+                  <p className="text-sm lg:text-base text-gray-700 break-words">{profileData.bio}</p>
                 )}
                 
                 {/* Show user type from API if available */}
                 {apiData?.userType && (
-                  <span className="inline-block mt-2 px-3 py-1 bg-primary-100 text-primary-700 text-sm font-medium rounded-full">
+                  <span className="inline-block mt-2 px-2 lg:px-3 py-1 bg-primary-100 text-primary-700 text-xs lg:text-sm font-medium rounded-full">
                     {apiData.userType.charAt(0).toUpperCase() + apiData.userType.slice(1)}
                   </span>
                 )}
@@ -855,99 +855,99 @@ export default function Profile() {
             </div>
             <button
               onClick={isEditing ? handleSaveProfile : () => setIsEditing(true)}
-              className="btn-primary flex items-center gap-2"
+              className="btn-primary flex items-center justify-center gap-2 w-full sm:w-auto text-sm lg:text-base px-4 py-2 lg:py-2"
               disabled={isUploading}
             >
               {isUploading ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  Uploading...
+                  <span>Uploading...</span>
                 </>
               ) : (
                 <>
                   <Edit className="w-4 h-4" />
-                  {isEditing ? 'Save Profile' : 'Edit Profile'}
+                  <span>{isEditing ? 'Save Profile' : 'Edit Profile'}</span>
                 </>
               )}
             </button>
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-4 gap-4 mb-6">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 lg:gap-4 mb-4 lg:mb-6">
             {stats.map((stat) => (
-              <div key={stat.label} className="text-center">
-                <div className="text-2xl font-bold text-gray-900">{stat.value}</div>
-                <div className="text-sm text-gray-600">{stat.label}</div>
+              <div key={stat.label} className="text-center p-2 lg:p-0">
+                <div className="text-xl lg:text-2xl font-bold text-gray-900">{stat.value}</div>
+                <div className="text-xs lg:text-sm text-gray-600">{stat.label}</div>
               </div>
             ))}
           </div>
 
           {/* Details */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <MapPin className="w-5 h-5 text-gray-400" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
+            <div className="space-y-3 lg:space-y-4">
+              <div className="flex items-start gap-2 lg:gap-3">
+                <MapPin className="w-4 h-4 lg:w-5 lg:h-5 text-gray-400 flex-shrink-0 mt-0.5" />
                 {isEditing ? (
                   <input
                     type="text"
                     value={profileData.location}
                     onChange={(e) => setProfileData({...profileData, location: e.target.value})}
-                    className="text-gray-700 bg-gray-50 border border-gray-300 rounded px-3 py-1"
+                    className="text-sm lg:text-base text-gray-700 bg-gray-50 border border-gray-300 rounded px-2 lg:px-3 py-1 w-full"
                   />
                 ) : (
-                  <span className="text-gray-700">{profileData.location}</span>
+                  <span className="text-sm lg:text-base text-gray-700 break-words">{profileData.location}</span>
                 )}
               </div>
-              <div className="flex items-center gap-3">
-                <GraduationCap className="w-5 h-5 text-gray-400" />
+              <div className="flex items-start gap-2 lg:gap-3">
+                <GraduationCap className="w-4 h-4 lg:w-5 lg:h-5 text-gray-400 flex-shrink-0 mt-0.5" />
                 {isEditing ? (
                   <input
                     type="text"
                     value={profileData.school}
                     onChange={(e) => setProfileData({...profileData, school: e.target.value})}
-                    className="text-gray-700 bg-gray-50 border border-gray-300 rounded px-3 py-1"
+                    className="text-sm lg:text-base text-gray-700 bg-gray-50 border border-gray-300 rounded px-2 lg:px-3 py-1 w-full"
                   />
                 ) : (
-                  <span className="text-gray-700">{profileData.school}</span>
+                  <span className="text-sm lg:text-base text-gray-700 break-words">{profileData.school}</span>
                 )}
               </div>
-              <div className="flex items-center gap-3">
-                <Calendar className="w-5 h-5 text-gray-400" />
-                <span className="text-gray-700">Joined {profileData.joinDate}</span>
+              <div className="flex items-center gap-2 lg:gap-3">
+                <Calendar className="w-4 h-4 lg:w-5 lg:h-5 text-gray-400 flex-shrink-0" />
+                <span className="text-sm lg:text-base text-gray-700">Joined {profileData.joinDate}</span>
               </div>
             </div>
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <Mail className="w-5 h-5 text-gray-400" />
-                <span className="text-gray-700">{profileData.email}</span>
+            <div className="space-y-3 lg:space-y-4">
+              <div className="flex items-start gap-2 lg:gap-3">
+                <Mail className="w-4 h-4 lg:w-5 lg:h-5 text-gray-400 flex-shrink-0 mt-0.5" />
+                <span className="text-sm lg:text-base text-gray-700 break-words break-all">{profileData.email}</span>
               </div>
-              <div className="flex items-center gap-3">
-                <Phone className="w-5 h-5 text-gray-400" />
+              <div className="flex items-start gap-2 lg:gap-3">
+                <Phone className="w-4 h-4 lg:w-5 lg:h-5 text-gray-400 flex-shrink-0 mt-0.5" />
                 {isEditing ? (
                   <input
                     type="tel"
                     value={profileData.phone}
                     onChange={(e) => setProfileData({...profileData, phone: e.target.value})}
-                    className="text-gray-700 bg-gray-50 border border-gray-300 rounded px-3 py-1"
+                    className="text-sm lg:text-base text-gray-700 bg-gray-50 border border-gray-300 rounded px-2 lg:px-3 py-1 w-full"
                   />
                 ) : (
-                  <span className="text-gray-700">{profileData.phone}</span>
+                  <span className="text-sm lg:text-base text-gray-700">{profileData.phone}</span>
                 )}
               </div>
-              <div className="text-gray-700">
+              <div className="text-sm lg:text-base text-gray-700">
                 <span className="font-medium">Major:</span>
                 {isEditing ? (
-                  <>
+                  <div className="flex flex-col sm:flex-row gap-2 mt-1">
                     <input
                       type="text"
                       value={profileData.major}
                       onChange={(e) => setProfileData({...profileData, major: e.target.value})}
-                      className="ml-2 text-gray-700 bg-gray-50 border border-gray-300 rounded px-3 py-1 w-32"
+                      className="text-sm lg:text-base text-gray-700 bg-gray-50 border border-gray-300 rounded px-2 lg:px-3 py-1 w-full sm:w-32"
                     />
                     <select
                       value={profileData.year}
                       onChange={(e) => setProfileData({...profileData, year: e.target.value})}
-                      className="ml-2 text-gray-700 bg-gray-50 border border-gray-300 rounded px-3 py-1"
+                      className="text-sm lg:text-base text-gray-700 bg-gray-50 border border-gray-300 rounded px-2 lg:px-3 py-1 w-full sm:w-auto"
                     >
                       <option value="Freshman">Freshman</option>
                       <option value="Sophomore">Sophomore</option>
@@ -955,9 +955,9 @@ export default function Profile() {
                       <option value="Senior">Senior</option>
                       <option value="Graduate">Graduate</option>
                     </select>
-                  </>
+                  </div>
                 ) : (
-                  ` ${profileData.major} • ${profileData.year}`
+                  <span className="ml-1">{profileData.major} • {profileData.year}</span>
                 )}
               </div>
             </div>
@@ -967,19 +967,19 @@ export default function Profile() {
 
       {/* Recent Activity */}
       <div className="card">
-        <h2 className="text-xl font-bold text-gray-900 mb-4">Recent Activity</h2>
-        <div className="space-y-4">
+        <h2 className="text-lg lg:text-xl font-bold text-gray-900 mb-3 lg:mb-4">Recent Activity</h2>
+        <div className="space-y-3 lg:space-y-4">
           {[1, 2, 3].map((item) => (
-            <div key={item} className="p-4 border border-gray-200 rounded-lg">
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 bg-primary-500 rounded-full flex items-center justify-center text-white font-bold">
+            <div key={item} className="p-3 lg:p-4 border border-gray-200 rounded-lg">
+              <div className="flex items-start gap-2 lg:gap-3">
+                <div className="w-8 h-8 lg:w-10 lg:h-10 bg-primary-500 rounded-full flex items-center justify-center text-white font-bold text-sm lg:text-base flex-shrink-0">
                   {profileData.name.charAt(0)}
                 </div>
-                <div className="flex-1">
-                  <p className="text-gray-700">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm lg:text-base text-gray-700 break-words">
                     <span className="font-medium">{profileData.name}</span> shared a new post
                   </p>
-                  <p className="text-sm text-gray-500 mt-1">2 hours ago</p>
+                  <p className="text-xs lg:text-sm text-gray-500 mt-1">2 hours ago</p>
                 </div>
               </div>
             </div>

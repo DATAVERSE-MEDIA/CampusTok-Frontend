@@ -225,45 +225,47 @@ export default function LandingPage() {
   // Loading skeleton
   if (isLoading && posts.length === 0) {
     return (
-      <div className="flex-1 flex bg-white">
-        <div className="flex-1 overflow-y-auto">
-          <div className="max-w-3xl mx-auto p-6">
+      <div className="flex-1 flex flex-col lg:flex-row bg-white">
+        <div className="flex-1 overflow-y-auto w-full lg:w-auto">
+          <div className="max-w-3xl mx-auto p-3 sm:p-4 lg:p-6 pb-20 lg:pb-6">
             {[...Array(3)].map((_, i) => (
-              <div key={i} className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 animate-pulse">
-                <div className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-gray-300 rounded-full"></div>
+              <div key={i} className="bg-white rounded-lg shadow-sm border border-gray-200 mb-4 lg:mb-6 animate-pulse">
+                <div className="p-3 lg:p-4">
+                  <div className="flex items-center gap-2 lg:gap-3">
+                    <div className="w-10 h-10 lg:w-12 lg:h-12 bg-gray-300 rounded-full flex-shrink-0"></div>
                     <div className="flex-1">
-                      <div className="h-4 bg-gray-300 rounded w-32 mb-2"></div>
-                      <div className="h-3 bg-gray-300 rounded w-24"></div>
+                      <div className="h-3 lg:h-4 bg-gray-300 rounded w-24 lg:w-32 mb-2"></div>
+                      <div className="h-2 lg:h-3 bg-gray-300 rounded w-20 lg:w-24"></div>
                     </div>
                   </div>
                 </div>
-                <div className="px-4 pb-4">
-                  <div className="h-3 bg-gray-300 rounded w-full mb-2"></div>
-                  <div className="h-3 bg-gray-300 rounded w-3/4"></div>
+                <div className="px-3 lg:px-4 pb-3 lg:pb-4">
+                  <div className="h-2 lg:h-3 bg-gray-300 rounded w-full mb-2"></div>
+                  <div className="h-2 lg:h-3 bg-gray-300 rounded w-3/4"></div>
                 </div>
-                <div className="w-full h-96 bg-gray-300"></div>
+                <div className="w-full h-48 lg:h-96 bg-gray-300"></div>
               </div>
             ))}
           </div>
         </div>
-        <RightSidebar />
+        <div className="hidden lg:block lg:w-80 flex-shrink-0">
+          <RightSidebar navigate={navigate} />
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="flex-1 flex bg-white">
+    <div className="flex-1 flex flex-col lg:flex-row bg-white">
       {/* Main Content Area */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="max-w-3xl mx-auto p-6">
+      <div className="flex-1 overflow-y-auto w-full lg:w-auto">
+        <div className="max-w-3xl mx-auto p-3 sm:p-4 lg:p-6 pb-20 lg:pb-6">
           {/* Welcome Header */}
-          <div className="mb-6">
-            <h1 className="text-2xl font-bold text-gray-900">
+          <div className="mb-4 lg:mb-6">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
               {selectedSchool ? `${selectedSchool.name} Feed` : 'Campus Feed'}
             </h1>
-            <p className="text-gray-600">
+            <p className="text-sm sm:text-base text-gray-600 mt-1">
               {selectedSchool 
                 ? `Latest posts from ${selectedSchool.name} community`
                 : 'Discover posts from campuses nationwide'
@@ -315,8 +317,10 @@ export default function LandingPage() {
         </div>
       </div>
 
-      {/* Right Sidebar - Chatbot Widget */}
-      <RightSidebar navigate={navigate} />
+      {/* Right Sidebar - Chatbot Widget - Hidden on mobile */}
+      <div className="hidden lg:block lg:w-80 flex-shrink-0">
+        <RightSidebar navigate={navigate} />
+      </div>
     </div>
   )
 }
@@ -333,11 +337,11 @@ const PostCard = ({ post, onLike, onComment, onShare, formatDate }) => {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-4 lg:mb-6">
       {/* Post Header */}
-      <div className="p-4 flex items-start justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200">
+      <div className="p-3 lg:p-4 flex items-start justify-between gap-2">
+        <div className="flex items-center gap-2 lg:gap-3 flex-1 min-w-0">
+          <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
             {post.author?.profile_picture ? (
               <img 
                 src={post.author.profile_picture} 
@@ -346,33 +350,33 @@ const PostCard = ({ post, onLike, onComment, onShare, formatDate }) => {
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-primary-500">
-                <span className="text-white font-bold">
+                <span className="text-white font-bold text-sm lg:text-base">
                   {post.author?.full_name?.charAt(0) || 'U'}
                 </span>
               </div>
             )}
           </div>
-          <div>
-            <h3 className="font-bold text-gray-900">{post.author?.full_name || 'Anonymous'}</h3>
-            <div className="flex items-center gap-2">
-              <p className="text-sm text-gray-600">
+          <div className="flex-1 min-w-0">
+            <h3 className="font-bold text-gray-900 text-sm lg:text-base truncate">{post.author?.full_name || 'Anonymous'}</h3>
+            <div className="flex items-center gap-1.5 lg:gap-2 flex-wrap">
+              <p className="text-xs lg:text-sm text-gray-600">
                 {post.author?.role ? post.author.role.charAt(0).toUpperCase() + post.author.role.slice(1) : 'User'}
               </p>
-              <span className="text-gray-400">•</span>
-              <p className="text-sm text-gray-500">
+              <span className="text-gray-400 text-xs">•</span>
+              <p className="text-xs lg:text-sm text-gray-500">
                 {formatDate(post.created_at || post.updated_at)}
               </p>
             </div>
           </div>
         </div>
-        <button className="p-2 hover:bg-gray-100 rounded-full">
-          <MoreVertical className="w-5 h-5 text-gray-400" />
+        <button className="p-1.5 lg:p-2 hover:bg-gray-100 rounded-full flex-shrink-0">
+          <MoreVertical className="w-4 h-4 lg:w-5 lg:h-5 text-gray-400" />
         </button>
       </div>
 
       {/* Post Content */}
-      <div className="px-4 pb-4">
-        <p className="text-gray-900 leading-relaxed whitespace-pre-line">
+      <div className="px-3 lg:px-4 pb-3 lg:pb-4">
+        <p className="text-sm lg:text-base text-gray-900 leading-relaxed whitespace-pre-line break-words">
           {post.content}
         </p>
         
@@ -387,7 +391,7 @@ const PostCard = ({ post, onLike, onComment, onShare, formatDate }) => {
       {/* Post Image/Media */}
       {post.media_url && (
         <div className="w-full">
-          <div className="w-full max-h-[600px] overflow-hidden">
+          <div className="w-full max-h-[300px] lg:max-h-[600px] overflow-hidden">
             <img 
               src={post.media_url} 
               alt="Post media"
@@ -399,38 +403,38 @@ const PostCard = ({ post, onLike, onComment, onShare, formatDate }) => {
       )}
 
       {/* Engagement Metrics */}
-      <div className="px-4 py-4 border-t border-gray-200 flex items-center justify-between">
-        <div className="flex items-center gap-6">
+      <div className="px-3 lg:px-4 py-3 lg:py-4 border-t border-gray-200 flex items-center justify-between gap-2 flex-wrap">
+        <div className="flex items-center gap-3 lg:gap-6 flex-wrap">
           <button 
             onClick={handleLike}
-            className="flex items-center gap-2 text-gray-600 hover:text-red-600 transition-colors"
+            className="flex items-center gap-1.5 lg:gap-2 text-gray-600 hover:text-red-600 transition-colors"
           >
-            <Heart className={`w-5 h-5 ${liked ? 'fill-red-600 text-red-600' : ''}`} />
-            <span className="font-medium">{likesCount}</span>
+            <Heart className={`w-4 h-4 lg:w-5 lg:h-5 ${liked ? 'fill-red-600 text-red-600' : ''}`} />
+            <span className="font-medium text-sm lg:text-base">{likesCount}</span>
           </button>
           <button 
             onClick={() => onComment(post.id)}
-            className="flex items-center gap-2 text-gray-600 hover:text-blue-600 transition-colors"
+            className="flex items-center gap-1.5 lg:gap-2 text-gray-600 hover:text-blue-600 transition-colors"
           >
-            <MessageCircle className="w-5 h-5" />
-            <span className="font-medium">{post.comments_count || 0}</span>
+            <MessageCircle className="w-4 h-4 lg:w-5 lg:h-5" />
+            <span className="font-medium text-sm lg:text-base">{post.comments_count || 0}</span>
           </button>
           <button 
             onClick={() => onShare(post.id)}
-            className="flex items-center gap-2 text-gray-600 hover:text-green-600 transition-colors"
+            className="flex items-center gap-1.5 lg:gap-2 text-gray-600 hover:text-green-600 transition-colors"
           >
-            <Share2 className="w-5 h-5" />
-            <span className="font-medium">{post.shares_count || 0}</span>
+            <Share2 className="w-4 h-4 lg:w-5 lg:h-5" />
+            <span className="font-medium text-sm lg:text-base">{post.shares_count || 0}</span>
           </button>
-          <div className="flex items-center gap-2 text-gray-600">
-            <BarChart3 className="w-5 h-5" />
-            <span className="font-medium">{post.views_count || 0}</span>
+          <div className="flex items-center gap-1.5 lg:gap-2 text-gray-600">
+            <BarChart3 className="w-4 h-4 lg:w-5 lg:h-5" />
+            <span className="font-medium text-sm lg:text-base">{post.views_count || 0}</span>
           </div>
         </div>
         
         {/* Privacy Badge */}
         {post.privacy && (
-          <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-600">
+          <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-600 flex-shrink-0">
             {post.privacy.charAt(0).toUpperCase() + post.privacy.slice(1)}
           </span>
         )}
@@ -441,22 +445,22 @@ const PostCard = ({ post, onLike, onComment, onShare, formatDate }) => {
 
 // Right Sidebar Component
 const RightSidebar = ({ navigate }) => (
-  <div className="w-80 bg-gray-900 p-6 flex items-start">
-    <div className="bg-gray-800 rounded-lg p-6 w-full">
-      <div className="flex items-center gap-3 mb-4">
-        <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
-          <span className="text-white text-xl">🤖</span>
+  <div className="w-full bg-gray-900 p-4 lg:p-6 flex items-start sticky top-0 h-fit">
+    <div className="bg-gray-800 rounded-lg p-4 lg:p-6 w-full">
+      <div className="flex items-center gap-2 lg:gap-3 mb-3 lg:mb-4">
+        <div className="w-10 h-10 lg:w-12 lg:h-12 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+          <span className="text-white text-lg lg:text-xl">🤖</span>
         </div>
         <div>
-          <h3 className="font-bold text-white">HI, I'm ChatBot</h3>
+          <h3 className="font-bold text-white text-sm lg:text-base">HI, I'm ChatBot</h3>
         </div>
       </div>
-      <p className="text-gray-300 text-sm mb-6">
+      <p className="text-gray-300 text-xs lg:text-sm mb-4 lg:mb-6">
         You can ask me questions based on a particular institution.
       </p>
       <button
         onClick={() => navigate('/chatbot')}
-        className="w-full bg-gray-700 hover:bg-gray-600 text-white py-3 rounded-lg font-medium transition-colors"
+        className="w-full bg-gray-700 hover:bg-gray-600 text-white py-2.5 lg:py-3 rounded-lg font-medium transition-colors text-sm lg:text-base"
       >
         Use ChatBot
       </button>

@@ -951,25 +951,30 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex bg-black">
-      {/* Left Panel - Primary Color */}
-      <div className="w-2/5 bg-primary rounded-r-3xl flex items-center justify-center">
-        <h1 className="text-6xl font-bold text-white">CampusTok</h1>
+    <div className="min-h-screen flex flex-col lg:flex-row bg-black">
+      {/* Left Panel - Primary Color - Hidden on mobile */}
+      <div className="hidden lg:flex lg:w-2/5 bg-primary rounded-r-3xl items-center justify-center">
+        <h1 className="text-4xl xl:text-6xl font-bold text-white px-4">CampusTok</h1>
       </div>
 
       {/* Right Panel - Light Gray */}
-      <div className="flex-1 bg-gray-100 flex items-center justify-center p-12">
+      <div className="flex-1 bg-gray-100 flex items-center justify-center p-4 sm:p-6 lg:p-12 min-h-screen lg:min-h-0">
         <div className="w-full max-w-md">
           {/* Back Button */}
           <button
             onClick={() => navigate('/signup')}
-            className="mb-6 w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center hover:bg-gray-300 transition-colors"
+            className="mb-4 lg:mb-6 w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center hover:bg-gray-300 transition-colors"
             disabled={isLoading || googleAuthLoading}
           >
             <ArrowLeft className="w-5 h-5 text-gray-700" />
           </button>
 
-          <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Login</h2>
+          {/* Mobile Logo */}
+          <div className="lg:hidden mb-6 text-center">
+            <h1 className="text-3xl font-bold text-primary">CampusTok</h1>
+          </div>
+
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 lg:mb-8 text-center">Login</h2>
 
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Login As Dropdown */}
@@ -981,14 +986,14 @@ export default function Login() {
                 type="button"
                 onClick={() => setShowUserTypeDropdown(!showUserTypeDropdown)}
                 disabled={isLoading || googleAuthLoading}
-                className={`w-full px-4 py-3 bg-white rounded-lg border ${errors.userType ? 'border-red-500' : 'border-gray-300'} focus:outline-none focus:ring-2 focus:ring-primary flex items-center justify-between disabled:opacity-50 disabled:cursor-not-allowed`}
+                className={`w-full px-3 sm:px-4 py-2.5 sm:py-3 bg-white rounded-lg border text-sm sm:text-base ${errors.userType ? 'border-red-500' : 'border-gray-300'} focus:outline-none focus:ring-2 focus:ring-primary flex items-center justify-between disabled:opacity-50 disabled:cursor-not-allowed`}
               >
                 <span className={formData.userType ? 'text-gray-900' : 'text-gray-400'}>
                   {formData.userType 
                     ? userTypes.find(t => t.value === formData.userType)?.label 
                     : 'Select a category'}
                 </span>
-                <ChevronDown className="w-5 h-5 text-gray-400" />
+                <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 flex-shrink-0" />
               </button>
               {showUserTypeDropdown && (
                 <>
@@ -996,13 +1001,13 @@ export default function Login() {
                     className="fixed inset-0 z-10"
                     onClick={() => setShowUserTypeDropdown(false)}
                   />
-                  <div className="absolute z-20 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg">
+                  <div className="absolute z-20 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
                     {userTypes.map((type) => (
                       <button
                         key={type.value}
                         type="button"
                         onClick={() => handleUserTypeSelect(type)}
-                        className="w-full text-left px-4 py-3 hover:bg-gray-100 transition-colors first:rounded-t-lg last:rounded-b-lg"
+                        className="w-full text-left px-3 sm:px-4 py-2.5 sm:py-3 hover:bg-gray-100 transition-colors first:rounded-t-lg last:rounded-b-lg text-sm sm:text-base"
                       >
                         {type.label}
                       </button>
@@ -1010,50 +1015,50 @@ export default function Login() {
                   </div>
                 </>
               )}
-              {errors.userType && <p className="mt-1 text-sm text-red-600">{errors.userType}</p>}
+              {errors.userType && <p className="mt-1 text-xs sm:text-sm text-red-600">{errors.userType}</p>}
             </div>
 
             {/* Username Field */}
             <div className="relative">
-              <User className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <User className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
               <input
                 type="text"
                 name="username"
                 value={formData.username}
                 onChange={handleChange}
                 disabled={isLoading || googleAuthLoading}
-                className={`w-full pl-12 pr-4 py-3 bg-white rounded-lg border ${errors.username ? 'border-red-500' : 'border-gray-300'} focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed`}
+                className={`w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-2.5 sm:py-3 bg-white rounded-lg border text-sm sm:text-base ${errors.username ? 'border-red-500' : 'border-gray-300'} focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed`}
                 placeholder="Username or Email"
               />
             </div>
-            {errors.username && <p className="text-sm text-red-600">{errors.username}</p>}
+            {errors.username && <p className="text-xs sm:text-sm text-red-600 mt-1">{errors.username}</p>}
 
             {/* Password Field */}
             <div className="relative">
-              <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <Lock className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
               <input
                 type="password"
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
                 disabled={isLoading || googleAuthLoading}
-                className={`w-full pl-12 pr-4 py-3 bg-white rounded-lg border ${errors.password ? 'border-red-500' : 'border-gray-300'} focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed`}
+                className={`w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-2.5 sm:py-3 bg-white rounded-lg border text-sm sm:text-base ${errors.password ? 'border-red-500' : 'border-gray-300'} focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed`}
                 placeholder="Password"
               />
             </div>
-            {errors.password && <p className="text-sm text-red-600">{errors.password}</p>}
+            {errors.password && <p className="text-xs sm:text-sm text-red-600 mt-1">{errors.password}</p>}
 
             {/* Terms & Condition Checkbox */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-start gap-2">
               <input
                 type="checkbox"
                 id="terms"
                 checked={agreedToTerms}
                 onChange={(e) => setAgreedToTerms(e.target.checked)}
                 disabled={isLoading || googleAuthLoading}
-                className="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary disabled:opacity-50"
+                className="w-4 h-4 sm:w-5 sm:h-5 rounded border-gray-300 text-primary focus:ring-primary disabled:opacity-50 mt-0.5 flex-shrink-0"
               />
-              <label htmlFor="terms" className="text-sm text-gray-700">
+              <label htmlFor="terms" className="text-xs sm:text-sm text-gray-700">
                 Agree with{' '}
                 <button
                   type="button"
@@ -1070,7 +1075,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={isLoading || googleAuthLoading}
-              className="w-full bg-primary hover:bg-primary-800 text-white py-3 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-primary hover:bg-primary-800 text-white py-2.5 sm:py-3 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
             >
               {isLoading ? 'Logging in...' : 'Login'}
             </button>
