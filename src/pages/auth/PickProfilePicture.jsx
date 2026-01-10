@@ -93,6 +93,8 @@
 //   )
 // }
 
+
+
 import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../../store/useAuthStore'
@@ -192,10 +194,24 @@ export default function PickProfilePicture() {
   }
 
   const triggerFileInput = () => {
-    fileInputRef.current?.click()
+    // Prevent multiple clicks
+    if (isUploading) return;
+    
+    // Clear the input value to allow selecting the same file again
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+    
+    // Trigger click on the input
+    fileInputRef.current?.click();
   }
 
   const removeSelectedImage = () => {
+    // Clear the file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+    
     setSelectedImage(null)
     setPreview(null)
     resetState()
@@ -257,35 +273,35 @@ export default function PickProfilePicture() {
           )}
 
           <div className="mb-8">
-            <label className="block">
-              <div 
-                onClick={triggerFileInput}
-                className="w-64 h-64 mx-auto border-2 border-dashed border-gray-400 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors relative"
-              >
-                {preview ? (
-                  <>
-                    <img 
-                      src={preview} 
-                      alt="Preview" 
-                      className="w-full h-full object-cover rounded-lg" 
-                    />
-                    {/* Overlay with change option */}
-                    <div className="absolute inset-0 bg-black bg-opacity-50 rounded-lg opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <div className="text-center text-white">
-                        <Camera className="w-8 h-8 mx-auto mb-1" />
-                        <span className="text-sm">Change Photo</span>
-                      </div>
+            {/* Change this to use onClick on the div instead of relying on label */}
+            <div 
+              onClick={triggerFileInput}
+              className="w-64 h-64 mx-auto border-2 border-dashed border-gray-400 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors relative"
+            >
+              {preview ? (
+                <>
+                  <img 
+                    src={preview} 
+                    alt="Preview" 
+                    className="w-full h-full object-cover rounded-lg" 
+                  />
+                  {/* Overlay with change option */}
+                  <div className="absolute inset-0 bg-black bg-opacity-50 rounded-lg opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <div className="text-center text-white">
+                      <Camera className="w-8 h-8 mx-auto mb-1" />
+                      <span className="text-sm">Change Photo</span>
                     </div>
-                  </>
-                ) : (
-                  <>
-                    <Camera className="w-12 h-12 text-gray-400 mb-2" />
-                    <span className="text-gray-600 font-medium">Upload Photo</span>
-                    <span className="text-gray-400 text-xs mt-1">JPG, PNG, GIF up to 5MB</span>
-                  </>
-                )}
-              </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <Camera className="w-12 h-12 text-gray-400 mb-2" />
+                  <span className="text-gray-600 font-medium">Upload Photo</span>
+                  <span className="text-gray-400 text-xs mt-1">JPG, PNG, GIF up to 5MB</span>
+                </>
+              )}
               
+              {/* Remove the label wrapper and put input separately */}
               <input
                 ref={fileInputRef}
                 type="file"
@@ -294,7 +310,7 @@ export default function PickProfilePicture() {
                 className="hidden"
                 disabled={isUploading}
               />
-            </label>
+            </div>
 
             {/* Selected file info */}
             {selectedImage && (
@@ -343,17 +359,6 @@ export default function PickProfilePicture() {
               Skip for now
             </button>
           </div>
-
-          {/* Debug info - remove in production */}
-          {/* {process.env.NODE_ENV === 'development' && (
-            <div className="mt-6 p-3 bg-gray-50 rounded-lg text-xs">
-              <p className="font-medium mb-1">Debug Info:</p>
-              <p>Selected: {selectedImage ? 'Yes' : 'No'}</p>
-              <p>Uploading: {isUploading ? 'Yes' : 'No'}</p>
-              <p>Success: {success ? 'Yes' : 'No'}</p>
-              {error && <p className="text-red-600">Error: {error}</p>}
-            </div>
-          )} */}
         </div>
       </div>
     </div>
