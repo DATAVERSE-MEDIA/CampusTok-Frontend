@@ -21,7 +21,9 @@ import {
   FileText,
   BookOpen,
   AtSign,
-  Building2
+  Building2,
+  Volume2,
+  Mic
 } from 'lucide-react'
 
 // General account menu items - matching Figma
@@ -59,11 +61,15 @@ export default function Sidebar({ isOpen, setIsOpen }) {
   const [showSchoolDropdown, setShowSchoolDropdown] = useState(false)
   const [showSettingsDropdown, setShowSettingsDropdown] = useState(false)
 
-  // Determine which menu items to show based on user type
+  // Determine which menu items to show based on user type or route
+  const effectiveUserType = userType || 
+    (location.pathname.includes('institution') ? 'institution' :
+     location.pathname.includes('student') ? 'student' : null)
+  
   const menuItems = 
-    userType === 'institution' ? institutionMenuItems :
-    userType === 'general' || !userType ? generalMenuItems :
-    studentMenuItems
+    effectiveUserType === 'institution' ? institutionMenuItems :
+    effectiveUserType === 'student' ? studentMenuItems :
+    generalMenuItems
 
   const handleLogout = () => {
     logout()
@@ -80,35 +86,46 @@ export default function Sidebar({ isOpen, setIsOpen }) {
       {/* Mobile Sidebar */}
       <div className={`
         fixed inset-y-0 left-0 z-40
-        w-64 bg-gray-800 text-white
+        w-64 bg-gray-50 text-gray-900
         transform transition-transform duration-300 ease-in-out
         lg:translate-x-0 lg:static lg:z-auto
         flex flex-col
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
         {/* Close button for mobile */}
-        <div className="lg:hidden flex justify-end p-4 border-b border-gray-700">
+        <div className="lg:hidden flex justify-end p-4 border-b border-gray-300">
           <button
             onClick={() => setIsOpen(false)}
-            className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
+            className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5 text-gray-700" />
           </button>
         </div>
 
-        {/* Logo Section with School Dropdown */}
-        <div className="p-4 lg:p-6 border-b border-gray-700">
+        {/* Logo Section with School Dropdown - Matching Figma */}
+        <div className="p-4 lg:p-6 border-b border-gray-300">
           <button
             onClick={() => setShowSchoolDropdown(!showSchoolDropdown)}
             className="w-full flex items-center gap-2 hover:opacity-80 transition-opacity"
           >
-            <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center relative flex-shrink-0">
-              <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center">
-                <Shield className="w-4 h-4 text-green-600" />
+            <h1 className="text-lg lg:text-xl font-bold text-gray-900 flex-1 text-left">CampusTOK</h1>
+            {/* Small University Logo with Dropdown */}
+            <div className="flex items-center gap-1">
+              <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 border border-gray-300 bg-white">
+                {selectedSchool?.logo || user?.logo ? (
+                  <img 
+                    src={selectedSchool.logo || user.logo} 
+                    alt={selectedSchool?.name || 'University'}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-blue-100 flex items-center justify-center">
+                    <div className="text-xs font-bold text-blue-600">UL</div>
+                  </div>
+                )}
               </div>
+              <ChevronDown className={`w-4 h-4 text-gray-600 transition-transform ${showSchoolDropdown ? 'rotate-180' : ''}`} />
             </div>
-            <h1 className="text-lg lg:text-xl font-bold flex-1 text-left">CampusTOK</h1>
-            <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${showSchoolDropdown ? 'rotate-180' : ''}`} />
           </button>
         
         {/* School Dropdown */}
@@ -118,9 +135,9 @@ export default function Sidebar({ isOpen, setIsOpen }) {
               className="fixed inset-0 z-10"
               onClick={() => setShowSchoolDropdown(false)}
             />
-            <div className="absolute left-0 mt-2 w-full lg:w-64 bg-gray-700 rounded-lg shadow-lg border border-gray-600 z-20">
+            <div className="absolute left-0 mt-2 w-full lg:w-64 bg-white rounded-lg shadow-lg border border-gray-300 z-20">
               <div className="p-2">
-                <div className="px-3 py-2 text-xs font-semibold text-gray-400 uppercase mb-1">
+                <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase mb-1">
                   Select School/Institution
                 </div>
                 {schools.map((school) => (
@@ -137,12 +154,12 @@ export default function Sidebar({ isOpen, setIsOpen }) {
                         navigate('/')
                       }
                     }}
-                    className={`w-full text-left px-4 py-3 rounded-lg hover:bg-gray-600 transition-colors ${
-                      selectedSchool?.id === school.id ? 'bg-gray-600 text-white' : 'text-gray-300'
+                    className={`w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100 transition-colors ${
+                      selectedSchool?.id === school.id ? 'bg-gray-100 text-gray-900' : 'text-gray-900'
                     }`}
                   >
                     <div className="font-medium text-sm lg:text-base">{school.name}</div>
-                    <div className="text-xs text-gray-400">{school.code}</div>
+                    <div className="text-xs text-gray-500">{school.code}</div>
                   </button>
                 ))}
               </div>
@@ -152,12 +169,12 @@ export default function Sidebar({ isOpen, setIsOpen }) {
       </div>
 
         {/* User/Institution Profile Section - Matching Figma */}
-        <div className="p-4 lg:p-6 border-b border-gray-700">
-          {userType === 'institution' ? (
-            // Institution Profile - Matching Figma design
-            <div className="flex items-center gap-3">
-              {/* Institution Crest/Logo */}
-              <div className="w-10 h-10 lg:w-12 lg:h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden">
+        <div className="p-4 lg:p-6 border-b border-gray-300">
+          {effectiveUserType === 'institution' ? (
+            // Institution Profile - Matching Figma design with larger logo
+            <div className="flex items-start gap-3">
+              {/* Larger University Crest/Logo - Matching Figma */}
+              <div className="w-16 h-16 lg:w-20 lg:h-20 rounded-full overflow-hidden flex-shrink-0 border-2 border-gray-200 bg-white flex items-center justify-center">
                 {user?.logo || selectedSchool?.logo ? (
                   <img 
                     src={user.logo || selectedSchool.logo} 
@@ -165,19 +182,28 @@ export default function Sidebar({ isOpen, setIsOpen }) {
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <Building2 className="w-6 h-6 lg:w-8 lg:h-8 text-blue-600" />
+                  <div className="w-full h-full bg-blue-50 flex items-center justify-center">
+                    <div className="text-center p-1">
+                      <div className="text-xs lg:text-sm font-bold text-blue-700">UNIVERSITY</div>
+                      <div className="text-xs lg:text-sm font-bold text-blue-700">OF LAGOS</div>
+                    </div>
+                  </div>
                 )}
               </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="font-bold text-white text-sm lg:text-base truncate">
+              <div className="flex-1 min-w-0 pt-1">
+                <h3 className="font-bold text-gray-900 text-base lg:text-lg truncate mb-1">
                   {user?.name || selectedSchool?.name || 'University of Lagos'}
                 </h3>
-                <p className="text-xs lg:text-sm text-gray-300 truncate">
-                  {user?.address || selectedSchool?.address || 'University Road Lagos Mainland A...'}
+                {/* Address in two lines - Matching Figma */}
+                <p className="text-xs lg:text-sm text-gray-600 leading-tight">
+                  University Road
+                </p>
+                <p className="text-xs lg:text-sm text-gray-600 leading-tight truncate">
+                  Lagos Mainland A...
                 </p>
               </div>
             </div>
-          ) : userType === 'general' || !userType ? (
+          ) : effectiveUserType === 'general' || !effectiveUserType ? (
             // General Account Profile - Matching Figma
             <div className="flex items-center gap-3">
               {/* Profile Picture */}
@@ -193,15 +219,15 @@ export default function Sidebar({ isOpen, setIsOpen }) {
                 )}
               </div>
               <div className="flex-1 min-w-0">
-                <h3 className="font-bold text-white text-sm lg:text-base truncate">{user?.name || 'Felix Gabriel'}</h3>
-                <p className="text-xs lg:text-sm text-gray-300 truncate">General Account</p>
+                <h3 className="font-bold text-gray-900 text-sm lg:text-base truncate">{user?.name || 'Felix Gabriel'}</h3>
+                <p className="text-xs lg:text-sm text-gray-600 truncate">General Account</p>
               </div>
             </div>
           ) : (
-            // Student Profile
-            <div className="flex items-center gap-3">
-              {/* Profile Picture */}
-              <div className="w-10 h-10 lg:w-12 lg:h-12 bg-red-600 rounded-full flex items-center justify-center text-white font-bold overflow-hidden flex-shrink-0">
+            // Student Profile - Matching Figma design exactly
+            <div className="flex items-start gap-3">
+              {/* Profile Picture - Larger circular, matching Figma */}
+              <div className="w-14 h-14 lg:w-16 lg:h-16 rounded-full overflow-hidden bg-gray-200 flex-shrink-0 flex items-center justify-center">
                 {user?.profilePicture ? (
                   <img 
                     src={user.profilePicture} 
@@ -209,14 +235,20 @@ export default function Sidebar({ isOpen, setIsOpen }) {
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  user?.name?.charAt(0) || 'F'
+                  <div className="w-full h-full bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center text-white font-bold text-xl lg:text-2xl">
+                    {user?.name?.charAt(0) || 'F'}
+                  </div>
                 )}
               </div>
               <div className="flex-1 min-w-0">
-                <h3 className="font-bold text-white text-sm lg:text-base truncate">{user?.name || 'Felix Gabriel'}</h3>
-                <p className="text-xs lg:text-sm text-gray-300 truncate">
-                  {user?.school ? `${user.school}` : selectedSchool ? `${selectedSchool.name}` : 'University of Lagos'}
-                  {user?.department && `, ${user.department}`}
+                {/* Name - Large, bold, dark grey - Matching Figma */}
+                <h3 className="font-bold text-gray-900 text-lg lg:text-xl mb-1 truncate">{user?.name || 'Felix Gabriel'}</h3>
+                {/* Two separate lines - Always show both - Matching Figma exactly */}
+                <p className="text-xs lg:text-sm text-gray-600 leading-tight truncate">
+                  {user?.school || selectedSchool?.name || 'University of Lagos'}
+                </p>
+                <p className="text-xs lg:text-sm text-gray-600 leading-tight truncate mt-0.5">
+                  {user?.department || user?.major || 'Civil Engineering'}
                 </p>
               </div>
             </div>
@@ -235,8 +267,8 @@ export default function Sidebar({ isOpen, setIsOpen }) {
                     onClick={() => handleNavigate(item.path)}
                     className={`w-full flex items-center gap-3 px-3 lg:px-4 py-2.5 lg:py-3 rounded-lg transition-colors text-sm lg:text-base ${
                       isActive
-                        ? 'bg-gray-700 text-white font-medium'
-                        : 'text-gray-300 hover:bg-gray-700'
+                        ? 'bg-gray-200 text-gray-900 font-medium'
+                        : 'text-gray-900 hover:bg-gray-100'
                     }`}
                   >
                     <Icon className="w-5 h-5 flex-shrink-0" />
@@ -248,33 +280,33 @@ export default function Sidebar({ isOpen, setIsOpen }) {
           </ul>
         </nav>
 
-        {/* Post Button - Matching Figma */}
-        <div className="p-3 lg:p-4 border-t border-gray-700">
+        {/* Post Button - Matching Figma (dark purple border) */}
+        <div className="p-3 lg:p-4 border-t border-gray-300">
           <button
             onClick={() => handleNavigate('/')}
-            className="w-full border-2 border-white text-white py-2.5 lg:py-3 rounded-full font-medium hover:bg-gray-700 transition-colors text-sm lg:text-base"
+            className="w-full border-2 border-gray-900 text-gray-900 bg-gray-50 py-2.5 lg:py-3 rounded-lg font-medium hover:bg-gray-100 transition-colors text-sm lg:text-base"
           >
             Post
           </button>
         </div>
 
         {/* Create Account As Section - Only for general accounts */}
-        {(userType === 'general' || !userType) && (
-          <div className="p-3 lg:p-4 border-t border-gray-700">
-            <p className="text-xs lg:text-sm text-gray-400 uppercase mb-2 lg:mb-3 font-semibold px-2">
+        {(effectiveUserType === 'general' || !effectiveUserType) && (
+          <div className="p-3 lg:p-4 border-t border-gray-300">
+            <p className="text-xs lg:text-sm text-gray-500 uppercase mb-2 lg:mb-3 font-semibold px-2">
               Create Account As
             </p>
             <div className="space-y-1">
               <button
                 onClick={() => navigate('/signup?type=student')}
-                className="w-full flex items-center gap-2 lg:gap-3 px-3 lg:px-4 py-2.5 lg:py-3 rounded-lg text-gray-300 hover:bg-gray-700 transition-colors text-sm lg:text-base"
+                className="w-full flex items-center gap-2 lg:gap-3 px-3 lg:px-4 py-2.5 lg:py-3 rounded-lg text-gray-900 hover:bg-gray-100 transition-colors text-sm lg:text-base"
               >
                 <GraduationCap className="w-5 h-5 flex-shrink-0" />
                 <span className="truncate">A Student</span>
               </button>
               <button
                 onClick={() => navigate('/create-account')}
-                className="w-full flex items-center gap-2 lg:gap-3 px-3 lg:px-4 py-2.5 lg:py-3 rounded-lg text-gray-300 hover:bg-gray-700 transition-colors text-sm lg:text-base"
+                className="w-full flex items-center gap-2 lg:gap-3 px-3 lg:px-4 py-2.5 lg:py-3 rounded-lg text-gray-900 hover:bg-gray-100 transition-colors text-sm lg:text-base"
               >
                 <Building2 className="w-5 h-5 flex-shrink-0" />
                 <span className="truncate">An Institution</span>
@@ -284,26 +316,26 @@ export default function Sidebar({ isOpen, setIsOpen }) {
         )}
 
         {/* Settings and Logout - Matching Figma (Hidden for general accounts) */}
-        {userType !== 'general' && userType && (
-          <div className="p-3 lg:p-4 border-t border-gray-700 space-y-1">
-            {userType === 'institution' ? (
+        {effectiveUserType !== 'general' && effectiveUserType && (
+          <div className="p-3 lg:p-4 border-t border-gray-300 space-y-1">
+            {effectiveUserType === 'institution' ? (
               <>
                 <button
                   onClick={() => setShowSettingsDropdown(!showSettingsDropdown)}
-                  className="w-full flex items-center gap-2 lg:gap-3 px-3 lg:px-4 py-2.5 lg:py-3 rounded-lg text-gray-300 hover:bg-gray-700 transition-colors text-sm lg:text-base"
+                  className="w-full flex items-center gap-2 lg:gap-3 px-3 lg:px-4 py-2.5 lg:py-3 rounded-lg text-gray-900 hover:bg-gray-100 transition-colors text-sm lg:text-base"
                 >
                   <Settings className="w-5 h-5 flex-shrink-0" />
                   <span className="flex-1 text-left truncate">Settings</span>
-                  <ChevronDown className={`w-4 h-4 transition-transform ${showSettingsDropdown ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`w-4 h-4 text-gray-600 transition-transform ${showSettingsDropdown ? 'rotate-180' : ''}`} />
                 </button>
                 {showSettingsDropdown && (
-                  <div className="ml-4 pl-4 border-l border-gray-600 space-y-1">
+                  <div className="ml-4 pl-4 border-l border-gray-300 space-y-1">
                     <button
                       onClick={() => {
                         handleNavigate('/settings')
                         setShowSettingsDropdown(false)
                       }}
-                      className="w-full flex items-center gap-2 lg:gap-3 px-3 lg:px-4 py-2 rounded-lg text-gray-400 hover:bg-gray-700 hover:text-gray-300 transition-colors text-sm"
+                      className="w-full flex items-center gap-2 lg:gap-3 px-3 lg:px-4 py-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors text-sm"
                     >
                       <AtSign className="w-4 h-4 flex-shrink-0" />
                       <span className="truncate">Account Settings</span>
@@ -314,7 +346,7 @@ export default function Sidebar({ isOpen, setIsOpen }) {
             ) : (
               <button
                 onClick={() => handleNavigate('/settings')}
-                className="w-full flex items-center gap-2 lg:gap-3 px-3 lg:px-4 py-2.5 lg:py-3 rounded-lg text-gray-300 hover:bg-gray-700 transition-colors text-sm lg:text-base"
+                className="w-full flex items-center gap-2 lg:gap-3 px-3 lg:px-4 py-2.5 lg:py-3 rounded-lg text-gray-900 hover:bg-gray-100 transition-colors text-sm lg:text-base"
               >
                 <Settings className="w-5 h-5 flex-shrink-0" />
                 <span className="truncate">Settings</span>
@@ -322,7 +354,7 @@ export default function Sidebar({ isOpen, setIsOpen }) {
             )}
             <button
               onClick={handleLogout}
-              className="w-full flex items-center gap-2 lg:gap-3 px-3 lg:px-4 py-2.5 lg:py-3 rounded-lg text-gray-300 hover:bg-gray-700 transition-colors text-sm lg:text-base"
+              className="w-full flex items-center gap-2 lg:gap-3 px-3 lg:px-4 py-2.5 lg:py-3 rounded-lg text-red-600 hover:bg-red-50 transition-colors text-sm lg:text-base"
             >
               <LogOut className="w-5 h-5 flex-shrink-0" />
               <span className="truncate">Logout</span>

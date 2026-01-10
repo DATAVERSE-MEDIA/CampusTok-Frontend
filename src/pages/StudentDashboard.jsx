@@ -1,150 +1,165 @@
-import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useAuthStore } from '../store/useAuthStore'
-import { useAppStore } from '../store/useAppStore'
-import { Heart, MessageCircle, Share2, BarChart3, MoreVertical } from 'lucide-react'
-import { apiClient } from '../api'
+import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAppStore } from "../store/useAppStore";
+import {
+  Heart,
+  MessageCircle,
+  Share2,
+  BarChart3,
+  MoreVertical,
+} from "lucide-react";
+import { apiClient } from "../api";
 
 export default function StudentDashboard() {
-  const navigate = useNavigate()
-  const { user } = useAuthStore()
-  const { selectedSchool } = useAppStore()
-  const [posts, setPosts] = useState([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState(null)
-  const [page, setPage] = useState(1)
-  const [hasMore, setHasMore] = useState(true)
+  const navigate = useNavigate();
+  const { selectedSchool } = useAppStore();
+  const [posts, setPosts] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
 
   // Fetch posts for student dashboard
-  useEffect(() => {
-    fetchPosts()
-  }, [selectedSchool, page])
+  const fetchPosts = useCallback(async () => {
+    setIsLoading(true);
 
-  const fetchPosts = async () => {
-    setIsLoading(true)
-    setError(null)
-    
     try {
       const params = {
         page,
         limit: 10,
-        sortBy: 'created_at',
-        sortOrder: 'desc'
-      }
+        sortBy: "created_at",
+        sortOrder: "desc",
+      };
 
       // Filter by school if selected, or get general feed
       if (selectedSchool?.id) {
-        params.filters = { school_id: selectedSchool.id }
+        params.filters = { school_id: selectedSchool.id };
       }
 
-      const response = await apiClient.get('/posts', { params })
-      const newPosts = response.data.data || response.data || []
-      
+      const response = await apiClient.get("/posts", { params });
+      const newPosts = response.data.data || response.data || [];
+
       // For testing: use dummy data if API fails
       if (newPosts.length === 0 && page === 1) {
-        setPosts([{
+        setPosts([
+          {
+            id: 1,
+            content:
+              "At the University of Lagos, a new electric bus was introduced to shuttle students around campus. Silent and eco-friendly, it quickly became a symbol of innovation, inspiring students wh...",
+            author: {
+              full_name: "University of Lagos",
+              profile_picture: null,
+              role: "institution",
+            },
+            media_url: null,
+            likes_count: 11700,
+            comments_count: 500,
+            shares_count: 1000,
+            views_count: 100000,
+            created_at: new Date().toISOString(),
+          },
+        ]);
+        setIsLoading(false);
+        return;
+      }
+
+      if (page === 1) {
+        setPosts(newPosts);
+      } else {
+        setPosts((prev) => [...prev, ...newPosts]);
+      }
+
+      setHasMore(newPosts.length >= 10);
+    } catch (err) {
+      console.error("Error fetching posts:", err);
+      // Use dummy data for testing
+      setPosts([
+        {
           id: 1,
-          content: "At the University of Lagos, a new electric bus was introduced to shuttle students around campus. Silent and eco-friendly, it quickly became a symbol of innovation, inspiring students wh...",
+          content:
+            "At the University of Lagos, a new electric bus was introduced to shuttle students around campus. Silent and eco-friendly, it quickly became a symbol of innovation, inspiring students wh...",
           author: {
             full_name: "University of Lagos",
             profile_picture: null,
-            role: "institution"
+            role: "institution",
           },
           media_url: null,
           likes_count: 11700,
           comments_count: 500,
           shares_count: 1000,
           views_count: 100000,
-          created_at: new Date().toISOString()
-        }])
-        setIsLoading(false)
-        return
-      }
-      
-      if (page === 1) {
-        setPosts(newPosts)
-      } else {
-        setPosts(prev => [...prev, ...newPosts])
-      }
-      
-      setHasMore(newPosts.length >= 10)
-    } catch (err) {
-      console.error('Error fetching posts:', err)
-      // Use dummy data for testing
-      setPosts([{
-        id: 1,
-        content: "At the University of Lagos, a new electric bus was introduced to shuttle students around campus. Silent and eco-friendly, it quickly became a symbol of innovation, inspiring students wh...",
-        author: {
-          full_name: "University of Lagos",
-          profile_picture: null,
-          role: "institution"
+          created_at: new Date().toISOString(),
         },
-        media_url: null,
-        likes_count: 11700,
-        comments_count: 500,
-        shares_count: 1000,
-        views_count: 100000,
-        created_at: new Date().toISOString()
-      }])
-      setError(null) // Don't show error, use dummy data
+      ]);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  }, [selectedSchool, page]);
+
+  useEffect(() => {
+    fetchPosts();
+  }, [fetchPosts]);
 
   const loadMorePosts = () => {
     if (!isLoading && hasMore) {
-      setPage(prev => prev + 1)
+      setPage((prev) => prev + 1);
     }
-  }
+  };
 
   const formatCount = (count) => {
     if (count >= 1000000) {
-      return (count / 1000000).toFixed(1) + 'M'
+      return (count / 1000000).toFixed(1) + "M";
     } else if (count >= 1000) {
-      return (count / 1000).toFixed(1) + 'k'
+      return (count / 1000).toFixed(1) + "k";
     }
-    return count.toString()
-  }
+    return count.toString();
+  };
 
   const handleLike = async (postId) => {
     try {
-      await apiClient.post(`/posts/${postId}/like`)
-      setPosts(prev => prev.map(post => 
-        post.id === postId 
-          ? { ...post, likes_count: (post.likes_count || 0) + 1, liked: true }
-          : post
-      ))
+      await apiClient.post(`/posts/${postId}/like`);
+      setPosts((prev) =>
+        prev.map((post) =>
+          post.id === postId
+            ? { ...post, likes_count: (post.likes_count || 0) + 1, liked: true }
+            : post
+        )
+      );
     } catch (error) {
       // Update optimistically even if API fails
-      setPosts(prev => prev.map(post => 
-        post.id === postId 
-          ? { ...post, likes_count: (post.likes_count || 0) + 1, liked: true }
-          : post
-      ))
+      setPosts((prev) =>
+        prev.map((post) =>
+          post.id === postId
+            ? { ...post, likes_count: (post.likes_count || 0) + 1, liked: true }
+            : post
+        )
+      );
     }
-  }
+  };
 
   const handleComment = (postId) => {
-    navigate(`/posts/${postId}`)
-  }
+    navigate(`/posts/${postId}`);
+  };
 
   const handleShare = async (postId) => {
     try {
-      await apiClient.post(`/posts/${postId}/share`)
-      setPosts(prev => prev.map(post => 
-        post.id === postId 
-          ? { ...post, shares_count: (post.shares_count || 0) + 1 }
-          : post
-      ))
+      await apiClient.post(`/posts/${postId}/share`);
+      setPosts((prev) =>
+        prev.map((post) =>
+          post.id === postId
+            ? { ...post, shares_count: (post.shares_count || 0) + 1 }
+            : post
+        )
+      );
     } catch (error) {
-      setPosts(prev => prev.map(post => 
-        post.id === postId 
-          ? { ...post, shares_count: (post.shares_count || 0) + 1 }
-          : post
-      ))
+      setPosts((prev) =>
+        prev.map((post) =>
+          post.id === postId
+            ? { ...post, shares_count: (post.shares_count || 0) + 1 }
+            : post
+        )
+      );
     }
-  }
+  };
 
   // Loading skeleton
   if (isLoading && posts.length === 0) {
@@ -153,7 +168,10 @@ export default function StudentDashboard() {
         <div className="flex-1 overflow-y-auto w-full lg:w-auto">
           <div className="max-w-3xl mx-auto p-3 sm:p-4 lg:p-6 pb-20 lg:pb-6">
             {[...Array(2)].map((_, i) => (
-              <div key={i} className="bg-white rounded-lg shadow-sm border border-gray-200 mb-4 lg:mb-6 animate-pulse">
+              <div
+                key={i}
+                className="bg-white rounded-lg shadow-sm border border-gray-200 mb-4 lg:mb-6 animate-pulse"
+              >
                 <div className="p-3 lg:p-4">
                   <div className="flex items-center gap-2 lg:gap-3">
                     <div className="w-10 h-10 lg:w-12 lg:h-12 bg-gray-300 rounded-full flex-shrink-0"></div>
@@ -176,7 +194,7 @@ export default function StudentDashboard() {
           <RightSidebar navigate={navigate} />
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -186,22 +204,26 @@ export default function StudentDashboard() {
         <div className="max-w-3xl mx-auto p-3 sm:p-4 lg:p-6 pb-20 lg:pb-6">
           {posts.length === 0 && !isLoading ? (
             <div className="text-center py-12">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">No posts yet</h3>
-              <p className="text-gray-600">Follow schools or create a post to get started</p>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                No posts yet
+              </h3>
+              <p className="text-gray-600">
+                Follow schools or create a post to get started
+              </p>
             </div>
           ) : (
             <>
               {posts.map((post) => (
-                <PostCard 
-                  key={post.id} 
-                  post={post} 
+                <PostCard
+                  key={post.id}
+                  post={post}
                   onLike={handleLike}
                   onComment={handleComment}
                   onShare={handleShare}
                   formatCount={formatCount}
                 />
               ))}
-              
+
               {hasMore && (
                 <div className="text-center mt-6">
                   <button
@@ -209,7 +231,7 @@ export default function StudentDashboard() {
                     disabled={isLoading}
                     className="px-6 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary-800 transition-colors disabled:opacity-50"
                   >
-                    {isLoading ? 'Loading...' : 'Load More Posts'}
+                    {isLoading ? "Loading..." : "Load More Posts"}
                   </button>
                 </div>
               )}
@@ -223,22 +245,22 @@ export default function StudentDashboard() {
         <RightSidebar navigate={navigate} />
       </div>
     </div>
-  )
+  );
 }
 
 // Post Card Component matching Figma design
 const PostCard = ({ post, onLike, onComment, onShare, formatCount }) => {
-  const [liked, setLiked] = useState(post.liked || false)
-  const [likesCount, setLikesCount] = useState(post.likes_count || 0)
+  const [liked, setLiked] = useState(post.liked || false);
+  const [likesCount, setLikesCount] = useState(post.likes_count || 0);
 
   const handleLike = () => {
-    const newLiked = !liked
-    setLiked(newLiked)
-    setLikesCount(prev => newLiked ? prev + 1 : prev - 1)
+    const newLiked = !liked;
+    setLiked(newLiked);
+    setLikesCount((prev) => (newLiked ? prev + 1 : prev - 1));
     if (newLiked) {
-      onLike(post.id)
+      onLike(post.id);
     }
-  }
+  };
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-4 lg:mb-6">
@@ -248,8 +270,8 @@ const PostCard = ({ post, onLike, onComment, onShare, formatCount }) => {
           {/* Institution/Author Avatar */}
           <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-full overflow-hidden bg-gray-200 flex-shrink-0 flex items-center justify-center">
             {post.author?.profile_picture ? (
-              <img 
-                src={post.author.profile_picture} 
+              <img
+                src={post.author.profile_picture}
                 alt={post.author.full_name}
                 className="w-full h-full object-cover"
               />
@@ -257,7 +279,7 @@ const PostCard = ({ post, onLike, onComment, onShare, formatCount }) => {
               <div className="w-full h-full bg-green-500 flex items-center justify-center">
                 <div className="w-10 h-10 lg:w-12 lg:h-12 bg-white rounded-full flex items-center justify-center">
                   <span className="text-green-600 font-bold text-sm lg:text-base">
-                    {post.author?.full_name?.charAt(0) || 'U'}
+                    {post.author?.full_name?.charAt(0) || "U"}
                   </span>
                 </div>
               </div>
@@ -265,10 +287,12 @@ const PostCard = ({ post, onLike, onComment, onShare, formatCount }) => {
           </div>
           <div className="flex-1 min-w-0">
             <h3 className="font-bold text-gray-900 text-sm lg:text-base truncate">
-              {post.author?.full_name || 'University of Lagos'}
+              {post.author?.full_name || "University of Lagos"}
             </h3>
             <p className="text-xs lg:text-sm text-gray-600 truncate">
-              {post.author?.address || post.author?.location || 'University Road Lagos Mainland Akoka, Yaba, Lagos'}
+              {post.author?.address ||
+                post.author?.location ||
+                "University Road Lagos Mainland Akoka, Yaba, Lagos"}
             </p>
           </div>
         </div>
@@ -288,8 +312,8 @@ const PostCard = ({ post, onLike, onComment, onShare, formatCount }) => {
       {post.media_url && (
         <div className="w-full">
           <div className="w-full aspect-square max-h-[600px] overflow-hidden bg-amber-50">
-            <img 
-              src={post.media_url} 
+            <img
+              src={post.media_url}
               alt="Post content"
               className="w-full h-full object-cover"
               loading="lazy"
@@ -305,42 +329,54 @@ const PostCard = ({ post, onLike, onComment, onShare, formatCount }) => {
             <div className="w-40 h-40 mx-auto mb-4 bg-red-600 rounded-full flex items-center justify-center shadow-lg">
               <span className="text-7xl">👩‍🎓</span>
             </div>
-            <p className="text-gray-600 text-sm">Academic Regalia - University of Lagos</p>
+            <p className="text-gray-600 text-sm">
+              Academic Regalia - University of Lagos
+            </p>
           </div>
         </div>
       )}
 
       {/* Engagement Metrics - Matching Figma */}
       <div className="px-3 lg:px-4 py-3 lg:py-4 border-t border-gray-200 flex items-center gap-4 lg:gap-6">
-        <button 
+        <button
           onClick={handleLike}
           className="flex items-center gap-2 text-gray-600 hover:text-red-600 transition-colors"
         >
-          <Heart className={`w-5 h-5 ${liked ? 'fill-red-600 text-red-600' : ''}`} />
-          <span className="font-medium text-sm lg:text-base">{formatCount(likesCount)}</span>
+          <Heart
+            className={`w-5 h-5 ${liked ? "fill-red-600 text-red-600" : ""}`}
+          />
+          <span className="font-medium text-sm lg:text-base">
+            {formatCount(likesCount)}
+          </span>
         </button>
-        <button 
+        <button
           onClick={() => onComment(post.id)}
           className="flex items-center gap-2 text-gray-600 hover:text-blue-600 transition-colors"
         >
           <MessageCircle className="w-5 h-5" />
-          <span className="font-medium text-sm lg:text-base">{formatCount(post.comments_count || 0)}</span>
+          <span className="font-medium text-sm lg:text-base">
+            {formatCount(post.comments_count || 0)}
+          </span>
         </button>
-        <button 
+        <button
           onClick={() => onShare(post.id)}
           className="flex items-center gap-2 text-gray-600 hover:text-green-600 transition-colors"
         >
           <Share2 className="w-5 h-5" />
-          <span className="font-medium text-sm lg:text-base">{formatCount(post.shares_count || 0)}</span>
+          <span className="font-medium text-sm lg:text-base">
+            {formatCount(post.shares_count || 0)}
+          </span>
         </button>
         <div className="flex items-center gap-2 text-gray-600">
           <BarChart3 className="w-5 h-5" />
-          <span className="font-medium text-sm lg:text-base">{formatCount(post.views_count || 0)}</span>
+          <span className="font-medium text-sm lg:text-base">
+            {formatCount(post.views_count || 0)}
+          </span>
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
 // Right Sidebar - ChatBot Component matching Figma
 const RightSidebar = ({ navigate }) => (
@@ -351,18 +387,20 @@ const RightSidebar = ({ navigate }) => (
           <span className="text-white text-lg lg:text-xl">🤖</span>
         </div>
         <div>
-          <h3 className="font-bold text-white text-sm lg:text-base">HI, I'm ChatBot</h3>
+          <h3 className="font-bold text-white text-sm lg:text-base">
+            HI, I&apos;m ChatBot
+          </h3>
         </div>
       </div>
       <p className="text-gray-300 text-xs lg:text-sm mb-4 lg:mb-6 leading-relaxed">
         You can ask me questions based on a particular institution.
       </p>
       <button
-        onClick={() => navigate('/chatbot')}
+        onClick={() => navigate("/chatbot")}
         className="w-full bg-gray-700 hover:bg-gray-600 text-white py-2.5 lg:py-3 rounded-lg font-medium transition-colors text-sm lg:text-base"
       >
         Use ChatBot
       </button>
     </div>
   </div>
-)
+);
