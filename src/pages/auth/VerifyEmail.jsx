@@ -85,13 +85,15 @@ export default function VerifyEmail() {
         // Show success message briefly
         setSuccessMessage('Email verified successfully! Redirecting to login...')
         setError('')
+
+        verifyEmailStore()
         
         // Clear code
         setCode(['', '', '', ''])
         
         // Navigate to login after a short delay
         setTimeout(() => {
-          navigate('/login', { 
+          navigate('/pick-profile-picture', { 
             replace: true,
             state: { 
               message: 'Email verified successfully! Please login to continue.',
