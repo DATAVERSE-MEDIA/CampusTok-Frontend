@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppStore } from "../store/useAppStore";
+import { useAuthStore } from "../store/useAuthStore";
 import {
   Heart,
   MessageCircle,
@@ -13,10 +14,17 @@ import { apiClient } from "../api";
 export default function StudentDashboard() {
   const navigate = useNavigate();
   const { selectedSchool } = useAppStore();
+  const { user, userType } = useAuthStore();
   const [posts, setPosts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+
+  // Debug: Log user and userType to verify they're set correctly
+  useEffect(() => {
+    console.log("StudentDashboard - User:", user);
+    console.log("StudentDashboard - UserType:", userType);
+  }, [user, userType]);
 
   // Fetch posts for student dashboard
   const fetchPosts = useCallback(async () => {

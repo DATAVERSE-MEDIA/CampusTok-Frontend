@@ -997,9 +997,29 @@ export default function Login() {
       {
         onSuccess: (data: any) => {
           console.log("Login successful:", data);
-          // Use userType from form or API response
+          // Ensure userType is set correctly - prefer formData.userType if not in response
           const userType =
-            data.user?.userType || data.user?.role || formData.userType;
+            data.user?.userType ||
+            data.user?.role ||
+            formData.userType ||
+            "general";
+
+          // Update auth store with correct userType if not already set
+          if (
+            data.user &&
+            !data.user.userType &&
+            !data.user.role &&
+            formData.userType
+          ) {
+            // The useLogin hook's onSuccess already sets this, but ensure userType is correct
+            const updatedUser = {
+              ...data.user,
+              userType: formData.userType,
+              role: formData.userType,
+            };
+            authStoreLogin(updatedUser);
+          }
+
           redirectBasedOnUserType(userType);
         },
         onError: (error: any) => {
@@ -1022,9 +1042,15 @@ export default function Login() {
             setErrors({});
             const dummyUser = {
               userType: formData.userType,
+              role: formData.userType,
               name: formData.username.split("@")[0] || "User",
               email: formData.username,
               isAuthenticated: true,
+              // Add default data for student users
+              school:
+                formData.userType === "student" ? "University of Lagos" : null,
+              department:
+                formData.userType === "student" ? "Civil Engineering" : null,
             };
             authStoreLogin(dummyUser);
             redirectBasedOnUserType(formData.userType);

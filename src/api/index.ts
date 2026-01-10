@@ -61,7 +61,10 @@ export const authApi = {
               email: credentials.email,
               name: credentials.email.split('@')[0],
               userType: credentials.userType || 'general',
-              role: credentials.userType || 'general'
+              role: credentials.userType || 'general',
+              // Add default student/institution data for testing
+              school: credentials.userType === 'student' ? 'University of Lagos' : null,
+              department: credentials.userType === 'student' ? 'Civil Engineering' : null
             },
             token: 'dummy-token-' + Date.now()
           }

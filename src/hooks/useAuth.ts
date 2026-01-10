@@ -19,11 +19,13 @@ export const useLogin = () => {
   return useMutation({
     mutationFn: (credentials: { email: string; password: string; userType?: string }) =>
       authApi.login(credentials).then(res => res.data),
-    onSuccess: (data) => {
+    onSuccess: (data, variables) => {
       // Update Zustand store with user data including userType
+      // Preserve userType from credentials if not in response
       const userData = {
         ...data.user,
-        userType: data.user?.userType || data.user?.role || 'general',
+        userType: data.user?.userType || data.user?.role || variables.userType || 'general',
+        role: data.user?.role || data.user?.userType || variables.userType || 'general',
         isAuthenticated: true
       }
       loginStore(userData)
