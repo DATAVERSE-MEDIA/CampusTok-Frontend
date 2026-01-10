@@ -1,23 +1,30 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuthStore } from '../../store/useAuthStore'
-import {useVerifyEmail , useResendVerification} from '../../hooks/useAuth'
+import { useVerifyEmail, useResendVerification } from '../../hooks/useAuth'
+import { ArrowLeft, Mail } from 'lucide-react'
 
 export default function VerifyEmail() {
   const navigate = useNavigate()
-  const { email,  } = useAuthStore()
+  const [searchParams] = useSearchParams()
+  const { email, verifyEmail: verifyEmailStore } = useAuthStore()
   const [code, setCode] = useState(['', '', '', ''])
   const [error, setError] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
   
-  const { mutate: verifyEmail, isPending:isVerifying, error: verifyError } = useVerifyEmail() 
+  // Get email from URL params if not in store (for email verification links)
+  const emailFromUrl = searchParams.get('email')
+  const currentEmail = email || emailFromUrl || ''
+  
+  const { mutate: verifyEmail, isPending: isVerifying, error: verifyError } = useVerifyEmail() 
   const { mutate: resendVerification, isPending: isResending } = useResendVerification()
 
   useEffect(() => {
-    if (!email) {
-    //  navigate('/signup')
+    if (!currentEmail) {
+      // If no email found, redirect to signup
+      navigate('/signup')
     }
-  }, [email, navigate])
+  }, [currentEmail, navigate])
 
   const handleCodeChange = (index, value) => {
     if (value.length > 1) return
@@ -69,49 +76,78 @@ export default function VerifyEmail() {
       return
     }
 
-    // Call API
-    verifyEmail(
-      { token: verificationCode },
-      {
-        onSuccess: (response) => {
-          // Update auth store with verification status and token
-          setVerified(true)
-          if (response.data?.token) {
-            setToken(response.data.token)
-          }
-          
-          // Navigate to next page
-          navigate('/pick-profile-picture')
-        },
-        onError: (error) => {
-          setError(
-            error.response?.data?.message || 
-            'Invalid verification code. Please try again.'
-          )
-        }
+    // Call API to verify email - pass token as string
+    verifyEmail(verificationCode, {
+      onSuccess: (response) => {
+        console.log('Email verification successful:', response)
+        
+        // Note: verifyEmailStore() is already called in the hook's onSuccess
+        // Show success message briefly
+        setSuccessMessage('Email verified successfully! Redirecting to login...')
+        setError('')
+        
+        // Clear code
+        setCode(['', '', '', ''])
+        
+        // Navigate to login after a short delay
+        setTimeout(() => {
+          navigate('/login', { 
+            replace: true,
+            state: { 
+              message: 'Email verified successfully! Please login to continue.',
+              email: currentEmail,
+              verified: true
+            }
+          })
+        }, 1500)
+      },
+      onError: (error) => {
+        console.error('Email verification failed:', error)
+        setError(
+          error?.response?.data?.message || 
+          error?.message ||
+          'Invalid verification code. Please try again or request a new code.'
+        )
+        setSuccessMessage('')
+        // Clear code on error for easier retry
+        setCode(['', '', '', ''])
+        // Focus on first input
+        const firstInput = document.getElementById('code-0')
+        if (firstInput) firstInput.focus()
       }
-    )
+    })
   }
 
   const handleResend = () => {
-    if (!email) {
+    if (!currentEmail) {
       setError('No email found. Please return to signup.')
+      navigate('/signup')
       return
     }
 
     resendVerification(
-      { email },
+      { email: currentEmail },
       {
-        onSuccess: () => {
+        onSuccess: (data) => {
+          console.log('Verification code resent:', data)
           setSuccessMessage('New verification code sent to your email!')
           setError('')
+          
+          // Clear code for new entry
+          setCode(['', '', '', ''])
+          
+          // Focus on first input
+          const firstInput = document.getElementById('code-0')
+          if (firstInput) firstInput.focus()
           
           // Clear success message after 5 seconds
           setTimeout(() => setSuccessMessage(''), 5000)
         },
         onError: (error) => {
+          console.error('Resend verification failed:', error)
           setError(
-            error.response?.data?.message || 
+            error?.response?.data?.message || 
+            error?.message ||
             'Failed to resend verification code. Please try again.'
           )
           setSuccessMessage('')
@@ -139,70 +175,129 @@ export default function VerifyEmail() {
   //   alert('Verification code resent to your email!')
   // }
 
+  // If no email, don't render (will redirect)
+  if (!currentEmail) {
+    return null
+  }
+
   return (
-    <div className="min-h-screen flex bg-black">
-      {/* Left Panel - Primary Color */}
-      <div className="w-1/3 bg-primary rounded-r-3xl flex items-center justify-center">
-        <h1 className="text-6xl font-bold text-white">CampusTOK</h1>
+    <div className="min-h-screen flex flex-col lg:flex-row bg-gray-50">
+      {/* Left Panel - Primary Color - Hidden on mobile */}
+      <div className="hidden lg:flex lg:w-2/5 bg-gradient-to-br from-primary-900 via-primary-800 to-primary-700 rounded-r-3xl items-center justify-center relative overflow-hidden">
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-20 left-20 w-64 h-64 bg-white rounded-full blur-3xl"></div>
+          <div className="absolute bottom-20 right-20 w-64 h-64 bg-white rounded-full blur-3xl"></div>
+        </div>
+        <div className="relative z-10 text-center px-8">
+          <div className="w-24 h-24 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-6 backdrop-blur-sm">
+            <Mail className="w-12 h-12 text-white" />
+          </div>
+          <h1 className="text-5xl xl:text-6xl font-bold text-white mb-4">CampusTOK</h1>
+          <p className="text-lg xl:text-xl text-white/90">Verify your email to get started</p>
+        </div>
       </div>
 
       {/* Right Panel - Light Gray */}
-      <div className="flex-1 bg-gray-100 flex items-center justify-center p-12">
+      <div className="flex-1 bg-gray-50 flex items-center justify-center p-4 sm:p-6 lg:p-12 min-h-screen lg:min-h-0">
         <div className="w-full max-w-md">
-          <h2 className="text-3xl font-bold text-gray-900 mb-3">Verify Email</h2>
-          <p className="text-gray-600 mb-8">Confirm the code sent to your Email.</p>
-           <p className="text-primary font-medium mb-8">{email}</p>
+          {/* Back Button */}
+          <button
+            onClick={() => navigate('/signup')}
+            className="mb-4 lg:mb-6 w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors shadow-sm"
+            disabled={isVerifying || isResending}
+          >
+            <ArrowLeft className="w-5 h-5 text-gray-700" />
+          </button>
 
-          <div className="flex justify-center gap-3 mb-6"  onPaste={handlePaste}>
+          {/* Mobile Logo */}
+          <div className="lg:hidden mb-6 text-center">
+            <div className="w-16 h-16 bg-primary-600 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Mail className="w-8 h-8 text-white" />
+            </div>
+            <h1 className="text-3xl font-bold text-primary-900">CampusTOK</h1>
+          </div>
+
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 text-center">Verify Your Email</h2>
+          <p className="text-sm lg:text-base text-gray-600 mb-4 text-center">Enter the 4-digit code sent to</p>
+          <p className="text-primary-600 font-medium mb-6 lg:mb-8 text-center break-all">{currentEmail}</p>
+
+          {/* OTP Input Boxes */}
+          <div className="flex justify-center gap-2 sm:gap-3 mb-6" onPaste={handlePaste}>
             {code.map((digit, index) => (
               <input
                 key={index}
                 id={`code-${index}`}
                 type="text"
                 inputMode="numeric"
-                maxLength="1"
+                pattern="[0-9]*"
+                maxLength={1}
                 value={digit}
                 onChange={(e) => handleCodeChange(index, e.target.value)}
                 onKeyDown={(e) => handleKeyDown(index, e)}
-                className="w-16 h-16 text-center text-2xl font-bold border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                disabled={isVerifying || isResending}
+                className="w-14 h-14 sm:w-16 sm:h-16 text-center text-xl sm:text-2xl font-bold border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                style={{
+                  borderColor: error ? '#ef4444' : digit ? '#24223A' : '#d1d5db'
+                }}
               />
             ))}
           </div>
-          {(error || verifyError) && <p className="text-sm text-red-600 text-center mb-4">{error || verifyError?.response?.data?.message || 'Verification failed'}</p>}
+
+          {/* Error Message */}
+          {(error || verifyError) && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-xs sm:text-sm text-red-700 text-center">
+                {error || verifyError?.response?.data?.message || 'Verification failed'}
+              </p>
+            </div>
+          )}
           
           {/* Success Message */}
           {successMessage && (
-            <p className="text-sm text-green-600 text-center mb-4">
-              {successMessage}
-            </p>
+            <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+              <p className="text-xs sm:text-sm text-green-700 text-center">
+                {successMessage}
+              </p>
+            </div>
           )}
 
           {/* Loading State */}
-          {(isVerifying || isResending) && (
-            <p className="text-sm text-gray-500 text-center mb-4">
-              {isVerifying ? 'Verifying...' : 'Sending new code...'}
-            </p>
+          {(isVerifying || isResending) && !error && !successMessage && (
+            <div className="mb-4 text-center">
+              <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+              <p className="text-xs sm:text-sm text-gray-500">
+                {isVerifying ? 'Verifying code...' : 'Sending new code...'}
+              </p>
+            </div>
           )}
-
 
           <button
             onClick={handleVerify}
-            disabled={isVerifying || isResending}
-            className="w-full bg-primary hover:bg-primary-800 text-white py-3 rounded-lg font-medium transition-colors mb-4 disabled:cursor-not-allowed "
+            disabled={isVerifying || isResending || code.join('').length !== 4}
+            className="w-full bg-primary hover:bg-primary-800 text-white py-2.5 sm:py-3 rounded-lg font-medium transition-colors mb-4 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
           >
              {isVerifying ? 'Verifying...' : 'Verify Code'}
           </button>
 
           <div className="text-center">
-            <span className="text-gray-600">Didn't receive any code? </span>
+            <span className="text-xs sm:text-sm text-gray-600">Didn't receive any code? </span>
             <button
-              disabled={isVerifying || isResending || !email}
+              disabled={isVerifying || isResending || !currentEmail}
               onClick={handleResend}
-              className="text-primary underline font-medium disabled:cursor-not-allowed"
+              className="text-primary-600 hover:text-primary-700 underline font-medium text-xs sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
             >
-             {isResending ? 'Sending...' : 'Request again'}
+             {isResending ? 'Sending...' : 'Resend Code'}
             </button>
           </div>
+
+          {/* Test Code Hint (for development/testing) */}
+          {process.env.NODE_ENV === 'development' && (
+            <div className="mt-6 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-xs text-blue-700 text-center">
+                <strong>Testing:</strong> Try code <strong>1234</strong> or any 4-digit number
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>

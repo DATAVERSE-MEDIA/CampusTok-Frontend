@@ -7,25 +7,63 @@ import {
   MessageSquare,
   Users,
   GraduationCap,
-  Building2,
   Plus,
   ChevronDown,
   Shield,
-  X
+  X,
+  Bell,
+  Settings,
+  LogOut,
+  HelpCircle,
+  AlertCircle,
+  LayoutDashboard,
+  Eye,
+  FileText,
+  BookOpen,
+  AtSign,
+  Building2
 } from 'lucide-react'
 
-const menuItems = [
+// General account menu items - matching Figma
+const generalMenuItems = [
   { path: '/profile', icon: User, label: 'Profile' },
   { path: '/community', icon: Users, label: 'Communities' },
   { path: '/messages', icon: MessageSquare, label: 'Messages' },
 ]
 
+// Student menu items
+const studentMenuItems = [
+  { path: '/profile', icon: User, label: 'Profile' },
+  { path: '/community', icon: Users, label: 'Communities' },
+  { path: '/messages', icon: MessageSquare, label: 'Messages' },
+  { path: '/complaints', icon: HelpCircle, label: 'complaints' },
+  { path: '/student-portal', icon: GraduationCap, label: 'Student Portal' },
+  { path: '/notifications', icon: Bell, label: 'Notification' },
+]
+
+// Institution menu items - matching Figma design
+const institutionMenuItems = [
+  { path: '/institution-dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+  { path: '/community', icon: Users, label: 'Communities' },
+  { path: '/chatbot', icon: Eye, label: 'ChatBot Bank' },
+  { path: '/faculties', icon: FileText, label: 'Faculties / Department' },
+  { path: '/courses', icon: BookOpen, label: 'Courses / Programs' },
+  { path: '/notifications', icon: Bell, label: 'Notification' },
+]
+
 export default function Sidebar({ isOpen, setIsOpen }) {
   const navigate = useNavigate()
   const location = useLocation()
-  const { logout, user } = useAuthStore()
+  const { logout, user, userType } = useAuthStore()
   const { selectedSchool, setSelectedSchool, schools } = useAppStore()
   const [showSchoolDropdown, setShowSchoolDropdown] = useState(false)
+  const [showSettingsDropdown, setShowSettingsDropdown] = useState(false)
+
+  // Determine which menu items to show based on user type
+  const menuItems = 
+    userType === 'institution' ? institutionMenuItems :
+    userType === 'general' || !userType ? generalMenuItems :
+    studentMenuItems
 
   const handleLogout = () => {
     logout()
@@ -113,20 +151,79 @@ export default function Sidebar({ isOpen, setIsOpen }) {
         )}
       </div>
 
-        {/* User Profile Section */}
+        {/* User/Institution Profile Section - Matching Figma */}
         <div className="p-4 lg:p-6 border-b border-gray-700">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 lg:w-12 lg:h-12 bg-red-600 rounded-full flex items-center justify-center text-white font-bold overflow-hidden flex-shrink-0">
-              {user?.name?.charAt(0) || 'F'}
+          {userType === 'institution' ? (
+            // Institution Profile - Matching Figma design
+            <div className="flex items-center gap-3">
+              {/* Institution Crest/Logo */}
+              <div className="w-10 h-10 lg:w-12 lg:h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden">
+                {user?.logo || selectedSchool?.logo ? (
+                  <img 
+                    src={user.logo || selectedSchool.logo} 
+                    alt={user?.name || selectedSchool?.name || 'Institution'}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <Building2 className="w-6 h-6 lg:w-8 lg:h-8 text-blue-600" />
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-bold text-white text-sm lg:text-base truncate">
+                  {user?.name || selectedSchool?.name || 'University of Lagos'}
+                </h3>
+                <p className="text-xs lg:text-sm text-gray-300 truncate">
+                  {user?.address || selectedSchool?.address || 'University Road Lagos Mainland A...'}
+                </p>
+              </div>
             </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="font-bold text-white text-sm lg:text-base truncate">{user?.name || 'Felix Gabriel'}</h3>
-              <p className="text-xs lg:text-sm text-gray-300">General Account</p>
+          ) : userType === 'general' || !userType ? (
+            // General Account Profile - Matching Figma
+            <div className="flex items-center gap-3">
+              {/* Profile Picture */}
+              <div className="w-10 h-10 lg:w-12 lg:h-12 bg-red-600 rounded-full flex items-center justify-center text-white font-bold overflow-hidden flex-shrink-0">
+                {user?.profilePicture ? (
+                  <img 
+                    src={user.profilePicture} 
+                    alt={user?.name || 'User'}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  user?.name?.charAt(0) || 'F'
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-bold text-white text-sm lg:text-base truncate">{user?.name || 'Felix Gabriel'}</h3>
+                <p className="text-xs lg:text-sm text-gray-300 truncate">General Account</p>
+              </div>
             </div>
-          </div>
+          ) : (
+            // Student Profile
+            <div className="flex items-center gap-3">
+              {/* Profile Picture */}
+              <div className="w-10 h-10 lg:w-12 lg:h-12 bg-red-600 rounded-full flex items-center justify-center text-white font-bold overflow-hidden flex-shrink-0">
+                {user?.profilePicture ? (
+                  <img 
+                    src={user.profilePicture} 
+                    alt={user?.name || 'User'}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  user?.name?.charAt(0) || 'F'
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-bold text-white text-sm lg:text-base truncate">{user?.name || 'Felix Gabriel'}</h3>
+                <p className="text-xs lg:text-sm text-gray-300 truncate">
+                  {user?.school ? `${user.school}` : selectedSchool ? `${selectedSchool.name}` : 'University of Lagos'}
+                  {user?.department && `, ${user.department}`}
+                </p>
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Navigation */}
+        {/* Navigation - Matching Figma */}
         <nav className="flex-1 p-2 lg:p-4 overflow-y-auto">
           <ul className="space-y-1">
             {menuItems.map((item) => {
@@ -151,7 +248,7 @@ export default function Sidebar({ isOpen, setIsOpen }) {
           </ul>
         </nav>
 
-        {/* Post Button */}
+        {/* Post Button - Matching Figma */}
         <div className="p-3 lg:p-4 border-t border-gray-700">
           <button
             onClick={() => handleNavigate('/')}
@@ -161,32 +258,77 @@ export default function Sidebar({ isOpen, setIsOpen }) {
           </button>
         </div>
 
-        {/* Account Creation Options */}
-        <div className="p-3 lg:p-4 border-t border-gray-700 space-y-1">
-          <button
-            onClick={() => handleNavigate('/create-account')}
-            className="w-full flex items-center gap-2 lg:gap-3 px-3 lg:px-4 py-2.5 lg:py-3 rounded-lg text-gray-300 hover:bg-gray-700 transition-colors text-sm lg:text-base"
-          >
-            <div className="w-7 h-7 lg:w-8 lg:h-8 rounded-full border-2 border-gray-400 flex items-center justify-center flex-shrink-0">
-              <Plus className="w-3.5 h-3.5 lg:w-4 lg:h-4" />
+        {/* Create Account As Section - Only for general accounts */}
+        {(userType === 'general' || !userType) && (
+          <div className="p-3 lg:p-4 border-t border-gray-700">
+            <p className="text-xs lg:text-sm text-gray-400 uppercase mb-2 lg:mb-3 font-semibold px-2">
+              Create Account As
+            </p>
+            <div className="space-y-1">
+              <button
+                onClick={() => navigate('/signup?type=student')}
+                className="w-full flex items-center gap-2 lg:gap-3 px-3 lg:px-4 py-2.5 lg:py-3 rounded-lg text-gray-300 hover:bg-gray-700 transition-colors text-sm lg:text-base"
+              >
+                <GraduationCap className="w-5 h-5 flex-shrink-0" />
+                <span className="truncate">A Student</span>
+              </button>
+              <button
+                onClick={() => navigate('/create-account')}
+                className="w-full flex items-center gap-2 lg:gap-3 px-3 lg:px-4 py-2.5 lg:py-3 rounded-lg text-gray-300 hover:bg-gray-700 transition-colors text-sm lg:text-base"
+              >
+                <Building2 className="w-5 h-5 flex-shrink-0" />
+                <span className="truncate">An Institution</span>
+              </button>
             </div>
-            <span className="truncate">Create Account As</span>
-          </button>
-          <button
-            onClick={() => handleNavigate('/create-account')}
-            className="w-full flex items-center gap-2 lg:gap-3 px-3 lg:px-4 py-2.5 lg:py-3 rounded-lg text-gray-300 hover:bg-gray-700 transition-colors text-sm lg:text-base"
-          >
-            <GraduationCap className="w-5 h-5 flex-shrink-0" />
-            <span className="truncate">A Student</span>
-          </button>
-          <button
-            onClick={() => handleNavigate('/create-account')}
-            className="w-full flex items-center gap-2 lg:gap-3 px-3 lg:px-4 py-2.5 lg:py-3 rounded-lg text-gray-300 hover:bg-gray-700 transition-colors text-sm lg:text-base"
-          >
-            <Building2 className="w-5 h-5 flex-shrink-0" />
-            <span className="truncate">An Institution</span>
-          </button>
-        </div>
+          </div>
+        )}
+
+        {/* Settings and Logout - Matching Figma (Hidden for general accounts) */}
+        {userType !== 'general' && userType && (
+          <div className="p-3 lg:p-4 border-t border-gray-700 space-y-1">
+            {userType === 'institution' ? (
+              <>
+                <button
+                  onClick={() => setShowSettingsDropdown(!showSettingsDropdown)}
+                  className="w-full flex items-center gap-2 lg:gap-3 px-3 lg:px-4 py-2.5 lg:py-3 rounded-lg text-gray-300 hover:bg-gray-700 transition-colors text-sm lg:text-base"
+                >
+                  <Settings className="w-5 h-5 flex-shrink-0" />
+                  <span className="flex-1 text-left truncate">Settings</span>
+                  <ChevronDown className={`w-4 h-4 transition-transform ${showSettingsDropdown ? 'rotate-180' : ''}`} />
+                </button>
+                {showSettingsDropdown && (
+                  <div className="ml-4 pl-4 border-l border-gray-600 space-y-1">
+                    <button
+                      onClick={() => {
+                        handleNavigate('/settings')
+                        setShowSettingsDropdown(false)
+                      }}
+                      className="w-full flex items-center gap-2 lg:gap-3 px-3 lg:px-4 py-2 rounded-lg text-gray-400 hover:bg-gray-700 hover:text-gray-300 transition-colors text-sm"
+                    >
+                      <AtSign className="w-4 h-4 flex-shrink-0" />
+                      <span className="truncate">Account Settings</span>
+                    </button>
+                  </div>
+                )}
+              </>
+            ) : (
+              <button
+                onClick={() => handleNavigate('/settings')}
+                className="w-full flex items-center gap-2 lg:gap-3 px-3 lg:px-4 py-2.5 lg:py-3 rounded-lg text-gray-300 hover:bg-gray-700 transition-colors text-sm lg:text-base"
+              >
+                <Settings className="w-5 h-5 flex-shrink-0" />
+                <span className="truncate">Settings</span>
+              </button>
+            )}
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center gap-2 lg:gap-3 px-3 lg:px-4 py-2.5 lg:py-3 rounded-lg text-gray-300 hover:bg-gray-700 transition-colors text-sm lg:text-base"
+            >
+              <LogOut className="w-5 h-5 flex-shrink-0" />
+              <span className="truncate">Logout</span>
+            </button>
+          </div>
+        )}
       </div>
     </>
   )

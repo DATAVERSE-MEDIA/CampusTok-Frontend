@@ -10,7 +10,9 @@ export const useAuthStore = create((set) => ({
   
   login: (userData) => set({ 
     user: userData, 
-    isAuthenticated: true 
+    userType: userData?.userType || userData?.role || 'general',
+    isAuthenticated: !userData?.isGuest, // Guests are not fully authenticated
+    email: userData?.email || null
   }),
   
   signup: (email) => set({ 

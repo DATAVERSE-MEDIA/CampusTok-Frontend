@@ -1,49 +1,46 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import React, { useState, useEffect, useRef } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '../../store/useAuthStore'
-import { ArrowLeft, ChevronDown } from 'lucide-react'
+import { ArrowLeft, ChevronDown, Mail, Building2 } from 'lucide-react'
+import { useRegister } from '../../hooks/useAuth'
 
 const institutions = [
   'University of Lagos',
   'Harvard University',
   'MIT',
   'Stanford University',
-  'Yale University'
-]
-
-const departments = [
-  'Computer Science',
-  'Civil Engineering',
-  'Electrical Engineering',
-  'Mechanical Engineering',
-  'Business Administration',
-  'Medicine',
-  'Law'
-]
-
-const levels = [
-  '100 Level',
-  '200 Level',
-  '300 Level',
-  '400 Level',
-  '500 Level',
-  'Graduate'
+  'Yale University',
+  'Oxford University',
+  'Cambridge University',
+  'University of Ibadan',
+  'Covenant University',
+  'Federal University of Technology'
 ]
 
 export default function CreateAccount() {
   const navigate = useNavigate()
-  const { login } = useAuthStore()
+  const location = useLocation()
+  const { signup } = useAuthStore()
+  const { mutate: register, isPending } = useRegister()
   const [formData, setFormData] = useState({
     institution: '',
-    matricNumber: '',
-    department: '',
-    level: ''
+    email: ''
   })
   const [agreedToTerms, setAgreedToTerms] = useState(true)
   const [errors, setErrors] = useState({})
   const [showInstitutionDropdown, setShowInstitutionDropdown] = useState(false)
-  const [showDepartmentDropdown, setShowDepartmentDropdown] = useState(false)
-  const [showLevelDropdown, setShowLevelDropdown] = useState(false)
+  const institutionDropdownRef = useRef(null)
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (institutionDropdownRef.current && !institutionDropdownRef.current.contains(event.target)) {
+        setShowInstitutionDropdown(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   const handleChange = (e) => {
     setFormData({
@@ -55,6 +52,14 @@ export default function CreateAccount() {
     }
   }
 
+  const handleInstitutionSelect = (institution) => {
+    setFormData({ ...formData, institution })
+    setShowInstitutionDropdown(false)
+    if (errors.institution) {
+      setErrors({ ...errors, institution: '' })
+    }
+  }
+
   const handleSubmit = (e) => {
     e.preventDefault()
     const newErrors = {}
@@ -62,14 +67,10 @@ export default function CreateAccount() {
     if (!formData.institution.trim()) {
       newErrors.institution = 'Institution is required'
     }
-    if (!formData.matricNumber.trim()) {
-      newErrors.matricNumber = 'Matric number is required'
-    }
-    if (!formData.department.trim()) {
-      newErrors.department = 'Department is required'
-    }
-    if (!formData.level.trim()) {
-      newErrors.level = 'Level is required'
+    if (!formData.email.trim()) {
+      newErrors.email = 'Institution email is required'
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'Email is invalid'
     }
     if (!agreedToTerms) {
       alert('Please agree to Terms & Conditions')
@@ -81,46 +82,97 @@ export default function CreateAccount() {
       return
     }
 
-    login({
-      ...formData,
-      name: 'Felix Gabriel'
+    // Prepare registration data for institution
+    const reqBody = {
+      full_name: formData.institution,
+      email: formData.email,
+      password: 'temp-password-' + Date.now(), // Temporary password, should be set properly
+      role: 'institution'
+    }
+
+    // Call registration API
+    register(reqBody, {
+      onSuccess: (data) => {
+        console.log('Institution registration successful:', data)
+        // Save email to auth store for OTP verification
+        const email = data?.data?.email || data?.email || formData.email
+        if (email) {
+          signup(email)
+        }
+        // Navigate to OTP verification screen
+        navigate('/verify-email')
+      },
+      onError: (error) => {
+        console.error('Institution registration failed:', error)
+        setErrors({
+          submit: error?.response?.data?.message || error?.message || 'Registration failed. Please try again.'
+        })
+      }
     })
-    navigate('/')
   }
 
   return (
-    <div className="min-h-screen flex bg-black">
-      {/* Left Panel - Primary Color */}
-      <div className="w-2/5 bg-primary rounded-r-3xl flex items-center justify-center">
-        <h1 className="text-6xl font-bold text-white">CampusTOK</h1>
+    <div className="min-h-screen flex flex-col lg:flex-row bg-gray-50">
+      {/* Left Panel - Primary Color - Hidden on mobile */}
+      <div className="hidden lg:flex lg:w-2/5 bg-gradient-to-br from-primary-900 via-primary-800 to-primary-700 rounded-r-3xl items-center justify-center relative overflow-hidden">
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-20 left-20 w-64 h-64 bg-white rounded-full blur-3xl"></div>
+          <div className="absolute bottom-20 right-20 w-64 h-64 bg-white rounded-full blur-3xl"></div>
+        </div>
+        <div className="relative z-10 text-center px-8">
+          <div className="w-24 h-24 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-6 backdrop-blur-sm">
+            <Building2 className="w-12 h-12 text-white" />
+          </div>
+          <h1 className="text-5xl xl:text-6xl font-bold text-white mb-4">CampusTOK</h1>
+          <p className="text-lg xl:text-xl text-white/90">Create your institution account to connect with students</p>
+        </div>
       </div>
 
       {/* Right Panel - Light Gray */}
-      <div className="flex-1 bg-gray-100 flex items-center justify-center p-12">
+      <div className="flex-1 bg-gray-50 flex items-center justify-center p-4 sm:p-6 lg:p-12 min-h-screen lg:min-h-0">
         <div className="w-full max-w-md">
+          {/* Back Button */}
           <button
-            onClick={() => navigate('/welcome')}
-            className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center mb-6 hover:bg-gray-300 transition-colors"
+            onClick={() => navigate('/signup')}
+            className="mb-4 lg:mb-6 w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors shadow-sm"
+            disabled={isPending}
           >
             <ArrowLeft className="w-5 h-5 text-gray-700" />
           </button>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Mobile Logo */}
+          <div className="lg:hidden mb-6 text-center">
+            <div className="w-16 h-16 bg-primary-600 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Building2 className="w-8 h-8 text-white" />
+            </div>
+            <h1 className="text-3xl font-bold text-primary-900">CampusTOK</h1>
+          </div>
+
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 text-center">Sign Up</h2>
+          <p className="text-sm lg:text-base text-gray-600 mb-6 lg:mb-8 text-center">Sign up as an Institution</p>
+
+          {/* Error Message */}
+          {errors.submit && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+              {errors.submit}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-4 lg:space-y-5">
             {/* Institution Dropdown */}
-            <div className="relative">
+            <div className="relative" ref={institutionDropdownRef}>
               <button
                 type="button"
-                onClick={() => {
-                  setShowInstitutionDropdown(!showInstitutionDropdown)
-                  setShowDepartmentDropdown(false)
-                  setShowLevelDropdown(false)
-                }}
-                className={`w-full px-4 py-3 bg-white rounded-lg border ${errors.institution ? 'border-red-500' : 'border-gray-300'} focus:outline-none focus:ring-2 focus:ring-primary flex items-center justify-between`}
+                onClick={() => setShowInstitutionDropdown(!showInstitutionDropdown)}
+                disabled={isPending}
+                className={`w-full px-4 py-3 bg-white rounded-lg border text-left ${
+                  errors.institution ? 'border-red-500' : 'border-gray-300'
+                } focus:outline-none focus:ring-2 focus:ring-primary flex items-center justify-between disabled:opacity-50 disabled:cursor-not-allowed`}
               >
                 <span className={formData.institution ? 'text-gray-900' : 'text-gray-400'}>
                   {formData.institution || 'Select Your Institution'}
                 </span>
-                <ChevronDown className="w-5 h-5 text-gray-400" />
+                <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform ${showInstitutionDropdown ? 'transform rotate-180' : ''}`} />
               </button>
               {showInstitutionDropdown && (
                 <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-auto">
@@ -128,115 +180,55 @@ export default function CreateAccount() {
                     <button
                       key={inst}
                       type="button"
-                      onClick={() => {
-                        setFormData({ ...formData, institution: inst })
-                        setShowInstitutionDropdown(false)
-                      }}
-                      className="w-full text-left px-4 py-2 hover:bg-gray-100 transition-colors"
+                      onClick={() => handleInstitutionSelect(inst)}
+                      className="w-full text-left px-4 py-2.5 hover:bg-gray-100 transition-colors text-sm"
                     >
                       {inst}
                     </button>
                   ))}
                 </div>
               )}
-            </div>
-
-            {/* Matric Number */}
-            <input
-              type="text"
-              name="matricNumber"
-              value={formData.matricNumber}
-              onChange={handleChange}
-              className={`w-full px-4 py-3 bg-white rounded-lg border ${errors.matricNumber ? 'border-red-500' : 'border-gray-300'} focus:outline-none focus:ring-2 focus:ring-primary`}
-              placeholder="Matric Number"
-            />
-            {errors.matricNumber && <p className="text-sm text-red-600">{errors.matricNumber}</p>}
-
-            {/* Department Dropdown */}
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => {
-                  setShowDepartmentDropdown(!showDepartmentDropdown)
-                  setShowInstitutionDropdown(false)
-                  setShowLevelDropdown(false)
-                }}
-                className={`w-full px-4 py-3 bg-white rounded-lg border ${errors.department ? 'border-red-500' : 'border-gray-300'} focus:outline-none focus:ring-2 focus:ring-primary flex items-center justify-between`}
-              >
-                <span className={formData.department ? 'text-gray-900' : 'text-gray-400'}>
-                  {formData.department || 'Your Department / Faculty'}
-                </span>
-                <ChevronDown className="w-5 h-5 text-gray-400" />
-              </button>
-              {showDepartmentDropdown && (
-                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-auto">
-                  {departments.map((dept) => (
-                    <button
-                      key={dept}
-                      type="button"
-                      onClick={() => {
-                        setFormData({ ...formData, department: dept })
-                        setShowDepartmentDropdown(false)
-                      }}
-                      className="w-full text-left px-4 py-2 hover:bg-gray-100 transition-colors"
-                    >
-                      {dept}
-                    </button>
-                  ))}
-                </div>
+              {errors.institution && (
+                <p className="mt-1 text-xs sm:text-sm text-red-600">{errors.institution}</p>
               )}
             </div>
 
-            {/* Level Dropdown */}
+            {/* Institution Email */}
             <div className="relative">
-              <button
-                type="button"
-                onClick={() => {
-                  setShowLevelDropdown(!showLevelDropdown)
-                  setShowInstitutionDropdown(false)
-                  setShowDepartmentDropdown(false)
-                }}
-                className={`w-full px-4 py-3 bg-white rounded-lg border ${errors.level ? 'border-red-500' : 'border-gray-300'} focus:outline-none focus:ring-2 focus:ring-primary flex items-center justify-between`}
-              >
-                <span className={formData.level ? 'text-gray-900' : 'text-gray-400'}>
-                  {formData.level || 'Select Your Level'}
-                </span>
-                <ChevronDown className="w-5 h-5 text-gray-400" />
-              </button>
-              {showLevelDropdown && (
-                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-auto">
-                  {levels.map((level) => (
-                    <button
-                      key={level}
-                      type="button"
-                      onClick={() => {
-                        setFormData({ ...formData, level: level })
-                        setShowLevelDropdown(false)
-                      }}
-                      className="w-full text-left px-4 py-2 hover:bg-gray-100 transition-colors"
-                    >
-                      {level}
-                    </button>
-                  ))}
-                </div>
-              )}
+              <Mail className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                disabled={isPending}
+                className={`w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-2.5 sm:py-3 bg-white rounded-lg border text-sm sm:text-base ${
+                  errors.email ? 'border-red-500' : 'border-gray-300'
+                } focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed`}
+                placeholder="Institution Email"
+              />
             </div>
+            {errors.email && (
+              <p className="text-xs sm:text-sm text-red-600 mt-1">{errors.email}</p>
+            )}
 
             {/* Terms & Conditions */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-start gap-2 sm:gap-3">
               <input
                 type="checkbox"
                 id="terms"
                 checked={agreedToTerms}
                 onChange={(e) => setAgreedToTerms(e.target.checked)}
-                className="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary"
+                disabled={isPending}
+                className="w-4 h-4 sm:w-5 sm:h-5 rounded border-gray-300 text-primary focus:ring-primary disabled:opacity-50 mt-0.5 flex-shrink-0"
               />
-              <label htmlFor="terms" className="text-gray-700">
+              <label htmlFor="terms" className="text-xs sm:text-sm text-gray-700">
                 Agree with{' '}
                 <button
                   type="button"
-                  className="underline text-gray-900"
+                  className="underline text-gray-900 hover:text-gray-700"
                   onClick={() => alert('Terms & Conditions')}
+                  disabled={isPending}
                 >
                   Terms & Condition
                 </button>
@@ -245,9 +237,10 @@ export default function CreateAccount() {
 
             <button
               type="submit"
-              className="w-full bg-primary hover:bg-primary-800 text-white py-3 rounded-lg font-medium transition-colors"
+              disabled={isPending}
+              className="w-full bg-primary hover:bg-primary-800 text-white py-2.5 sm:py-3 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
             >
-              Create Account
+              {isPending ? 'Creating account...' : 'Create Account'}
             </button>
           </form>
         </div>

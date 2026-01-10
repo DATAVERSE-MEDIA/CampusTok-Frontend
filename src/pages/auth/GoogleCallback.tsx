@@ -60,13 +60,13 @@ export default function GoogleCallback() {
           }
 
           // Redirect based on user type
-          const userType = data.user?.userType || 'general'
+          const userType = data.user?.userType || data.user?.role || 'general'
           if (userType === 'student') {
             navigate('/student-dashboard', { replace: true })
           } else if (userType === 'institution') {
             navigate('/institution-dashboard', { replace: true })
           } else {
-            navigate('/', { replace: true })
+            navigate('/general-dashboard', { replace: true })
           }
         },
         onError: (error) => {

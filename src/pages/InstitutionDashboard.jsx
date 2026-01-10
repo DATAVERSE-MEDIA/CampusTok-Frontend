@@ -1,137 +1,26 @@
-// import { useNavigate } from 'react-router-dom'
-// import { useAppStore } from '../store/useAppStore'
-// import { Heart, MessageCircle, Share2, BarChart3, MoreVertical } from 'lucide-react'
-
-// export default function LandingPage() {
-//   const navigate = useNavigate()
-//   const { selectedSchool } = useAppStore()
-
-//   return (
-//     <div className="flex-1 flex bg-white">
-//       {/* Main Content Area */}
-//       <div className="flex-1 overflow-y-auto">
-//         <div className="max-w-3xl mx-auto p-6">
-//           {/* Post */}
-//           <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
-//             {/* Post Header */}
-//             <div className="p-4 flex items-start justify-between">
-//               <div className="flex items-center gap-3">
-//                 <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center relative">
-//                   <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center">
-//                     <span className="text-green-600 font-bold text-lg">U</span>
-//                   </div>
-//                 </div>
-//                 <div>
-//                   <h3 className="font-bold text-gray-900">
-//                     {selectedSchool ? selectedSchool.name : 'University of Lagos'}
-//                   </h3>
-//                   <p className="text-sm text-gray-600">
-//                     {selectedSchool?.address || 'University Road Lagos Mainland Akoka, Yaba, Lagos'}
-//                   </p>
-//                 </div>
-//               </div>
-//               <button className="p-2 hover:bg-gray-100 rounded-full">
-//                 <MoreVertical className="w-5 h-5 text-gray-400" />
-//               </button>
-//             </div>
-
-//             {/* Post Text */}
-//             <div className="px-4 pb-4">
-//               <p className="text-gray-900 leading-relaxed">
-//                 At the University of Lagos, a new electric bus was introduced to shuttle students around campus. 
-//                 Silent and eco-friendly, it quickly became a symbol of innovation, inspiring students wh...
-//               </p>
-//             </div>
-
-//             {/* Post Image */}
-//             <div className="w-full">
-//               <div className="w-full h-[600px] bg-gradient-to-br from-amber-50 to-amber-100 flex items-center justify-center relative overflow-hidden">
-//                 {/* Placeholder for the academic regalia image - you can replace this with actual image */}
-//                 <div className="w-full h-full flex items-center justify-center bg-amber-50">
-//                   <div className="text-center">
-//                     <div className="w-40 h-40 mx-auto mb-4 bg-red-600 rounded-full flex items-center justify-center shadow-lg">
-//                       <span className="text-7xl">👩‍🎓</span>
-//                     </div>
-//                     <p className="text-gray-600 text-sm">Academic Regalia - University of Lagos</p>
-//                     <p className="text-gray-500 text-xs mt-2">Replace with actual image from your assets</p>
-//                   </div>
-//                 </div>
-//               </div>
-//             </div>
-
-//             {/* Engagement Metrics */}
-//             <div className="px-4 py-4 border-t border-gray-200 flex items-center gap-6">
-//               <button className="flex items-center gap-2 text-gray-600 hover:text-red-600 transition-colors">
-//                 <Heart className="w-5 h-5" />
-//                 <span className="font-medium">11.7k</span>
-//               </button>
-//               <button className="flex items-center gap-2 text-gray-600 hover:text-blue-600 transition-colors">
-//                 <MessageCircle className="w-5 h-5" />
-//                 <span className="font-medium">500</span>
-//               </button>
-//               <button className="flex items-center gap-2 text-gray-600 hover:text-green-600 transition-colors">
-//                 <Share2 className="w-5 h-5" />
-//                 <span className="font-medium">1k</span>
-//               </button>
-//               <button className="flex items-center gap-2 text-gray-600 hover:text-primary transition-colors">
-//                 <BarChart3 className="w-5 h-5" />
-//                 <span className="font-medium">100k</span>
-//               </button>
-//             </div>
-//           </div>
-//         </div>
-//       </div>
-
-//       {/* Right Sidebar - Chatbot Widget */}
-//       <div className="w-80 bg-gray-900 p-6 flex items-start">
-//         <div className="bg-gray-800 rounded-lg p-6 w-full">
-//           <div className="flex items-center gap-3 mb-4">
-//             <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
-//               <span className="text-white text-xl">🤖</span>
-//             </div>
-//             <div>
-//               <h3 className="font-bold text-white">HI, I'm ChatBot</h3>
-//             </div>
-//           </div>
-//           <p className="text-gray-300 text-sm mb-6">
-//             You can ask me questions based on a particular institution.
-//           </p>
-//           <button
-//             onClick={() => navigate('/chatbot')}
-//             className="w-full bg-gray-700 hover:bg-gray-600 text-white py-3 rounded-lg font-medium transition-colors"
-//           >
-//             Use ChatBot
-//           </button>
-//         </div>
-//       </div>
-//     </div>
-//   )
-// }
-
-
-import { useNavigate } from 'react-router-dom'
-import { useAppStore } from '../store/useAppStore'
-import { Heart, MessageCircle, Share2, BarChart3, MoreVertical, User } from 'lucide-react'
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useAuthStore } from '../store/useAuthStore'
+import { useAppStore } from '../store/useAppStore'
+import { Heart, MessageCircle, Share2, BarChart3, MoreVertical } from 'lucide-react'
 import { apiClient } from '../api'
 
-export default function LandingPage() {
+export default function InstitutionDashboard() {
   const navigate = useNavigate()
+  const { user } = useAuthStore()
   const { selectedSchool } = useAppStore()
   const [posts, setPosts] = useState([])
   const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState(null)
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(true)
 
-  // Fetch posts based on selected school
+  // Fetch posts for institution dashboard
   useEffect(() => {
     fetchPosts()
   }, [selectedSchool, page])
 
   const fetchPosts = async () => {
     setIsLoading(true)
-    setError(null)
     
     try {
       const params = {
@@ -141,13 +30,34 @@ export default function LandingPage() {
         sortOrder: 'desc'
       }
 
-      // If a school is selected, filter by school
       if (selectedSchool?.id) {
         params.filters = { school_id: selectedSchool.id }
       }
 
       const response = await apiClient.get('/posts', { params })
-      const newPosts = response.data.data || response.data
+      const newPosts = response.data.data || response.data || []
+      
+      // For testing: use dummy data matching Figma design
+      if (newPosts.length === 0 && page === 1) {
+        setPosts([{
+          id: 1,
+          content: "At the University of Lagos, a new electric bus was introduced to shuttle students around campus. Silent and eco-friendly, it quickly became a symbol of innovation, inspiring students wh...",
+          author: {
+            full_name: "University of Lagos",
+            profile_picture: null,
+            role: "institution",
+            address: "University Road Lagos Mainland Akoka, Yaba, Lagos"
+          },
+          media_url: null,
+          likes_count: 11700,
+          comments_count: 500,
+          shares_count: 1000,
+          views_count: 100000,
+          created_at: new Date().toISOString()
+        }])
+        setIsLoading(false)
+        return
+      }
       
       if (page === 1) {
         setPosts(newPosts)
@@ -155,12 +65,11 @@ export default function LandingPage() {
         setPosts(prev => [...prev, ...newPosts])
       }
       
-      // Check if there are more posts
-      setHasMore(newPosts.length > 0)
+      setHasMore(newPosts.length >= 10)
     } catch (err) {
       console.error('Error fetching posts:', err)
       // Use dummy data for testing matching Figma
-      const dummyPost = {
+      setPosts([{
         id: 1,
         content: "At the University of Lagos, a new electric bus was introduced to shuttle students around campus. Silent and eco-friendly, it quickly became a symbol of innovation, inspiring students wh...",
         author: {
@@ -175,11 +84,7 @@ export default function LandingPage() {
         shares_count: 1000,
         views_count: 100000,
         created_at: new Date().toISOString()
-      }
-      if (page === 1) {
-        setPosts([dummyPost])
-      }
-      setError(null) // Don't show error, use dummy data
+      }])
     } finally {
       setIsLoading(false)
     }
@@ -191,42 +96,34 @@ export default function LandingPage() {
     }
   }
 
-  const formatDate = (dateString) => {
-    const date = new Date(dateString)
-    const now = new Date()
-    const diffInHours = Math.floor((now - date) / (1000 * 60 * 60))
-    
-    if (diffInHours < 1) {
-      return 'Just now'
-    } else if (diffInHours < 24) {
-      return `${diffInHours}h ago`
-    } else {
-      return date.toLocaleDateString('en-US', { 
-        month: 'short', 
-        day: 'numeric',
-        year: 'numeric'
-      })
+  const formatCount = (count) => {
+    if (count >= 1000000) {
+      return (count / 1000000).toFixed(1) + 'M'
+    } else if (count >= 1000) {
+      return (count / 1000).toFixed(1) + 'k'
     }
+    return count.toString()
   }
 
-  // Handle post engagement
   const handleLike = async (postId) => {
     try {
       await apiClient.post(`/posts/${postId}/like`)
-      // Update local state
       setPosts(prev => prev.map(post => 
         post.id === postId 
           ? { ...post, likes_count: (post.likes_count || 0) + 1, liked: true }
           : post
       ))
     } catch (error) {
-      console.error('Error liking post:', error)
+      setPosts(prev => prev.map(post => 
+        post.id === postId 
+          ? { ...post, likes_count: (post.likes_count || 0) + 1, liked: true }
+          : post
+      ))
     }
   }
 
   const handleComment = (postId) => {
-    // Navigate to comments or open comment modal
-    console.log('Open comments for post:', postId)
+    navigate(`/posts/${postId}`)
   }
 
   const handleShare = async (postId) => {
@@ -238,7 +135,11 @@ export default function LandingPage() {
           : post
       ))
     } catch (error) {
-      console.error('Error sharing post:', error)
+      setPosts(prev => prev.map(post => 
+        post.id === postId 
+          ? { ...post, shares_count: (post.shares_count || 0) + 1 }
+          : post
+      ))
     }
   }
 
@@ -248,7 +149,7 @@ export default function LandingPage() {
       <div className="flex-1 flex flex-col lg:flex-row bg-white">
         <div className="flex-1 overflow-y-auto w-full lg:w-auto">
           <div className="max-w-3xl mx-auto p-3 sm:p-4 lg:p-6 pb-20 lg:pb-6">
-            {[...Array(3)].map((_, i) => (
+            {[...Array(2)].map((_, i) => (
               <div key={i} className="bg-white rounded-lg shadow-sm border border-gray-200 mb-4 lg:mb-6 animate-pulse">
                 <div className="p-3 lg:p-4">
                   <div className="flex items-center gap-2 lg:gap-3">
@@ -277,35 +178,13 @@ export default function LandingPage() {
 
   return (
     <div className="flex-1 flex flex-col lg:flex-row bg-white">
-      {/* Main Content Area */}
+      {/* Main Content Area - Feed */}
       <div className="flex-1 overflow-y-auto w-full lg:w-auto">
         <div className="max-w-3xl mx-auto p-3 sm:p-4 lg:p-6 pb-20 lg:pb-6">
-          {/* Welcome Header */}
-          <div className="mb-4 lg:mb-6">
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
-              {selectedSchool ? `${selectedSchool.name} Feed` : 'Campus Feed'}
-            </h1>
-            <p className="text-sm sm:text-base text-gray-600 mt-1">
-              {selectedSchool 
-                ? `Latest posts from ${selectedSchool.name} community`
-                : 'Discover posts from campuses nationwide'
-              }
-            </p>
-          </div>
-
-          {/* Posts */}
           {posts.length === 0 && !isLoading ? (
             <div className="text-center py-12">
-              <div className="w-24 h-24 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                <User className="w-12 h-12 text-gray-400" />
-              </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">No posts yet</h3>
-              <p className="text-gray-600">
-                {selectedSchool 
-                  ? `Be the first to post in ${selectedSchool.name}`
-                  : 'Follow schools or create a post to get started'
-                }
-              </p>
+              <p className="text-gray-600">Create a post to engage with your community</p>
             </div>
           ) : (
             <>
@@ -316,17 +195,16 @@ export default function LandingPage() {
                   onLike={handleLike}
                   onComment={handleComment}
                   onShare={handleShare}
-                  formatDate={formatDate}
+                  formatCount={formatCount}
                 />
               ))}
               
-              {/* Load More Button */}
               {hasMore && (
                 <div className="text-center mt-6">
                   <button
                     onClick={loadMorePosts}
                     disabled={isLoading}
-                    className="btn-primary px-6 py-2 rounded-lg disabled:opacity-50"
+                    className="px-6 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary-800 transition-colors disabled:opacity-50"
                   >
                     {isLoading ? 'Loading...' : 'Load More Posts'}
                   </button>
@@ -345,19 +223,10 @@ export default function LandingPage() {
   )
 }
 
-// Post Card Component
-const PostCard = ({ post, onLike, onComment, onShare, formatDate }) => {
+// Post Card Component matching Figma design
+const PostCard = ({ post, onLike, onComment, onShare, formatCount }) => {
   const [liked, setLiked] = useState(post.liked || false)
   const [likesCount, setLikesCount] = useState(post.likes_count || 0)
-
-  const formatCount = (count) => {
-    if (count >= 1000000) {
-      return (count / 1000000).toFixed(1) + 'M'
-    } else if (count >= 1000) {
-      return (count / 1000).toFixed(1) + 'k'
-    }
-    return count.toString()
-  }
 
   const handleLike = () => {
     const newLiked = !liked
@@ -370,33 +239,25 @@ const PostCard = ({ post, onLike, onComment, onShare, formatDate }) => {
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-4 lg:mb-6">
-      {/* Post Header - Matching Figma */}
+      {/* Post Header */}
       <div className="p-3 lg:p-4 flex items-start justify-between gap-2">
         <div className="flex items-center gap-2 lg:gap-3 flex-1 min-w-0">
           {/* Institution Avatar - Matching Figma (green background with white circle) */}
           <div className="w-10 h-10 lg:w-12 lg:h-12 rounded-full overflow-hidden bg-gray-200 flex-shrink-0 flex items-center justify-center">
-            {post.author?.profile_picture ? (
-              <img 
-                src={post.author.profile_picture} 
-                alt={post.author.full_name}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full bg-green-500 flex items-center justify-center">
-                <div className="w-10 h-10 lg:w-12 lg:h-12 bg-white rounded-full flex items-center justify-center">
-                  <span className="text-green-600 font-bold text-sm lg:text-base">
-                    {post.author?.full_name?.charAt(0) || 'U'}
-                  </span>
-                </div>
+            <div className="w-full h-full bg-green-500 flex items-center justify-center">
+              <div className="w-10 h-10 lg:w-12 lg:h-12 bg-white rounded-full flex items-center justify-center">
+                <span className="text-green-600 font-bold text-sm lg:text-base">
+                  {post.author?.full_name?.charAt(0) || 'U'}
+                </span>
               </div>
-            )}
+            </div>
           </div>
           <div className="flex-1 min-w-0">
             <h3 className="font-bold text-gray-900 text-sm lg:text-base truncate">
               {post.author?.full_name || 'University of Lagos'}
             </h3>
             <p className="text-xs lg:text-sm text-gray-600 truncate">
-              {post.author?.address || post.author?.location || 'University Road Lagos Mainland Akoka, Yaba, Lagos'}
+              {post.author?.address || 'University Road Lagos Mainland Akoka, Yaba, Lagos'}
             </p>
           </div>
         </div>
@@ -412,7 +273,7 @@ const PostCard = ({ post, onLike, onComment, onShare, formatDate }) => {
         </p>
       </div>
 
-      {/* Post Image/Media - Using academic regalia placeholder */}
+      {/* Post Image - Academic Regalia Image (Matching Figma) */}
       {post.media_url ? (
         <div className="w-full">
           <div className="w-full aspect-square max-h-[600px] overflow-hidden">
@@ -489,7 +350,7 @@ const PostCard = ({ post, onLike, onComment, onShare, formatDate }) => {
   )
 }
 
-// Right Sidebar Component - Matching Figma (white background with border)
+// Right Sidebar - ChatBot Component matching Figma
 const RightSidebar = ({ navigate }) => (
   <div className="w-full bg-white p-4 lg:p-6 flex items-start sticky top-0 h-fit">
     <div className="border border-gray-200 rounded-lg p-4 lg:p-6 w-full bg-white">

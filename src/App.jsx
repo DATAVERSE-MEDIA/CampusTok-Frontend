@@ -22,6 +22,9 @@ import Notifications from './pages/Notifications'
 import StudentPortal from './pages/StudentPortal'
 import Settings from './pages/Settings'
 import GoogleCallback from './pages/auth/GoogleCallback'
+import StudentDashboard from './pages/StudentDashboard'
+import InstitutionDashboard from './pages/InstitutionDashboard'
+import GeneralDashboard from './pages/GeneralDashboard'
 
 function ProtectedRoute({ children }) {
   const { isAuthenticated } = useAuthStore()
@@ -40,6 +43,13 @@ function App() {
       <Route path="/create-account" element={<CreateAccount />} />
       <Route path="/user-type" element={<UserTypeSelection />} />
       <Route path="/auth/google/callback" element={<GoogleCallback />} />
+      
+      {/* Dashboard Routes - Allow guest access without full auth */}
+      <Route element={<Layout />}>
+        <Route path="/student-dashboard" element={<StudentDashboard />} />
+        <Route path="/institution-dashboard" element={<InstitutionDashboard />} />
+        <Route path="/general-dashboard" element={<GeneralDashboard />} />
+      </Route>
       
       {/* Main App Routes with Layout */}
       <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
