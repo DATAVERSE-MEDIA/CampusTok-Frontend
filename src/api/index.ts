@@ -49,95 +49,100 @@ apiClient.interceptors.response.use(
 export const authApi = {
   login: (credentials: { email: string; password: string; userType?: string }) => {
     // If endpoint doesn't support userType, we'll handle it gracefully
-    return apiClient.post('/auth/login', credentials).catch((error) => {
-      // For testing: return dummy response if endpoint doesn't exist or returns 401/400
-      if (error.response?.status === 404 || error.response?.status === 401 || error.response?.status === 400 || error.code === 'ERR_NETWORK') {
-        console.log('Using dummy login response for testing (status:', error.response?.status || 'network error', ')')
-        // Return a successful response for testing purposes
-        return Promise.resolve({
-          data: {
-            user: {
-              id: Date.now().toString(),
-              email: credentials.email,
-              name: credentials.email.split('@')[0],
-              userType: credentials.userType || 'general',
-              role: credentials.userType || 'general',
-              // Add default student/institution data for testing
-              school: credentials.userType === 'student' ? 'University of Lagos' : null,
-              department: credentials.userType === 'student' ? 'Civil Engineering' : null
-            },
-            token: 'dummy-token-' + Date.now()
-          }
-        })
-      }
-      throw error
-    })
+    return apiClient.post('/auth/login', credentials)
+    //  .catch((error) => {
+    //   // For testing: return dummy response if endpoint doesn't exist or returns 401/400
+    //   if (error.response?.status === 404 || error.code === 'ERR_NETWORK' || error.code === 'ECONNREFUSED') {
+    //     console.log('Using dummy login response for testing (status:', error.response?.status || 'network error', ')')
+    //     // Return a successful response for testing purposes
+    //     return Promise.resolve({
+    //       data: {
+    //         user: {
+    //           id: Date.now().toString(),
+    //           email: credentials.email,
+    //           name: credentials.email.split('@')[0],
+    //           userType: credentials.userType || 'general',
+    //           role: credentials.userType || 'general',
+    //           // Add default student/institution data for testing
+    //           school: credentials.userType === 'student' ? 'University of Lagos' : null,
+    //           department: credentials.userType === 'student' ? 'Civil Engineering' : null
+    //         },
+    //         token: 'dummy-token-' + Date.now()
+    //       }
+    //     })
+    //   }
+    //   throw error
+    // })
   },
   
   register: (userData: {full_name:string, email: string; password: string; role?: string }) => {
-    return apiClient.post('/auth/register', userData).catch((error: any) => {
-      // For testing: return dummy response if endpoint doesn't exist or returns error
-      if (error.response?.status === 404 || error.response?.status === 400 || error.code === 'ERR_NETWORK') {
-        console.log('Using dummy registration response for testing')
-        // Return a successful response matching axios response structure
-        return Promise.resolve({
-          data: {
-            status: true,
-            message: "User created successfully, Please check your mail to verify your email address.",
-            data: {
-              id: `mock-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-              full_name: userData.full_name,
-              email: userData.email,
-              role: userData.role || "general",
-              verification_token: Math.floor(1000 + Math.random() * 9000).toString(),
-              is_onboarding_completed: false,
-              profile_picture: null,
-              is_verified: false,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            }
-          },
-          status: 200,
-          statusText: 'OK',
-          headers: {},
-          config: {}
-        } as any)
-      }
-      throw error
-    })
+    return apiClient.post('/auth/register', userData)
+    
+    // .catch((error: any) => {
+    //   // For testing: return dummy response if endpoint doesn't exist or returns error
+    //   if (error.response?.status === 404 || error.response?.status === 400 || error.code === 'ERR_NETWORK') {
+    //     console.log('Using dummy registration response for testing')
+    //     // Return a successful response matching axios response structure
+    //     return Promise.resolve({
+    //       data: {
+    //         status: true,
+    //         message: "User created successfully, Please check your mail to verify your email address.",
+    //         data: {
+    //           id: `mock-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    //           full_name: userData.full_name,
+    //           email: userData.email,
+    //           role: userData.role || "general",
+    //           verification_token: Math.floor(1000 + Math.random() * 9000).toString(),
+    //           is_onboarding_completed: false,
+    //           profile_picture: null,
+    //           is_verified: false,
+    //           created_at: new Date().toISOString(),
+    //           updated_at: new Date().toISOString()
+    //         }
+    //       },
+    //       status: 200,
+    //       statusText: 'OK',
+    //       headers: {},
+    //       config: {}
+    //     } as any)
+    //   }
+    //   throw error
+    // })
   },
   
   verifyEmail: (token: string) => {
     // Handle verify email with token as query param
-    return apiClient.post(`/auth/verify-email?token=${encodeURIComponent(token)}`).catch((error: any) => {
-      // For testing: return dummy response if endpoint doesn't exist
-      if (error.response?.status === 404 || error.code === 'ERR_NETWORK') {
-        const testTokens = ['1234', '0000', '1111', '9999']
-        if (testTokens.includes(token)) {
-          return Promise.resolve({
-            data: {
-              status: true,
-              message: "Email verified successfully",
-              data: {
-                verified: true,
-                token: 'dummy-verified-token-' + Date.now()
-              }
-            }
-          })
-        } else {
-          return Promise.reject({
-            response: {
-              data: {
-                message: 'Invalid verification code. Try 1234, 0000, 1111, or 9999 for testing.'
-              },
-              status: 400
-            },
-            message: 'Invalid verification code'
-          })
-        }
-      }
-      throw error
-    })
+    return apiClient.post(`/auth/verify-email?token=${encodeURIComponent(token)}`)
+    
+    // .catch((error: any) => {
+    //   // For testing: return dummy response if endpoint doesn't exist
+    //   if (error.response?.status === 404 || error.code === 'ERR_NETWORK') {
+    //     const testTokens = ['1234', '0000', '1111', '9999']
+    //     if (testTokens.includes(token)) {
+    //       return Promise.resolve({
+    //         data: {
+    //           status: true,
+    //           message: "Email verified successfully",
+    //           data: {
+    //             verified: true,
+    //             token: 'dummy-verified-token-' + Date.now()
+    //           }
+    //         }
+    //       })
+    //     } else {
+    //       return Promise.reject({
+    //         response: {
+    //           data: {
+    //             message: 'Invalid verification code. Try 1234, 0000, 1111, or 9999 for testing.'
+    //           },
+    //           status: 400
+    //         },
+    //         message: 'Invalid verification code'
+    //       })
+    //     }
+    //   }
+    //   throw error
+    // })
   },
   
   logout: () => apiClient.post('/auth/logout'),

@@ -290,41 +290,16 @@ export default function Login() {
         redirectBasedOnUserType(userType);
       },
       onError: (error: any) => {
-        if (
-          error?.response?.status === 404 ||
-          error?.response?.status === 401 ||
-          error?.response?.status === 400 ||
-          error?.message?.includes("network")
-        ) {
-          // Dummy login for testing
-          const dummyUser = {
-            userType: activeTab,
-            role: activeTab,
-            name: activeTab === "general" 
-              ? generalForm.username.split("@")[0] || "User"
-              : activeTab === "student"
-              ? `Student ${studentForm.matricNumber}`
-              : institutionForm.institutionName,
-            email: loginData.email,
-            isAuthenticated: true,
-            ...(activeTab === "student" && {
-              institution: studentForm.institution,
-              matricNumber: studentForm.matricNumber,
-              department: studentForm.department,
-              level: studentForm.level,
-            }),
-            ...(activeTab === "institution" && {
-              institutionName: institutionForm.institutionName,
-            }),
-          };
-          authStoreLogin(dummyUser);
-          redirectBasedOnUserType(activeTab);
-        } else {
-          setErrors({
-            submit: error?.response?.data?.message || error?.message || "Login failed. Please try again.",
-          });
-          setIsLoading(false);
-        }
+        console.error("Login failed:", error);
+        // Handle 401 and other errors properly
+        const errorMessage =  error.response?.data?.detail ||  error.response?.data?.message || 
+                           error.message || 
+                           "Login failed. Please check your credentials.";
+        
+        setErrors({
+          submit: errorMessage,
+        });
+        setIsLoading(false);
       },
       onSettled: () => {
         if (!isLoading) {

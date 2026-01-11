@@ -17,8 +17,7 @@ export const useLogin = () => {
   const loginStore = useAuthStore(state => state.login)
 
   return useMutation({
-    mutationFn: (credentials: { email: string; password: string; userType?: string }) =>
-      authApi.login(credentials).then(res => res.data),
+    mutationFn: (credentials: { email: string; password: string; userType?: string }) => authApi.login(credentials).then(res => res.data),
     onSuccess: (data, variables) => {
       // Update Zustand store with user data including userType
       // Preserve userType from credentials if not in response
@@ -38,6 +37,11 @@ export const useLogin = () => {
       // Invalidate user profile query
       queryClient.invalidateQueries({ queryKey: authKeys.profile() })
     },
+    onError: (error: any) => {
+      console.error('Login mutation error:', error)
+      // You can handle specific error types here if needed
+      // The error will be available in the mutation result for the component to use
+    }
   })
 }
 
