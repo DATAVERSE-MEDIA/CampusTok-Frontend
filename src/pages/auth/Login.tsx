@@ -88,6 +88,7 @@ export default function Login() {
     department: "",
     level: "",
     password: "",
+    email:""
   });
   
   const [institutionForm, setInstitutionForm] = useState({
@@ -211,6 +212,11 @@ export default function Login() {
       if (!studentForm.department) newErrors.department = "Department is required";
       if (!studentForm.level) newErrors.level = "Level is required";
       if (!studentForm.password) newErrors.password = "Password is required";
+      if (!studentForm.email ) newErrors.email="Email is required" ;
+      if (studentForm.email && !/\S+@\S+\.\S+/.test(studentForm.email)) {
+        newErrors.email = "Please enter a valid email";
+      }
+
     } else if (activeTab === "institution") {
       if (!institutionForm.institutionName.trim()) newErrors.institutionName = "Institution name is required";
       if (!institutionForm.email.trim()) newErrors.email = "Email is required";
@@ -237,7 +243,7 @@ export default function Login() {
       };
     } else if (activeTab === "student") {
       return {
-        email: `${studentForm.matricNumber}@${studentForm.institution.toLowerCase().replace(/\s+/g, "")}.edu`,
+        email: studentForm.email,//`${studentForm.matricNumber}@${studentForm.institution.toLowerCase().replace(/\s+/g, "")}.edu`,
         password: studentForm.password,
         userType: "student",
         institution: studentForm.institution,
@@ -279,6 +285,7 @@ export default function Login() {
               matricNumber: studentForm.matricNumber,
               department: studentForm.department,
               level: studentForm.level,
+              email: studentForm.email
             }),
             ...(activeTab === "institution" && {
               institutionName: institutionForm.institutionName,
@@ -430,6 +437,23 @@ export default function Login() {
         </select>
       </div>
       {errors.level && <p className="text-sm text-red-600">{errors.level}</p>}
+
+
+       <div className="relative">
+        <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+        <input
+          type="email"
+          name="email"
+          value={studentForm.email}
+          onChange={handleStudentInputChange}
+          disabled={isLoading || googleAuthLoading}
+          className={`w-full pl-10 pr-4 py-3 bg-white rounded-lg border text-sm ${
+            errors.email ? "border-red-500" : "border-gray-300"
+          } focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50`}
+          placeholder="Email"
+        />
+      </div>
+      {errors.email && <p className="text-sm text-red-600">{errors.email}</p>}
 
       <div className="relative">
         <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
