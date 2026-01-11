@@ -40,7 +40,8 @@ export default function StudentDashboard() {
 
       // Filter by school if selected, or get general feed
       if (selectedSchool?.id) {
-        params.filters = { school_id: selectedSchool.id };
+       // params.filters = { school_id: selectedSchool.id };
+       params.school_scope= selectedSchool?.name
       }
 
       const response = await apiClient.get("/posts", { params });

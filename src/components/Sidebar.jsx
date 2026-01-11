@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "../store/useAuthStore";
 import { useAppStore } from "../store/useAppStore";
+import { schoolApi } from "../api";
 import {
   User,
   MessageSquare,
@@ -19,7 +20,10 @@ import {
   BookOpen,
   AtSign,
   Building2,
+  Book,
+  Loader2
 } from "lucide-react";
+
 
 // General account menu items - matching Figma
 const generalMenuItems = [
@@ -52,9 +56,10 @@ export default function Sidebar({ isOpen, setIsOpen }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { logout, user, userType } = useAuthStore();
-  const { selectedSchool, setSelectedSchool, schools } = useAppStore();
+  const { selectedSchool, setSelectedSchool, schools ,setSchools} = useAppStore();
   const [showSchoolDropdown, setShowSchoolDropdown] = useState(false);
   const [showSettingsDropdown, setShowSettingsDropdown] = useState(false);
+   const [isLoadingSchools, setIsLoadingSchools] = useState(false);
 
   // Determine which menu items to show based on user type or route
   const effectiveUserType =
@@ -64,6 +69,84 @@ export default function Sidebar({ isOpen, setIsOpen }) {
       : location.pathname.includes("student")
       ? "student"
       : null);
+
+
+  // Fetch schools from API
+  const fetchSchools = async () => {
+    setIsLoadingSchools(true);
+    
+    try {
+      const response = await schoolApi.getAllSchools();
+      const schoolsData = response.data.data || response.data || [];
+
+     // console.log("schools ::",JSON.stringify(schoolsData))
+      
+      // Format the schools data
+      const formattedSchools = schoolsData.map((school) => ({
+        id: school.id || school._id,
+        name: school.name || school.institution_name || school.full_name,
+        
+        code: school.code || school.abbreviation || school.short_name,
+        logo: school.logo || school.profile_picture || school.image_url,
+        address: school.address || school.location,
+        type: school.type || "university",
+      }));
+      
+      setSchools(formattedSchools);
+      
+      // If no school is selected yet and we have schools, select the first one
+      if (!selectedSchool && formattedSchools.length > 0) {
+        setSelectedSchool(formattedSchools[0]);
+      }
+      
+    } catch (error) {
+      console.error("Error fetching schools:", error);
+      
+      // Mock data for testing
+      // const mockSchools = [
+      //   {
+      //     id: 1,
+      //     name: "University of Lagos",
+      //     code: "UNILAG",
+      //     logo: null,
+      //     address: "University Road, Lagos Mainland Akoka, Yaba, Lagos",
+      //     type: "university",
+      //   },
+      //   {
+      //     id: 2,
+      //     name: "Harvard University",
+      //     code: "HARVARD",
+      //     logo: null,
+      //     address: "Cambridge, Massachusetts, USA",
+      //     type: "university",
+      //   },
+      //   {
+      //     id: 3,
+      //     name: "University of Ibadan",
+      //     code: "UI",
+      //     logo: null,
+      //     address: "Ibadan, Oyo State, Nigeria",
+      //     type: "university",
+      //   },
+      // ];
+      
+      // setSchools(mockSchools);
+      // if (!selectedSchool && mockSchools.length > 0) {
+      //   setSelectedSchool(mockSchools[0]);
+      // }
+    } finally {
+      setIsLoadingSchools(false);
+    }
+  };
+
+  // Fetch schools on component mount
+  useEffect(() => {
+    if (schools.length === 0) {
+      fetchSchools();
+    }
+  }, []);
+
+  
 
   // Debug: Log to verify userType detection
   useEffect(() => {
@@ -156,7 +239,63 @@ export default function Sidebar({ isOpen, setIsOpen }) {
                   <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase mb-1">
                     Select School/Institution
                   </div>
-                  {schools.map((school) => (
+
+                  {isLoadingSchools ? (
+                    <div className="px-4 py-3 text-center">
+                      <Loader2 className="w-4 h-4 animate-spin mx-auto" />
+                      <p className="text-xs text-gray-500 mt-1">Loading schools...</p>
+                    </div>
+                  ) : schools.length > 0 ? (
+                    schools.map((school) => (
+                      <button
+                        key={school.id}
+                        onClick={() => {
+                          setSelectedSchool(school);
+                          setShowSchoolDropdown(false);
+                          setIsOpen(false);
+                          // Navigate to dashboard for the selected school
+                          // if (location.pathname === "/") {
+                          //   window.location.reload();
+                          // } else {
+                          //   navigate("/");
+                          // }
+                        }}
+                        className={`w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100 transition-colors flex items-center gap-3 ${
+                          selectedSchool?.id === school.id
+                            ? "bg-gray-100 text-gray-900"
+                            : "text-gray-900"
+                        }`}
+                      >
+                        <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 bg-gray-200 flex items-center justify-center">
+                          {school.logo ? (
+                            <img
+                              src={school.logo}
+                              alt={school.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-blue-100 flex items-center justify-center">
+                              <Book className="w-4 h-4 text-blue-600" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-sm truncate">
+                            {school.name}
+                          </div>
+                          <div className="text-xs text-gray-500">{school.code}</div>
+                        </div>
+                      </button>
+                    ))
+                   ) : (
+                    <div className="px-4 py-3 text-center">
+                      <p className="text-xs text-gray-500">No schools available</p>
+                    </div>
+                    )}
+                
+
+
+                  {/* {schools.map((school) => (
                     <button
                       key={school.id}
                       onClick={() => {
@@ -181,7 +320,9 @@ export default function Sidebar({ isOpen, setIsOpen }) {
                       </div>
                       <div className="text-xs text-gray-500">{school.code}</div>
                     </button>
-                  ))}
+                  ))} */}
+
+
                 </div>
               </div>
             </>

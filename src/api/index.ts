@@ -166,19 +166,19 @@ export const authApi = {
 }
 
 export const schoolApi = {
-  getAllSchools: () => apiClient.get('/schools'),
+  getAllSchools: () => apiClient.get('/auth/institutions'),
   
-  getSchoolById: (id: string | number) => apiClient.get(`/schools/${id}`),
+  getSchoolById: (id: string | number) => apiClient.get(`/institutions/${id}`),
   
   searchSchools: (query: string) =>
-    apiClient.get('/schools/search', { params: { q: query } }),
+    apiClient.get('/institutions/search', { params: { q: query } }),
   
-  createSchool: (schoolData: any) => apiClient.post('/schools', schoolData),
+  createSchool: (schoolData: any) => apiClient.post('/institutions', schoolData),
   
   updateSchool: (id: string | number, schoolData: any) =>
-    apiClient.put(`/schools/${id}`, schoolData),
+    apiClient.put(`/institutions/${id}`, schoolData),
   
-  deleteSchool: (id: string | number) => apiClient.delete(`/schools/${id}`),
+  deleteSchool: (id: string | number) => apiClient.delete(`/institutions/${id}`),
 
   getSchoolsPaginated: (params: {
     page?: number;
@@ -204,7 +204,7 @@ export const schoolApi = {
     }
     
     const queryString = queryParams.toString();
-    const url = queryString ? `/schools?${queryString}` : '/schools';
+    const url = queryString ? `/institutions?${queryString}` : '/institutions';
     
     return apiClient.get(url);
   },
