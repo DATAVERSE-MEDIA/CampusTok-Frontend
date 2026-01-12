@@ -79,7 +79,7 @@ export default function Signup() {
         console.error("Registration failed:", error);
         // Handle API errors
         setErrors({
-          submit:
+          submit:  error.response?.data?.detail ||
             error?.response?.data?.message ||
             error?.message ||
             "Registration failed. Please try again.",
