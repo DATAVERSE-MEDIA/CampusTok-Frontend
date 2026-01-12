@@ -174,7 +174,8 @@ export default function Sidebar({ isOpen, setIsOpen ,onCreatePostClick}) {
 
     onCreatePostClick()
   };
-
+ 
+  console.log("user:" ,JSON.stringify(user))
   return (
     <>
       {/* Mobile Sidebar */}
@@ -400,9 +401,9 @@ export default function Sidebar({ isOpen, setIsOpen ,onCreatePostClick}) {
             <div className="flex items-start gap-3">
               {/* Profile Picture - Larger circular, matching Figma */}
               <div className="w-14 h-14 lg:w-16 lg:h-16 rounded-full overflow-hidden bg-gray-200 flex-shrink-0 flex items-center justify-center">
-                {user?.profilePicture ? (
+                {user?.profile_picture ? (
                   <img
-                    src={user.profilePicture}
+                    src={user.profile_picture}
                     alt={user?.name || "User"}
                     className="w-full h-full object-cover"
                   />

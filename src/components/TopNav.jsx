@@ -76,7 +76,7 @@ export default function TopNav({ onMenuClick }) {
                 onClick={() => navigate('/profile')}
                 className="w-10 h-10 bg-red-600 rounded-full flex items-center justify-center text-white font-bold hover:opacity-80 transition-opacity flex-shrink-0"
               >
-                {user?.name?.charAt(0).toUpperCase() || 'F'}
+                {user?.full_name?.charAt(0).toUpperCase() || 'F'}
               </button>
               <form onSubmit={handleSearch} className="flex-1">
                 <div className="relative">

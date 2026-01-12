@@ -1021,11 +1021,11 @@ export default function Login() {
 
     login(loginData, {
       onSuccess: (data: any) => {
-        const userType = data.user?.userType || data.user?.role || activeTab;
-        
-        if (data.user && !data.user.userType && !data.user.role) {
+        const userType =  data.data?.userType || data.data?.role || activeTab; //data.user?.userType || data.user?.role || activeTab;
+       // console.log("data: ",JSON.stringify(data))
+        if (data.data ) {
           const updatedUser = {
-            ...data.user,
+            ...data.data,
             userType: activeTab,
             role: activeTab,
             ...(activeTab === "student" && {
@@ -1033,7 +1033,7 @@ export default function Login() {
               matricNumber: studentForm.matricNumber,
               department: studentForm.department,
               level: studentForm.level,
-              email: studentForm.email
+              email: studentForm.email,
             }),
             ...(activeTab === "institution" && {
               institutionName: institutionForm.institutionName,
