@@ -88,7 +88,7 @@ export default function Sidebar({ isOpen, setIsOpen ,onCreatePostClick}) {
         name: school.name || school.institution_name || school.full_name,
         
         code: school.code || school.abbreviation || school.short_name,
-        logo: school.logo || school.profile_picture || school.image_url,
+        logo: school.logo || school.institution_profile_picture || school.image_url,
         address: school.address || school.location,
         type: school.type || "university",
       }));
@@ -175,7 +175,7 @@ export default function Sidebar({ isOpen, setIsOpen ,onCreatePostClick}) {
     onCreatePostClick()
   };
  
-  console.log("user:" ,JSON.stringify(user))
+
   return (
     <>
       {/* Mobile Sidebar */}
