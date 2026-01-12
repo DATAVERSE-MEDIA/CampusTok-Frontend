@@ -52,7 +52,7 @@ const institutionMenuItems = [
   { path: "/notifications", icon: Bell, label: "Notification" },
 ];
 
-export default function Sidebar({ isOpen, setIsOpen }) {
+export default function Sidebar({ isOpen, setIsOpen ,onCreatePostClick}) {
   const navigate = useNavigate();
   const location = useLocation();
   const { logout, user, userType } = useAuthStore();
@@ -60,6 +60,7 @@ export default function Sidebar({ isOpen, setIsOpen }) {
   const [showSchoolDropdown, setShowSchoolDropdown] = useState(false);
   const [showSettingsDropdown, setShowSettingsDropdown] = useState(false);
    const [isLoadingSchools, setIsLoadingSchools] = useState(false);
+
 
   // Determine which menu items to show based on user type or route
   const effectiveUserType =
@@ -96,7 +97,7 @@ export default function Sidebar({ isOpen, setIsOpen }) {
       
       // If no school is selected yet and we have schools, select the first one
       if (!selectedSchool && formattedSchools.length > 0) {
-        setSelectedSchool(formattedSchools[0]);
+       // setSelectedSchool(formattedSchools[0]);
       }
       
     } catch (error) {
@@ -168,8 +169,10 @@ export default function Sidebar({ isOpen, setIsOpen }) {
   };
 
   const handleNavigate = (path) => {
-    navigate(path);
+    //navigate(path);
     setIsOpen(false); // Close sidebar on mobile after navigation
+
+    onCreatePostClick()
   };
 
   return (

@@ -2,14 +2,21 @@ import { useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import TopNav from './TopNav'
-
+import CreatePostModal from './CreatePostModal'
 export default function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+   const [isCreatePostModalOpen, setIsCreatePostModalOpen] = useState(false)
+
+    const handlePostCreated = () => {
+    // Refresh posts or show success message
+    console.log('Post created successfully!');
+    // You might want to trigger a refetch of posts here
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Sidebar - Hidden on mobile, shown on desktop */}
-      <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
+      <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen}  onCreatePostClick={() => setIsCreatePostModalOpen(true)}/>
       
       {/* Main Content */}
       <div className="flex-1 flex flex-col w-full lg:w-auto">
@@ -18,6 +25,12 @@ export default function Layout() {
           <Outlet />
         </main>
       </div>
+
+      <CreatePostModal
+        isOpen={isCreatePostModalOpen}
+        onClose={() => setIsCreatePostModalOpen(false)}
+        onPostCreated={handlePostCreated}
+      />
       
       {/* Overlay for mobile sidebar */}
       {sidebarOpen && (

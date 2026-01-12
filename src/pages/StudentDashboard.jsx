@@ -262,6 +262,8 @@ const PostCard = ({ post, onLike, onComment, onShare, formatCount }) => {
   const [liked, setLiked] = useState(post.liked || false);
   const [likesCount, setLikesCount] = useState(post.likes_count || 0);
 
+  console.log("post::" ,JSON.stringify(post))
+
   const handleLike = () => {
     const newLiked = !liked;
     setLiked(newLiked);
@@ -318,11 +320,11 @@ const PostCard = ({ post, onLike, onComment, onShare, formatCount }) => {
       </div>
 
       {/* Post Image - Matching Figma design */}
-      {post.media_url && (
+      {post.media && post.media.length >0 &&  (
         <div className="w-full">
           <div className="w-full aspect-square max-h-[600px] overflow-hidden bg-amber-50">
             <img
-              src={post.media_url}
+              src={post.media[0].url}
               alt="Post content"
               className="w-full h-full object-cover"
               loading="lazy"
@@ -332,7 +334,7 @@ const PostCard = ({ post, onLike, onComment, onShare, formatCount }) => {
       )}
 
       {/* Placeholder for academic image if no media */}
-      {!post.media_url && (
+      {!post.media && (
         <div className="w-full aspect-square max-h-[600px] overflow-hidden bg-gradient-to-br from-amber-50 to-amber-100 flex items-center justify-center">
           <div className="text-center">
             <div className="w-40 h-40 mx-auto mb-4 bg-red-600 rounded-full flex items-center justify-center shadow-lg">
