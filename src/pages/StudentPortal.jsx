@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { GraduationCap, ExternalLink, RefreshCw } from 'lucide-react'
 
 export default function StudentPortal() {
-  const [portalUrl] = useState('https://example-student-portal.edu')
+  const [portalUrl] = useState('https://studentportal.unilag.edu.ng/login')
   const [isLoading, setIsLoading] = useState(false)
 
   const handleRefresh = () => {
