@@ -46,7 +46,7 @@ const studentMenuItems = [
 const institutionMenuItems = [
   { path: "/institution-dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { path: "/community", icon: Users, label: "Communities" },
-  { path: "/chatbot", icon: Eye, label: "Sentiment Bank" },
+  { path: "/sentiment-bank", icon: Eye, label: "Sentiment Bank" },
   { path: "/faculties", icon: FileText, label: "Faculties / Department" },
   { path: "/courses", icon: BookOpen, label: "Courses / Programs" },
   { path: "/notifications", icon: Bell, label: "Notification" },
