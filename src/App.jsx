@@ -49,15 +49,15 @@ function App() {
         <Route path="/student-dashboard" element={<StudentDashboard />} />
         <Route path="/institution-dashboard" element={<InstitutionDashboard />} />
         <Route path="/general-dashboard" element={<GeneralDashboard />} />
+        <Route path="/video" element={<Video />} />
+        <Route path="/blog" element={<CampusBlog />} />
+        <Route path="/friends" element={<Friends />} />
       </Route>
       
       {/* Main App Routes with Layout */}
       <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
         <Route path="/" element={<LandingPage />} />
         <Route path="/chatbot" element={<Chatbot />} />
-        <Route path="/blog" element={<CampusBlog />} />
-        <Route path="/video" element={<Video />} />
-        <Route path="/friends" element={<Friends />} />
         <Route path="/search" element={<Search />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/messages" element={<Messages />} />
