@@ -846,7 +846,10 @@ export default function Login() {
     id: school.id,
     name: school.institution_name,
     code: school.code,
-    logo: school.logo
+    logo: school.institution_profile_picture,
+    website:school.institution_website,
+    email: school.institution_email,
+    location:school.institution_location
   }));
 
   // Check for verification success message
@@ -868,6 +871,7 @@ export default function Login() {
   const { mutate: login, isPending } = useLogin();
   const { mutate: googleAuth, isPending: isGoogleAuthPending } = useGoogleAuth();
   const { selectedSchool, setSelectedSchool, schools ,setSchools} = useAppStore();
+
 
   const handleContinueWithoutLogin = () => {
     authStoreLogin({
@@ -1029,7 +1033,7 @@ export default function Login() {
             userType: activeTab,
             role: activeTab,
             ...(activeTab === "student" && {
-              institution: studentForm.institution,
+              institution: institutionOptions[studentForm.institution],
               matricNumber: studentForm.matricNumber,
               department: studentForm.department,
               level: studentForm.level,
@@ -1040,6 +1044,9 @@ export default function Login() {
             }),
           };
           authStoreLogin(updatedUser);
+          if(activeTab === "student"){
+            setSelectedSchool(institutionOptions[studentForm.institution])
+          }
         }
         
         redirectBasedOnUserType(userType);
@@ -1129,9 +1136,9 @@ export default function Login() {
           ) : schoolsError ? (
             <option value="" disabled>Error loading institutions</option>
           ) : institutionOptions.length > 0 ? (
-            institutionOptions.map((institution) => (
-              <option key={institution.id} value={institution.name}>
-                {institution.name} ({institution.code})
+            institutionOptions.map((institution,index) => (
+              <option key={institution.id} value={index}>
+                {institution.name}
               </option>
             ))
           ) : (
@@ -1250,7 +1257,7 @@ export default function Login() {
           ) : institutionOptions.length > 0 ? (
             institutionOptions.map((institution) => (
               <option key={institution.id} value={institution.name}>
-                {institution.name} ({institution.code})
+                {institution.name}
               </option>
             ))
           ) : (
