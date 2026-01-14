@@ -375,9 +375,9 @@ export default function Sidebar({ isOpen, setIsOpen ,onCreatePostClick}) {
             <div className="flex items-center gap-3">
               {/* Profile Picture */}
               <div className="w-10 h-10 lg:w-12 lg:h-12 bg-red-600 rounded-full flex items-center justify-center text-white font-bold overflow-hidden flex-shrink-0">
-                {user?.profilePicture ? (
+                {user?.logo ? (
                   <img
-                    src={user.profilePicture}
+                    src={user.logo}
                     alt={user?.name || "User"}
                     className="w-full h-full object-cover"
                   />
@@ -402,19 +402,19 @@ export default function Sidebar({ isOpen, setIsOpen ,onCreatePostClick}) {
                 {user?.profile_picture ? (
                   <img
                     src={user.profile_picture}
-                    alt={user?.name || "User"}
+                    alt={user?.full_name || "User"}
                     className="w-full h-full object-cover"
                   />
                 ) : (
                   <div className="w-full h-full bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center text-white font-bold text-xl lg:text-2xl">
-                    {user?.name?.charAt(0) || "F"}
+                    {user?.full_name?.charAt(0) || "F"}
                   </div>
                 )}
               </div>
               <div className="flex-1 min-w-0">
                 {/* Name - Large, bold, dark grey - Matching Figma */}
                 <h3 className="font-bold text-gray-900 text-lg lg:text-xl mb-1 truncate">
-                  {user?.name || "Felix Gabriel"}
+                  {user?.full_name || "Felix Gabriel"}
                 </h3>
                 {/* Two separate lines - Always show both - Matching Figma exactly */}
                 <p className="text-xs lg:text-sm text-gray-600 leading-tight truncate">
