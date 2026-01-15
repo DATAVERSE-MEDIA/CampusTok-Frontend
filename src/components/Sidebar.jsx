@@ -338,9 +338,9 @@ export default function Sidebar({ isOpen, setIsOpen ,onCreatePostClick}) {
             <div className="flex items-start gap-3">
               {/* Larger University Crest/Logo - Matching Figma */}
               <div className="w-16 h-16 lg:w-20 lg:h-20 rounded-full overflow-hidden flex-shrink-0 border-2 border-gray-200 bg-white flex items-center justify-center">
-                {user?.logo || selectedSchool?.logo ? (
+                {user?.profile_picture || selectedSchool?.logo ? (
                   <img
-                    src={user.logo || selectedSchool.logo}
+                    src={user.profile_picture || selectedSchool.logo}
                     alt={user?.name || selectedSchool?.name || "Institution"}
                     className="w-full h-full object-cover"
                   />
