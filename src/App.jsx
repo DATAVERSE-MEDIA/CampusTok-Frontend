@@ -25,6 +25,7 @@ import GoogleCallback from './pages/auth/GoogleCallback'
 import StudentDashboard from './pages/StudentDashboard'
 import InstitutionDashboard from './pages/InstitutionDashboard'
 import GeneralDashboard from './pages/GeneralDashboard'
+import SentimentBank from './pages/SentimentBank'
 
 function ProtectedRoute({ children }) {
   const { isAuthenticated } = useAuthStore()
@@ -49,6 +50,7 @@ function App() {
         <Route path="/student-dashboard" element={<StudentDashboard />} />
         <Route path="/institution-dashboard" element={<InstitutionDashboard />} />
         <Route path="/general-dashboard" element={<GeneralDashboard />} />
+        <Route path="/sentiment-bank" element={<SentimentBank />} />
       </Route>
       
       {/* Main App Routes with Layout */}
