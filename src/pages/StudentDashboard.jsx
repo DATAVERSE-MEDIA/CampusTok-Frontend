@@ -394,8 +394,11 @@ const RightSidebar = ({ navigate }) => (
   <div className="w-full bg-gray-900 p-4 lg:p-6 flex items-start sticky top-0 h-fit">
     <div className="bg-gray-800 rounded-lg p-4 lg:p-6 w-full">
       <div className="flex items-center gap-2 lg:gap-3 mb-3 lg:mb-4">
-        <div className="w-10 h-10 lg:w-12 lg:h-12 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
-          <span className="text-white text-lg lg:text-xl">🤖</span>
+        <div className="w-10 h-10 lg:w-20 lg:h-20 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+          <span className="text-white text-lg lg:text-xl">
+            <img src="https://res.cloudinary.com/ddcfjn03w/image/upload/v1768467101/chatbot/chatbot%20icon.png"/>
+          </span>
+          
         </div>
         <div>
           <h3 className="font-bold text-white text-sm lg:text-base">

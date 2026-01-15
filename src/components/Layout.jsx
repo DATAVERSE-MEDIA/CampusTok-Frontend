@@ -2,10 +2,13 @@ import { useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import TopNav from './TopNav'
-import CreatePostModal from './CreatePostModal'
+import CreatePostModal from './CreatePostModal';
+
+//import  from '../pages/InstitutionDashboard'
+
 export default function Layout() {
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-   const [isCreatePostModalOpen, setIsCreatePostModalOpen] = useState(false)
+   const [sidebarOpen, setSidebarOpen] = useState(false);
+   const [isCreatePostModalOpen, setIsCreatePostModalOpen] = useState(false);
 
     const handlePostCreated = () => {
     // Refresh posts or show success message

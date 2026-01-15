@@ -276,11 +276,11 @@ const PostCard = ({ post, onLike, onComment, onShare, formatCount }) => {
       </div>
 
       {/* Post Image - Academic Regalia Image (Matching Figma) */}
-      {post.media_url ? (
+      {post.media && post.media.length >0 ?  (
         <div className="w-full">
           <div className="w-full aspect-square max-h-[600px] overflow-hidden">
             <img 
-              src={post.media_url} 
+              src={post.media[0].url} 
               alt="Post content"
               className="w-full h-full object-cover"
               loading="lazy"

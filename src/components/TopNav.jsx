@@ -103,7 +103,7 @@ export default function TopNav({ onMenuClick }) {
                     onClick={() => navigate(item.path)}
                     className="flex flex-col items-center gap-1 hover:opacity-80 transition-opacity"
                   >
-                    <Icon className={`w-5 h-5 xl:w-6 xl:h-6 ${isActive ? 'text-primary' : 'text-gray-600'}`} />
+                    <Icon className={`w-5 h-5 xl:w-6 xl:h-6 ${isActive ? 'text-primary' : 'text-gray-500'}`} />
                     <span className={`text-xs ${isActive ? 'text-primary font-medium' : 'text-gray-600'}`}>
                       {item.label}
                     </span>

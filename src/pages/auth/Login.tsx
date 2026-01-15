@@ -823,7 +823,7 @@ export default function Login() {
   });
   
   const [institutionForm, setInstitutionForm] = useState({
-    institutionName: "",
+    institution: "",
     email: "",
     password: "",
   });
@@ -968,7 +968,7 @@ export default function Login() {
         newErrors.email = "Please enter a valid email";
       }
     } else if (activeTab === "institution") {
-      if (!institutionForm.institutionName.trim()) newErrors.institutionName = "Institution name is required";
+      if (!institutionForm.institution.trim()) newErrors.institution = "Institution name is required";
       if (!institutionForm.email.trim()) newErrors.email = "Email is required";
       if (!institutionForm.password) newErrors.password = "Password is required";
       if (institutionForm.email && !/\S+@\S+\.\S+/.test(institutionForm.email)) {
@@ -1003,12 +1003,12 @@ export default function Login() {
         level: studentForm.level,
       };
     } else {
-      setSelectedSchool(institutionForm.institutionName);
+      setSelectedSchool(institutionForm.institution);
       return {
         email: institutionForm.email,
         password: institutionForm.password,
         userType: "institution",
-        institutionName: institutionForm.institutionName,
+        institutionName: institutionForm.institution,
       };
     }
   };
@@ -1040,7 +1040,7 @@ export default function Login() {
               email: studentForm.email,
             }),
             ...(activeTab === "institution" && {
-              institutionName: institutionForm.institutionName,
+              institutionName: institutionOptions[institutionForm.institution],
             }),
           };
           authStoreLogin(updatedUser);
@@ -1241,8 +1241,8 @@ export default function Login() {
       <div className="relative">
         <Building2 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
         <select
-          name="institutionName"
-          value={institutionForm.institutionName}
+          name="institution"
+          value={institutionForm.institution}
           onChange={handleInstitutionInputChange}
           disabled={isLoading || googleAuthLoading || isLoadingSchools}
           className={`w-full pl-10 pr-4 py-3 bg-white rounded-lg border text-sm appearance-none ${
@@ -1255,8 +1255,8 @@ export default function Login() {
           ) : schoolsError ? (
             <option value="" disabled>Error loading institutions</option>
           ) : institutionOptions.length > 0 ? (
-            institutionOptions.map((institution) => (
-              <option key={institution.id} value={institution.name}>
+            institutionOptions.map((institution,index) => (
+              <option key={institution.id} value={index}>
                 {institution.name}
               </option>
             ))
@@ -1265,7 +1265,7 @@ export default function Login() {
           )}
         </select>
       </div>
-      {errors.institutionName && <p className="text-sm text-red-600">{errors.institutionName}</p>}
+      {errors.institution && <p className="text-sm text-red-600">{errors.institution}</p>}
 
       <div className="relative">
         <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
