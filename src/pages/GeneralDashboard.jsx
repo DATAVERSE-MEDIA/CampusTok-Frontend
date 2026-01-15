@@ -334,11 +334,11 @@ const PostCard = ({ post, onLike, onComment, onShare, onFollow, isFollowing }) =
       </div>
 
       {/* Post Media - Lecture Hall Image Placeholder */}
-      {post.media_url ? (
+      {post.media  && post.media.length >0  ? (
         <div className="w-full">
           <div className="w-full aspect-video max-h-[600px] overflow-hidden">
             <img 
-              src={post.media_url} 
+              src={post.media[0].url} 
               alt="Post content"
               className="w-full h-full object-cover"
               loading="lazy"
