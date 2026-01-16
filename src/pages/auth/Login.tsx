@@ -1047,6 +1047,11 @@ export default function Login() {
           if(activeTab === "student"){
             setSelectedSchool(institutionOptions[studentForm.institution])
           }
+          else if(activeTab === "institution"){
+            setSelectedSchool(institutionOptions[institutionForm.institution])
+          }else {
+            setSelectedSchool(institutionOptions[0])
+          }
         }
         
         redirectBasedOnUserType(userType);
