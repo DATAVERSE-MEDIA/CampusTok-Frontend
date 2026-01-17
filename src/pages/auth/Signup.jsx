@@ -604,10 +604,7 @@ export default function Signup() {
             )}
 
             {/* Role Selection Dropdown */}
-            <div className="space-y-2">
-              {/* <label className="text-sm font-medium text-gray-700">
-                Select Your Role
-              </label> */}
+            {/* <div className="space-y-2">
               <div className="relative">
                 <button
                   type="button"
@@ -636,8 +633,6 @@ export default function Signup() {
                     showRoleDropdown ? "transform rotate-180" : ""
                   }`} />
                 </button>
-
-                {/* Dropdown Menu */}
                 {showRoleDropdown && (
                   <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                     {roleOptions.map((option) => {
@@ -677,7 +672,7 @@ export default function Signup() {
                   {errors.role}
                 </p>
               )}
-            </div>
+            </div> */}
 
 
             {/* {
