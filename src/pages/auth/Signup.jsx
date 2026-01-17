@@ -295,6 +295,8 @@ import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../store/useAuthStore";
 import { Mail, Lock, User, ArrowLeft, ChevronDown, Building2, GraduationCap, Users } from "lucide-react";
 import { useRegister } from "../../hooks/useAuth";
+import { useSchools } from "../../hooks/useSchools";
+import { useCreateInstitutionProfile, useCreateStudentProfile } from '../../hooks/useProfile'
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -308,8 +310,29 @@ export default function Signup() {
   });
   const [errors, setErrors] = useState({});
   const [showRoleDropdown, setShowRoleDropdown] = useState(false);
-
   const { mutate: register, isPending, error: apiError } = useRegister();
+  const [institutionName , setInstitutionName] = useState('');//
+
+   // Use the useSchools hook to fetch institutions from API
+  const { 
+    data: institutions = [], 
+    isLoading: isLoadingSchools, 
+    error: schoolsError 
+  } = useSchools();
+
+   const { mutate: createProfile, isPending:institutionIsPending, isSuccess, error } = useCreateInstitutionProfile();
+   const { mutate: createProfile2, isPending:studentIsPending } = useCreateStudentProfile()
+
+  // Transform schools data to institution options
+  const institutionOptions = institutions.map(school => ({
+    id: school.id,
+    name: school.institution_name,
+    code: school.code,
+    logo: school.institution_profile_picture,
+    website:school.institution_website,
+    email: school.institution_email,
+    location:school.institution_location
+  }));
 
   // Role options with icons and descriptions
   const roleOptions = [
@@ -401,6 +424,11 @@ export default function Signup() {
         }
         // Navigate to OTP verification screen
         navigate("/verify-email");
+        // if(formData.role === 'institution'){
+        //    handleCreateInstitutionProfile();
+        // }else if(formData === 'student'){
+        //    handleCreateStudentProfile();
+        // }
       },
       onError: (error) => {
         console.error("Registration failed:", error);
@@ -414,6 +442,68 @@ export default function Signup() {
       },
     });
   };
+
+
+  const handleCreateInstitutionProfile= () => {
+    const profileData = {
+      institution_email: formData.email , //"admin@unilag.edu.ng",
+      institution_id:  institutionName,
+      institution_name: institutionName
+    }
+    
+    createProfile(profileData, {
+      onSuccess: (data) => {
+        console.log('Profile created:', data)
+        navigate("/verify-email");
+      },
+      onError: (error) => {
+        console.error('Failed:', error)
+      }
+    })
+  }
+
+  const handleCreateStudentProfile= () => {
+    const profileData = {
+      department: '',
+      educational_level: "Undergraduate",
+      faculty: "Faculty of Science and Technology",
+      institution_id: "unilag",
+      institution_name: "University of Lagos",
+      matric_number: "150150150FG"
+    }
+    
+    createProfile2(profileData)
+  }
+
+
+  const InstitutionsComponent=institutions.length > 0 && <div className="relative">
+        <Building2 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+        <select
+          name="institution"
+          value={institutionName}
+          onChange={(e)=> setInstitutionName(institutionOptions[e.target.value].name)}
+          disabled={isLoadingSchools}
+          className={`w-full pl-10 pr-4 py-3 bg-white rounded-lg border text-sm appearance-none ${
+            errors.institutionName ? "border-red-500" : "border-gray-300"
+          } focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50`}
+        >
+          <option value="">Select Institution</option>
+          {isLoadingSchools ? (
+            <option value="" disabled>Loading institutions...</option>
+          ) : schoolsError ? (
+            <option value="" disabled>Error loading institutions</option>
+          ) : institutionOptions.length > 0 ? (
+            institutionOptions.map((institution,index) => (
+              <option key={institution.id} value={index}>
+                {institution.name}
+              </option>
+            ))
+          ) : (
+            <option value="" disabled>No institutions available</option>
+          )}
+        </select>
+      </div>
+
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-gray-50">
@@ -588,6 +678,12 @@ export default function Signup() {
                 </p>
               )}
             </div>
+
+
+            {/* {
+              selectedRole.value === "institution" && InstitutionsComponent
+            } */}
+            
 
             <div className="relative">
               <Lock className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />

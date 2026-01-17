@@ -760,10 +760,11 @@ import {
   School,
 } from "lucide-react";
 import { GoogleLogin } from "@react-oauth/google";
-import { useLogin, useGoogleAuth } from "../../hooks/useAuth";
+import { useLogin, useGoogleAuth , useCurrentUser} from "../../hooks/useAuth";
 import { useAuthStore } from "../../store/useAuthStore";
 import { useSchools } from "../../hooks/useSchools"; // Import the hook
 import { useAppStore } from "../../store/useAppStore";
+import { useCreateInstitutionProfile, useCreateStudentProfile } from '../../hooks/useProfile'
 
 const userTypes = [
   {
@@ -871,6 +872,10 @@ export default function Login() {
   const { mutate: login, isPending } = useLogin();
   const { mutate: googleAuth, isPending: isGoogleAuthPending } = useGoogleAuth();
   const { selectedSchool, setSelectedSchool, schools ,setSchools} = useAppStore();
+
+  const { mutate: createProfile, isPending:institutionIsPending, isSuccess, error } = useCreateInstitutionProfile();
+  const { mutate: createProfile2, isPending:studentIsPending } = useCreateStudentProfile()
+
 
 
   const handleContinueWithoutLogin = () => {
@@ -1045,10 +1050,16 @@ export default function Login() {
           };
           authStoreLogin(updatedUser);
           if(activeTab === "student"){
-            setSelectedSchool(institutionOptions[studentForm.institution])
+            setSelectedSchool(institutionOptions[studentForm.institution]);
+
+            //check if it has already been created
+            //handleCreateStudentProfile();
           }
           else if(activeTab === "institution"){
-            setSelectedSchool(institutionOptions[institutionForm.institution])
+            setSelectedSchool(institutionOptions[institutionForm.institution]);
+           
+            //check if it has already been created
+            //handleCreateInstitutionProfile();
           }else {
             setSelectedSchool(institutionOptions[0])
           }
@@ -1305,6 +1316,39 @@ export default function Login() {
       {errors.password && <p className="text-sm text-red-600">{errors.password}</p>}
     </div>
   );
+
+
+
+  const handleCreateInstitutionProfile= () => {
+    const profileData = {
+      institution_email: institutionForm.email , //"admin@unilag.edu.ng",
+      institution_id:  institutionOptions[institutionForm.institution],
+      institution_name: institutionOptions[institutionForm.institution]
+    }
+    
+    createProfile(profileData, {
+      onSuccess: (data) => {
+        console.log('Profile created:', data)
+       
+      },
+      onError: (error) => {
+        console.error('Failed:', error)
+      }
+    })
+  }
+
+  const handleCreateStudentProfile= () => {
+    const profileData = {
+      department: studentForm.department,
+      educational_level: studentForm.level,
+      faculty: studentForm.department,
+      institution_id: institutionOptions[studentForm.institution],
+      institution_name: institutionOptions[studentForm.institution],
+      matric_number: studentForm.matricNumber
+    }
+    
+    createProfile2(profileData)
+  }
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-gray-50">

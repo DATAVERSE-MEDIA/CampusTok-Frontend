@@ -114,236 +114,239 @@ import { useAppStore } from '../store/useAppStore'
 import { Heart, MessageCircle, Share2, BarChart3, MoreVertical, User } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { apiClient } from '../api'
+import { useAuthStore } from "../store/useAuthStore";
+import InstitutionLandingPage from './institutionLandingPage'
+import StudentLandingPage from './studentLandingPage'
 
-export default function LandingPage() {
-  const navigate = useNavigate()
-  const { selectedSchool } = useAppStore()
-  const [posts, setPosts] = useState([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState(null)
-  const [page, setPage] = useState(1)
-  const [hasMore, setHasMore] = useState(true)
+// export default function LandingPage() {
+//   const navigate = useNavigate()
+//   const { selectedSchool } = useAppStore()
+//   const [posts, setPosts] = useState([])
+//   const [isLoading, setIsLoading] = useState(true)
+//   const [error, setError] = useState(null)
+//   const [page, setPage] = useState(1)
+//   const [hasMore, setHasMore] = useState(true)
 
-  // Fetch posts based on selected school
-  useEffect(() => {
-    fetchPosts()
-  }, [selectedSchool, page])
+//   // Fetch posts based on selected school
+//   useEffect(() => {
+//     fetchPosts()
+//   }, [selectedSchool, page])
 
-  const fetchPosts = async () => {
-    setIsLoading(true)
-    setError(null)
+//   const fetchPosts = async () => {
+//     setIsLoading(true)
+//     setError(null)
     
-    try {
-      const params = {
-        page,
-        limit: 10,
-        sortBy: 'created_at',
-        sortOrder: 'desc'
-      }
+//     try {
+//       const params = {
+//         page,
+//         limit: 10,
+//         sortBy: 'created_at',
+//         sortOrder: 'desc'
+//       }
 
-      // If a school is selected, filter by school
-      if (selectedSchool?.id) {
-        params.filters = { school_id: selectedSchool.id }
-      }
+//       // If a school is selected, filter by school
+//       if (selectedSchool?.id) {
+//         params.filters = { school_id: selectedSchool.id }
+//       }
 
-      const response = await apiClient.get('/posts', { params })
-      const newPosts = response.data.data || response.data
+//       const response = await apiClient.get('/posts', { params })
+//       const newPosts = response.data.data || response.data
       
-      if (page === 1) {
-        setPosts(newPosts)
-      } else {
-        setPosts(prev => [...prev, ...newPosts])
-      }
+//       if (page === 1) {
+//         setPosts(newPosts)
+//       } else {
+//         setPosts(prev => [...prev, ...newPosts])
+//       }
       
-      // Check if there are more posts
-      setHasMore(newPosts.length > 0)
-    } catch (err) {
-      console.error('Error fetching posts:', err)
-      // Use dummy data for testing matching Figma
-      const dummyPost = {
-        id: 1,
-        content: "At the University of Lagos, a new electric bus was introduced to shuttle students around campus. Silent and eco-friendly, it quickly became a symbol of innovation, inspiring students wh...",
-        author: {
-          full_name: "University of Lagos",
-          profile_picture: null,
-          role: "institution",
-          address: "University Road Lagos Mainland Akoka, Yaba, Lagos"
-        },
-        media_url: null,
-        likes_count: 11700,
-        comments_count: 500,
-        shares_count: 1000,
-        views_count: 100000,
-        created_at: new Date().toISOString()
-      }
-      if (page === 1) {
-        setPosts([dummyPost])
-      }
-      setError(null) // Don't show error, use dummy data
-    } finally {
-      setIsLoading(false)
-    }
-  }
+//       // Check if there are more posts
+//       setHasMore(newPosts.length > 0)
+//     } catch (err) {
+//       console.error('Error fetching posts:', err)
+//       // Use dummy data for testing matching Figma
+//       const dummyPost = {
+//         id: 1,
+//         content: "At the University of Lagos, a new electric bus was introduced to shuttle students around campus. Silent and eco-friendly, it quickly became a symbol of innovation, inspiring students wh...",
+//         author: {
+//           full_name: "University of Lagos",
+//           profile_picture: null,
+//           role: "institution",
+//           address: "University Road Lagos Mainland Akoka, Yaba, Lagos"
+//         },
+//         media_url: null,
+//         likes_count: 11700,
+//         comments_count: 500,
+//         shares_count: 1000,
+//         views_count: 100000,
+//         created_at: new Date().toISOString()
+//       }
+//       if (page === 1) {
+//         setPosts([dummyPost])
+//       }
+//       setError(null) // Don't show error, use dummy data
+//     } finally {
+//       setIsLoading(false)
+//     }
+//   }
 
-  const loadMorePosts = () => {
-    if (!isLoading && hasMore) {
-      setPage(prev => prev + 1)
-    }
-  }
+//   const loadMorePosts = () => {
+//     if (!isLoading && hasMore) {
+//       setPage(prev => prev + 1)
+//     }
+//   }
 
-  const formatDate = (dateString) => {
-    const date = new Date(dateString)
-    const now = new Date()
-    const diffInHours = Math.floor((now - date) / (1000 * 60 * 60))
+//   const formatDate = (dateString) => {
+//     const date = new Date(dateString)
+//     const now = new Date()
+//     const diffInHours = Math.floor((now - date) / (1000 * 60 * 60))
     
-    if (diffInHours < 1) {
-      return 'Just now'
-    } else if (diffInHours < 24) {
-      return `${diffInHours}h ago`
-    } else {
-      return date.toLocaleDateString('en-US', { 
-        month: 'short', 
-        day: 'numeric',
-        year: 'numeric'
-      })
-    }
-  }
+//     if (diffInHours < 1) {
+//       return 'Just now'
+//     } else if (diffInHours < 24) {
+//       return `${diffInHours}h ago`
+//     } else {
+//       return date.toLocaleDateString('en-US', { 
+//         month: 'short', 
+//         day: 'numeric',
+//         year: 'numeric'
+//       })
+//     }
+//   }
 
-  // Handle post engagement
-  const handleLike = async (postId) => {
-    try {
-      await apiClient.post(`/posts/${postId}/like`)
-      // Update local state
-      setPosts(prev => prev.map(post => 
-        post.id === postId 
-          ? { ...post, likes_count: (post.likes_count || 0) + 1, liked: true }
-          : post
-      ))
-    } catch (error) {
-      console.error('Error liking post:', error)
-    }
-  }
+//   // Handle post engagement
+//   const handleLike = async (postId) => {
+//     try {
+//       await apiClient.post(`/posts/${postId}/like`)
+//       // Update local state
+//       setPosts(prev => prev.map(post => 
+//         post.id === postId 
+//           ? { ...post, likes_count: (post.likes_count || 0) + 1, liked: true }
+//           : post
+//       ))
+//     } catch (error) {
+//       console.error('Error liking post:', error)
+//     }
+//   }
 
-  const handleComment = (postId) => {
-    // Navigate to comments or open comment modal
-    console.log('Open comments for post:', postId)
-  }
+//   const handleComment = (postId) => {
+//     // Navigate to comments or open comment modal
+//     console.log('Open comments for post:', postId)
+//   }
 
-  const handleShare = async (postId) => {
-    try {
-      await apiClient.post(`/posts/${postId}/share`)
-      setPosts(prev => prev.map(post => 
-        post.id === postId 
-          ? { ...post, shares_count: (post.shares_count || 0) + 1 }
-          : post
-      ))
-    } catch (error) {
-      console.error('Error sharing post:', error)
-    }
-  }
+//   const handleShare = async (postId) => {
+//     try {
+//       await apiClient.post(`/posts/${postId}/share`)
+//       setPosts(prev => prev.map(post => 
+//         post.id === postId 
+//           ? { ...post, shares_count: (post.shares_count || 0) + 1 }
+//           : post
+//       ))
+//     } catch (error) {
+//       console.error('Error sharing post:', error)
+//     }
+//   }
 
-  // Loading skeleton
-  if (isLoading && posts.length === 0) {
-    return (
-      <div className="flex-1 flex flex-col lg:flex-row bg-white">
-        <div className="flex-1 overflow-y-auto w-full lg:w-auto">
-          <div className="max-w-3xl mx-auto p-3 sm:p-4 lg:p-6 pb-20 lg:pb-6">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="bg-white rounded-lg shadow-sm border border-gray-200 mb-4 lg:mb-6 animate-pulse">
-                <div className="p-3 lg:p-4">
-                  <div className="flex items-center gap-2 lg:gap-3">
-                    <div className="w-10 h-10 lg:w-12 lg:h-12 bg-gray-300 rounded-full flex-shrink-0"></div>
-                    <div className="flex-1">
-                      <div className="h-3 lg:h-4 bg-gray-300 rounded w-24 lg:w-32 mb-2"></div>
-                      <div className="h-2 lg:h-3 bg-gray-300 rounded w-20 lg:w-24"></div>
-                    </div>
-                  </div>
-                </div>
-                <div className="px-3 lg:px-4 pb-3 lg:pb-4">
-                  <div className="h-2 lg:h-3 bg-gray-300 rounded w-full mb-2"></div>
-                  <div className="h-2 lg:h-3 bg-gray-300 rounded w-3/4"></div>
-                </div>
-                <div className="w-full h-48 lg:h-96 bg-gray-300"></div>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="hidden lg:block lg:w-80 flex-shrink-0">
-          <RightSidebar navigate={navigate} />
-        </div>
-      </div>
-    )
-  }
+//   // Loading skeleton
+//   if (isLoading && posts.length === 0) {
+//     return (
+//       <div className="flex-1 flex flex-col lg:flex-row bg-white">
+//         <div className="flex-1 overflow-y-auto w-full lg:w-auto">
+//           <div className="max-w-3xl mx-auto p-3 sm:p-4 lg:p-6 pb-20 lg:pb-6">
+//             {[...Array(3)].map((_, i) => (
+//               <div key={i} className="bg-white rounded-lg shadow-sm border border-gray-200 mb-4 lg:mb-6 animate-pulse">
+//                 <div className="p-3 lg:p-4">
+//                   <div className="flex items-center gap-2 lg:gap-3">
+//                     <div className="w-10 h-10 lg:w-12 lg:h-12 bg-gray-300 rounded-full flex-shrink-0"></div>
+//                     <div className="flex-1">
+//                       <div className="h-3 lg:h-4 bg-gray-300 rounded w-24 lg:w-32 mb-2"></div>
+//                       <div className="h-2 lg:h-3 bg-gray-300 rounded w-20 lg:w-24"></div>
+//                     </div>
+//                   </div>
+//                 </div>
+//                 <div className="px-3 lg:px-4 pb-3 lg:pb-4">
+//                   <div className="h-2 lg:h-3 bg-gray-300 rounded w-full mb-2"></div>
+//                   <div className="h-2 lg:h-3 bg-gray-300 rounded w-3/4"></div>
+//                 </div>
+//                 <div className="w-full h-48 lg:h-96 bg-gray-300"></div>
+//               </div>
+//             ))}
+//           </div>
+//         </div>
+//         <div className="hidden lg:block lg:w-80 flex-shrink-0">
+//           <RightSidebar navigate={navigate} />
+//         </div>
+//       </div>
+//     )
+//   }
 
-  return (
-    <div className="flex-1 flex flex-col lg:flex-row bg-white">
-      {/* Main Content Area */}
-      <div className="flex-1 overflow-y-auto w-full lg:w-auto">
-        <div className="max-w-3xl mx-auto p-3 sm:p-4 lg:p-6 pb-20 lg:pb-6">
-          {/* Welcome Header */}
-          <div className="mb-4 lg:mb-6">
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
-              {selectedSchool ? `${selectedSchool.name} Feed` : 'Campus Feed'}
-            </h1>
-            <p className="text-sm sm:text-base text-gray-600 mt-1">
-              {selectedSchool 
-                ? `Latest posts from ${selectedSchool.name} community`
-                : 'Discover posts from campuses nationwide'
-              }
-            </p>
-          </div>
+//   return (
+//     <div className="flex-1 flex flex-col lg:flex-row bg-white">
+//       {/* Main Content Area */}
+//       <div className="flex-1 overflow-y-auto w-full lg:w-auto">
+//         <div className="max-w-3xl mx-auto p-3 sm:p-4 lg:p-6 pb-20 lg:pb-6">
+//           {/* Welcome Header */}
+//           <div className="mb-4 lg:mb-6">
+//             <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+//               {selectedSchool ? `${selectedSchool.name} Feed` : 'Campus Feed'}
+//             </h1>
+//             <p className="text-sm sm:text-base text-gray-600 mt-1">
+//               {selectedSchool 
+//                 ? `Latest posts from ${selectedSchool.name} community`
+//                 : 'Discover posts from campuses nationwide'
+//               }
+//             </p>
+//           </div>
 
-          {/* Posts */}
-          {posts.length === 0 && !isLoading ? (
-            <div className="text-center py-12">
-              <div className="w-24 h-24 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                <User className="w-12 h-12 text-gray-400" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">No posts yet</h3>
-              <p className="text-gray-600">
-                {selectedSchool 
-                  ? `Be the first to post in ${selectedSchool.name}`
-                  : 'Follow schools or create a post to get started'
-                }
-              </p>
-            </div>
-          ) : (
-            <>
-              {posts.map((post) => (
-                <PostCard 
-                  key={post.id} 
-                  post={post} 
-                  onLike={handleLike}
-                  onComment={handleComment}
-                  onShare={handleShare}
-                  formatDate={formatDate}
-                />
-              ))}
+//           {/* Posts */}
+//           {posts.length === 0 && !isLoading ? (
+//             <div className="text-center py-12">
+//               <div className="w-24 h-24 mx-auto bg-gray-100 rounded-full flex items-center justify-center mb-4">
+//                 <User className="w-12 h-12 text-gray-400" />
+//               </div>
+//               <h3 className="text-lg font-semibold text-gray-900 mb-2">No posts yet</h3>
+//               <p className="text-gray-600">
+//                 {selectedSchool 
+//                   ? `Be the first to post in ${selectedSchool.name}`
+//                   : 'Follow schools or create a post to get started'
+//                 }
+//               </p>
+//             </div>
+//           ) : (
+//             <>
+//               {posts.map((post) => (
+//                 <PostCard 
+//                   key={post.id} 
+//                   post={post} 
+//                   onLike={handleLike}
+//                   onComment={handleComment}
+//                   onShare={handleShare}
+//                   formatDate={formatDate}
+//                 />
+//               ))}
               
-              {/* Load More Button */}
-              {hasMore && (
-                <div className="text-center mt-6">
-                  <button
-                    onClick={loadMorePosts}
-                    disabled={isLoading}
-                    className="btn-primary px-6 py-2 rounded-lg disabled:opacity-50"
-                  >
-                    {isLoading ? 'Loading...' : 'Load More Posts'}
-                  </button>
-                </div>
-              )}
-            </>
-          )}
-        </div>
-      </div>
+//               {/* Load More Button */}
+//               {hasMore && (
+//                 <div className="text-center mt-6">
+//                   <button
+//                     onClick={loadMorePosts}
+//                     disabled={isLoading}
+//                     className="btn-primary px-6 py-2 rounded-lg disabled:opacity-50"
+//                   >
+//                     {isLoading ? 'Loading...' : 'Load More Posts'}
+//                   </button>
+//                 </div>
+//               )}
+//             </>
+//           )}
+//         </div>
+//       </div>
 
-      {/* Right Sidebar - Chatbot Widget - Hidden on mobile */}
-      <div className="hidden lg:block lg:w-80 flex-shrink-0">
-        <RightSidebar navigate={navigate} />
-      </div>
-    </div>
-  )
-}
+//       {/* Right Sidebar - Chatbot Widget - Hidden on mobile */}
+//       <div className="hidden lg:block lg:w-80 flex-shrink-0">
+//         <RightSidebar navigate={navigate} />
+//       </div>
+//     </div>
+//   )
+// }
 
 // Post Card Component
 const PostCard = ({ post, onLike, onComment, onShare, formatDate }) => {
@@ -515,3 +518,23 @@ const RightSidebar = ({ navigate }) => (
     </div>
   </div>
 )
+
+
+
+export default function LandingPage() {
+
+
+
+    const { logout, user, userType } = useAuthStore();
+
+    console.log(userType)
+
+    if(userType === 'institution')
+       return <InstitutionLandingPage/>
+    else if( userType === 'student')
+       return <StudentLandingPage/>
+
+    else 
+       return <div>general</div>
+
+}
