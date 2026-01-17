@@ -154,20 +154,30 @@ export default function LandingPage() {
     setError(null);
 
     try {
-      const params = {
-        page,
-        limit: 10,
-        sortBy: "created_at",
-        sortOrder: "desc",
-      };
+      let response;
 
-      // If a school is selected, filter by school
+      // If a school is selected, use the institution-specific endpoint
       if (selectedSchool?.id) {
-        params.filters = { school_id: selectedSchool.id };
+        response = await apiClient.get(
+          `/posts/institution/${selectedSchool.id}`,
+          {
+            params: {
+              skip: (page - 1) * 10,
+              limit: 10,
+            },
+          },
+        );
+      } else {
+        // Otherwise, get the general feed
+        response = await apiClient.get("/posts", {
+          params: {
+            skip: (page - 1) * 10,
+            limit: 10,
+          },
+        });
       }
 
-      const response = await apiClient.get("/posts", { params });
-      const newPosts = response.data.data || response.data;
+      const newPosts = response.data.data || response.data || [];
 
       if (page === 1) {
         setPosts(newPosts);
@@ -176,7 +186,7 @@ export default function LandingPage() {
       }
 
       // Check if there are more posts
-      setHasMore(newPosts.length > 0);
+      setHasMore(Array.isArray(newPosts) && newPosts.length > 0);
     } catch (err) {
       console.error("Error fetching posts:", err);
       // Use dummy data for testing matching Figma
@@ -185,10 +195,12 @@ export default function LandingPage() {
         content:
           "At the University of Lagos, a new electric bus was introduced to shuttle students around campus. Silent and eco-friendly, it quickly became a symbol of innovation, inspiring students wh...",
         author: {
-          full_name: "University of Lagos",
-          profile_picture: null,
+          full_name: selectedSchool?.name || "University of Lagos",
+          profile_picture: selectedSchool?.logo || null,
           role: "institution",
-          address: "University Road Lagos Mainland Akoka, Yaba, Lagos",
+          address:
+            selectedSchool?.address ||
+            "University Road Lagos Mainland Akoka, Yaba, Lagos",
         },
         media_url: null,
         likes_count: 11700,
