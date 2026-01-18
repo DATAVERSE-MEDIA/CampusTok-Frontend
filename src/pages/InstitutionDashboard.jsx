@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/useAuthStore";
@@ -39,8 +40,6 @@ const Counter = ({ value, duration = 2 }) => {
 
   return <span>{count.toLocaleString()}</span>;
 };
-
-import { useState, useEffect } from "react";
 
 // Mock data for the institution
 const MOCK_STATS = {
