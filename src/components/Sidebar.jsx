@@ -379,12 +379,12 @@ export default function Sidebar({ isOpen, setIsOpen, onCreatePostClick }) {
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  user?.name?.charAt(0) || "F"
+                  user?.full_name?.charAt(0) || "U"
                 )}
               </div>
               <div className="flex-1 min-w-0">
                 <h3 className="font-bold text-gray-900 text-sm lg:text-base truncate">
-                  {user?.name || "Felix Gabriel"}
+                  {user?.full_name || "Guest User"}
                 </h3>
                 <p className="text-xs lg:text-sm text-gray-600 truncate">
                   General Account
