@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Send, Trash2, Loader2, Sparkles } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 import { useAppStore } from "../store/useAppStore";
 import { useAuthStore } from "../store/useAuthStore";
 
@@ -243,18 +244,26 @@ Respond in a helpful, concise manner. Use markdown formatting for better readabi
             className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
           >
             <div
-              className={`max-w-[85%] rounded-2xl px-4 py-3 ${
+              className={`flex flex-col max-w-[85%] min-w-[15%] rounded-xl px-3 py-2 ${
                 message.role === "user"
-                  ? "bg-gray-900 text-white rounded-br-md"
-                  : "bg-gray-100 text-gray-900 rounded-bl-md"
+                  ? "bg-gray-200 text-gray-800 rounded-br-sm"
+                  : ""
               }`}
             >
-              <p className="text-sm whitespace-pre-wrap leading-relaxed">
-                {message.content}
-              </p>
+              {message.role === "user" ? (
+                <p className="text-base whitespace-pre-wrap leading-relaxed">
+                  {message.content}
+                </p>
+              ) : (
+                <div className="prose prose-sm prose-gray max-w-none prose-p:my-1 prose-headings:my-2 prose-ul:my-1 prose-li:my-0 prose-code:bg-gray-200 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:before:content-none prose-code:after:content-none">
+                  <ReactMarkdown>{message.content}</ReactMarkdown>
+                </div>
+              )}
               <p
-                className={`text-[10px] mt-2 ${
-                  message.role === "user" ? "text-gray-400" : "text-gray-400"
+                className={`text-[10px] mt-px ${
+                  message.role === "user"
+                    ? "text-gray-400 ml-auto"
+                    : "text-gray-400 mr-auto opacity-0"
                 }`}
               >
                 {formatTime(message.timestamp)}
@@ -267,7 +276,7 @@ Respond in a helpful, concise manner. Use markdown formatting for better readabi
         {isLoading && (
           <div className="flex justify-start">
             <div className="bg-gray-100 rounded-2xl rounded-bl-md px-4 py-3">
-              <div className="flex items-center gap-2 text-gray-500">
+              <div className="flex items-center gap-2 text-gray-500 animate-pulse">
                 <Loader2 className="w-4 h-4 animate-spin" />
                 <span className="text-sm">Thinking...</span>
               </div>
