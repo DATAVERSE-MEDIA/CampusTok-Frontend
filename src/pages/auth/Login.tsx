@@ -195,16 +195,28 @@ export default function Login() {
     login(loginData, {
       onSuccess: (data: any) => {
         // The useLogin hook already stores user data in auth store
-        // We just need to handle institution and redirect
+        // For DEMO: Route based on user's selected type, not API role
         const userData = data.user || data.data || data;
+
+        // DEMO MODE: Use selected userType first, fallback to API role
         const userType =
-          userData?.userType || userData?.role || formData.userType;
+          formData.userType ||
+          userData?.role ||
+          userData?.userType ||
+          "general";
 
         // Set default institution if available
         if (userData?.defaultInstitution) {
           setDefaultInstitution(userData.defaultInstitution);
           setSelectedSchool(userData.defaultInstitution);
         }
+
+        // Also store the selected userType in auth store for sidebar
+        authStoreLogin({
+          ...userData,
+          userType: userType,
+          role: userType,
+        });
 
         redirectBasedOnUserType(userType);
       },
