@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { motion } from "framer-motion";
 import { useAuthStore } from "../store/useAuthStore";
 import { useAppStore } from "../store/useAppStore";
 import { schoolApi } from "../api";
@@ -429,12 +430,29 @@ export default function Sidebar({ isOpen, setIsOpen, onCreatePostClick }) {
 
         {/* Navigation - Matching Figma */}
         <nav className="flex-1 p-2 lg:p-4 overflow-y-auto">
-          <ul className="space-y-1">
-            {menuItems.map((item) => {
+          <motion.ul
+            className="space-y-1"
+            initial="hidden"
+            animate="visible"
+            variants={{
+              hidden: { opacity: 0 },
+              visible: {
+                opacity: 1,
+                transition: { staggerChildren: 0.05 },
+              },
+            }}
+          >
+            {menuItems.map((item, index) => {
               const Icon = item.icon;
               const isActive = location.pathname === item.path;
               return (
-                <li key={item.path}>
+                <motion.li
+                  key={item.path}
+                  variants={{
+                    hidden: { opacity: 0, x: -20 },
+                    visible: { opacity: 1, x: 0 },
+                  }}
+                >
                   <button
                     onClick={() => handleNavigate(item.path)}
                     className={`w-full flex items-center gap-3 px-3 lg:px-4 py-2.5 lg:py-3 rounded-lg transition-colors text-sm lg:text-base ${
@@ -446,10 +464,10 @@ export default function Sidebar({ isOpen, setIsOpen, onCreatePostClick }) {
                     <Icon className="w-5 h-5 flex-shrink-0" />
                     <span className="truncate">{item.label}</span>
                   </button>
-                </li>
+                </motion.li>
               );
             })}
-          </ul>
+          </motion.ul>
         </nav>
 
         {/* Post Button - Matching Figma (dark purple border) */}

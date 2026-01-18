@@ -130,8 +130,8 @@
 //   )
 // }
 
-
 import { useEffect, useMemo, useRef, useState } from "react";
+import { motion } from "framer-motion";
 import {
   Heart,
   MessageCircle,
@@ -462,12 +462,19 @@ export default function CampusBlog() {
       </div>
 
       {/* Feed */}
-      {posts.map((post) => {
+      {posts.map((post, index) => {
         const isExpanded = expanded[post.id];
         const likeDisplay = getLikeDisplay(post);
 
         return (
-          <article key={post.id} className="bg-white rounded-2xl shadow p-5">
+          <motion.article
+            key={post.id}
+            className="bg-white rounded-2xl shadow p-5"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-50px" }}
+            transition={{ duration: 0.4, delay: index * 0.03 }}
+          >
             {/* Header */}
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-center gap-3">
@@ -554,7 +561,7 @@ export default function CampusBlog() {
                 <button
                   onClick={() =>
                     setReactionPickerFor((p) =>
-                      p === post.id ? null : post.id
+                      p === post.id ? null : post.id,
                     )
                   }
                   className={`flex items-center gap-2 transition active:scale-95 ${
@@ -606,7 +613,7 @@ export default function CampusBlog() {
                 {post.shares}
               </button>
             </div>
-          </article>
+          </motion.article>
         );
       })}
 

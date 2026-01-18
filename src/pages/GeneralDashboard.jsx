@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import { useAuthStore } from "../store/useAuthStore";
 import { useAppStore } from "../store/useAppStore";
 import {
@@ -254,16 +255,23 @@ export default function GeneralDashboard() {
             </div>
           ) : (
             <>
-              {posts.map((post) => (
-                <PostCard
+              {posts.map((post, index) => (
+                <motion.div
                   key={post.id}
-                  post={post}
-                  onLike={handleLike}
-                  onComment={handleComment}
-                  onShare={handleShare}
-                  onFollow={handleFollow}
-                  isFollowing={following.has(post.author?.id || post.id)}
-                />
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-50px" }}
+                  transition={{ duration: 0.4, delay: index * 0.05 }}
+                >
+                  <PostCard
+                    post={post}
+                    onLike={handleLike}
+                    onComment={handleComment}
+                    onShare={handleShare}
+                    onFollow={handleFollow}
+                    isFollowing={following.has(post.author?.id || post.id)}
+                  />
+                </motion.div>
               ))}
 
               {hasMore && (

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   SlidersHorizontal,
   Check,
@@ -189,10 +190,26 @@ export default function FriendsPage() {
 
       {/* Suggestions Grid */}
       {activeTab === "suggestions" && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+        <motion.div
+          className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4"
+          initial="hidden"
+          animate="visible"
+          variants={{
+            hidden: { opacity: 0 },
+            visible: {
+              opacity: 1,
+              transition: { staggerChildren: 0.05 },
+            },
+          }}
+        >
           {requests.map((person) => (
-            <div
+            <motion.div
               key={person.id}
+              variants={{
+                hidden: { opacity: 0, y: 20, scale: 0.95 },
+                visible: { opacity: 1, y: 0, scale: 1 },
+              }}
+              whileHover={{ y: -5, scale: 1.02 }}
               className="relative rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-shadow bg-white"
             >
               {/* Image */}
@@ -245,9 +262,9 @@ export default function FriendsPage() {
                   )}
                 </button>
               </div>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       )}
 
       {/* Toast */}
