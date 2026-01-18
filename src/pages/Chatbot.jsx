@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Send, Trash2, Loader2, Sparkles } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { useAppStore } from "../store/useAppStore";
@@ -238,39 +239,59 @@ Respond in a helpful, concise manner. Use markdown formatting for better readabi
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto space-y-4 pb-4 scroll-smooth">
-        {messages.map((message) => (
-          <div
-            key={message.id}
-            className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
-          >
-            <div
-              className={`flex flex-col max-w-[85%] min-w-[15%] rounded-xl px-3 py-2 ${
-                message.role === "user"
-                  ? "bg-gray-200 text-gray-800 rounded-br-sm"
-                  : ""
-              }`}
+        <AnimatePresence mode="popLayout">
+          {messages.map((message, index) => (
+            <motion.div
+              key={message.id}
+              initial={{ opacity: 0, y: 20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{
+                opacity: 0,
+                x: message.role === "user" ? 50 : -50,
+                transition: { duration: 0.2 },
+              }}
+              transition={{ duration: 0.3, delay: index * 0.05 }}
+              className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
             >
-              {message.role === "user" ? (
-                <p className="text-base whitespace-pre-wrap leading-relaxed">
-                  {message.content}
-                </p>
-              ) : (
-                <div className="prose prose-sm prose-gray max-w-none prose-p:my-1 prose-headings:my-2 prose-ul:my-1 prose-li:my-0 prose-code:bg-gray-200 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:before:content-none prose-code:after:content-none">
-                  <ReactMarkdown>{message.content}</ReactMarkdown>
-                </div>
-              )}
-              <p
-                className={`text-[10px] mt-px ${
+              <motion.div
+                whileHover={{ scale: 1.01 }}
+                className={`flex flex-col max-w-[85%] min-w-[15%] rounded-xl px-3 py-2 ${
                   message.role === "user"
-                    ? "text-gray-400 ml-auto"
-                    : "text-gray-400 mr-auto opacity-0"
+                    ? "bg-gray-200 text-gray-800 rounded-br-sm"
+                    : ""
                 }`}
               >
-                {formatTime(message.timestamp)}
-              </p>
-            </div>
-          </div>
-        ))}
+                {message.role === "user" ? (
+                  <p className="text-base whitespace-pre-wrap leading-relaxed">
+                    {message.content}
+                  </p>
+                ) : (
+                  <div className="prose prose-sm prose-gray max-w-none prose-p:my-1 prose-headings:my-2 prose-ul:my-1 prose-li:my-0 prose-code:bg-gray-200 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-sm prose-code:before:content-none prose-code:after:content-none">
+                    <ReactMarkdown
+                      components={{
+                        a: ({ node, ...props }) => (
+                          <a
+                            {...props}
+                            className="text-blue-500 hover:underline"
+                          />
+                        ),
+                      }}
+                    >
+                      {message.content}
+                    </ReactMarkdown>
+                  </div>
+                )}
+                <p
+                  className={`text-[10px] mt-px ${
+                    message.role === "user"
+                      ? "text-gray-400 ml-auto"
+                      : "text-gray-400 mr-auto opacity-0"
+                  }`}
+                ></p>
+              </motion.div>
+            </motion.div>
+          ))}
+        </AnimatePresence>
 
         {/* Loading indicator */}
         {isLoading && (
@@ -301,7 +322,7 @@ Respond in a helpful, concise manner. Use markdown formatting for better readabi
                 : "Ask me anything..."
             }
             disabled={isLoading}
-            className="flex-1 px-3 py-2 bg-transparent text-sm placeholder-gray-400 focus:outline-none disabled:opacity-50"
+            className="flex-1 px-3 py-2 bg-transparent text-base placeholder-gray-400 focus:outline-none disabled:opacity-50"
           />
           <button
             type="submit"
@@ -313,7 +334,7 @@ Respond in a helpful, concise manner. Use markdown formatting for better readabi
           </button>
         </div>
         <p className="text-center text-[10px] text-gray-400 mt-2">
-          Powered by Groq AI • Responses may not always be accurate
+          {/* Powered by Groq AI • Responses may not always be accurate */}
         </p>
       </form>
     </div>

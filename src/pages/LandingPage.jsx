@@ -109,6 +109,7 @@
 // }
 
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import { useAppStore } from "../store/useAppStore";
 import {
   Heart,
@@ -351,15 +352,22 @@ export default function LandingPage() {
             </div>
           ) : (
             <>
-              {posts.map((post) => (
-                <PostCard
+              {posts.map((post, index) => (
+                <motion.div
                   key={post.id}
-                  post={post}
-                  onLike={handleLike}
-                  onComment={handleComment}
-                  onShare={handleShare}
-                  formatDate={formatDate}
-                />
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-50px" }}
+                  transition={{ duration: 0.4, delay: index * 0.05 }}
+                >
+                  <PostCard
+                    post={post}
+                    onLike={handleLike}
+                    onComment={handleComment}
+                    onShare={handleShare}
+                    formatDate={formatDate}
+                  />
+                </motion.div>
               ))}
 
               {/* Load More Button */}
@@ -558,7 +566,7 @@ const RightSidebar = ({ navigate }) => (
         </div>
         <div>
           <h3 className="font-bold text-gray-900 text-sm lg:text-base">
-            HI, I'm ChatBot
+            HI, I'm CampusTokAI
           </h3>
         </div>
       </div>
@@ -569,7 +577,7 @@ const RightSidebar = ({ navigate }) => (
         onClick={() => navigate("/chatbot")}
         className="w-full bg-gray-700 hover:bg-gray-800 text-white py-2.5 lg:py-3 rounded-lg font-medium transition-colors text-sm lg:text-base"
       >
-        Use ChatBot
+        Chat
       </button>
     </div>
   </div>

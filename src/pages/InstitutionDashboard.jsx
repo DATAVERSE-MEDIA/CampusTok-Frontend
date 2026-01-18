@@ -106,7 +106,7 @@ const KPI_CARDS = [
     value: "12",
     change: "-3",
     positive: true,
-    icon: MessageSquareWarning,
+    icon: AlertTriangle,
   },
   {
     id: 4,
@@ -132,14 +132,14 @@ export default function InstitutionDashboard() {
   // Get cover image based on school
   const getCoverImage = () => {
     const schoolName = selectedSchool?.name?.toLowerCase() || "";
-    if (schoolName.includes("lagos") || schoolName.includes("unilag")) {
-      return "/blog-images/UNILAG Campus Blog Images/image 22.svg";
-    } else if (schoolName.includes("oau") || schoolName.includes("obafemi")) {
-      return "/blog-images/OAU Campus Blog images/image 28.svg";
-    } else if (schoolName.includes("yabatech") || schoolName.includes("yaba")) {
-      return "/blog-images/Yabatech Campus blog images/image 6.svg";
-    }
-    return "/blog-images/UNILAG Campus Blog Images/image 22.svg";
+    // if (schoolName.includes("lagos") || schoolName.includes("unilag")) {
+    //   return "/blog-images/UNILAG%20Campus%20Blog%20Images/image%2014.svg";
+    // } else if (schoolName.includes("oau") || schoolName.includes("obafemi")) {
+    //   return "/blog-images/OAU%20Campus%20Blog%20images/image%2028.svg";
+    // } else if (schoolName.includes("yabatech") || schoolName.includes("yaba")) {
+    //   return "/blog-images/Yabatech%20Campus%20blog%20images/image%206.svg";
+    // }
+    return "/blog-images/OAU%20Campus%20Blog%20images/image%2028.svg";
   };
 
   const container = {
@@ -172,7 +172,10 @@ export default function InstitutionDashboard() {
             alt="Cover"
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+          {/* Dark gradient for visual depth */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+          {/* White fade at bottom for text legibility */}
+          <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-white/80 to-transparent" />
         </motion.div>
 
         {/* Profile Section */}
