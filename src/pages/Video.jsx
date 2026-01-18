@@ -155,15 +155,18 @@
 //   )
 // }
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
   Play,
+  Pause,
   ThumbsUp,
   MessageCircle,
   Share2,
   Eye,
   ArrowUp,
   ArrowDown,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 
 const videos = [
@@ -176,6 +179,7 @@ const videos = [
     comments: 24,
     shares: 50,
     uploaded: "5 days ago",
+    src: "/vids/vid1.mp4",
     thumbnail:
       "https://images.unsplash.com/photo-1519452575417-564c1401ecc0?auto=format&fit=crop&w=1200&q=80",
   },
@@ -188,6 +192,7 @@ const videos = [
     comments: 67,
     shares: 89,
     uploaded: "2 days ago",
+    src: "/vids/vid2.mp4",
     thumbnail:
       "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=1200&q=80",
   },
@@ -195,33 +200,86 @@ const videos = [
 
 export default function Video() {
   const [activeIndex, setActiveIndex] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
+  const videoRef = useRef(null);
   const video = videos[activeIndex];
+
+  const togglePlay = () => {
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause();
+      } else {
+        videoRef.current.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+  const toggleMute = () => {
+    if (videoRef.current) {
+      videoRef.current.muted = !isMuted;
+      setIsMuted(!isMuted);
+    }
+  };
+
+  const handleVideoChange = (newIndex) => {
+    setActiveIndex(newIndex);
+    setIsPlaying(false);
+    if (videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.currentTime = 0;
+    }
+  };
 
   return (
     <div className="max-w-md mx-auto">
       {/* Card */}
-      <div className="relative h-[88vh] rounded-3xl overflow-hidden bg-white shadow">
-        {/* Image */}
-        <img
-          src={video.thumbnail}
-          alt={video.title}
+      <div className="relative h-[88vh] rounded-3xl overflow-hidden bg-black shadow">
+        {/* Video */}
+        <video
+          ref={videoRef}
+          src={video.src}
+          poster={video.thumbnail}
           className="absolute inset-0 w-full h-full object-cover"
-          onError={(e) => {
-            e.currentTarget.src =
-              "https://images.unsplash.com/photo-1520975922284-8b456906c813?auto=format&fit=crop&w=1200&q=80";
-          }}
+          loop
+          playsInline
+          muted={isMuted}
+          onPlay={() => setIsPlaying(true)}
+          onPause={() => setIsPlaying(false)}
         />
 
-        {/* Center play icon */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <Play className="w-20 h-20 text-white opacity-80" />
-        </div>
+        {/* Center play/pause overlay */}
+        <button
+          onClick={togglePlay}
+          className="absolute inset-0 flex items-center justify-center"
+        >
+          {!isPlaying && (
+            <div className="w-20 h-20 rounded-full bg-white/30 backdrop-blur flex items-center justify-center">
+              <Play className="w-10 h-10 text-white ml-1" />
+            </div>
+          )}
+        </button>
+
+        {/* Mute button (bottom left) */}
+        <button
+          onClick={toggleMute}
+          className="absolute bottom-28 left-4 w-10 h-10 rounded-full bg-white/20 backdrop-blur flex items-center justify-center z-10"
+        >
+          {isMuted ? (
+            <VolumeX className="w-5 h-5 text-white" />
+          ) : (
+            <Volume2 className="w-5 h-5 text-white" />
+          )}
+        </button>
 
         {/* Navigation arrows (top right) */}
         <div className="absolute top-4 right-4 flex gap-2 z-10">
           <button
             onClick={() =>
-              setActiveIndex((i) => (i === 0 ? videos.length - 1 : i - 1))
+              handleVideoChange(
+                activeIndex === 0 ? videos.length - 1 : activeIndex - 1,
+              )
             }
             className="w-10 h-10 rounded-xl bg-white shadow flex items-center justify-center"
           >
@@ -230,7 +288,9 @@ export default function Video() {
 
           <button
             onClick={() =>
-              setActiveIndex((i) => (i === videos.length - 1 ? 0 : i + 1))
+              handleVideoChange(
+                activeIndex === videos.length - 1 ? 0 : activeIndex + 1,
+              )
             }
             className="w-10 h-10 rounded-xl bg-white shadow flex items-center justify-center"
           >
@@ -246,10 +306,10 @@ export default function Video() {
             { icon: Share2, value: video.shares },
           ].map(({ icon: Icon, value }, idx) => (
             <div key={idx} className="flex flex-col items-center gap-1">
-              <div className="w-12 h-12 rounded-full bg-gray-100 shadow flex items-center justify-center">
-                <Icon className="w-6 h-6 text-gray-700" />
+              <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur shadow flex items-center justify-center">
+                <Icon className="w-6 h-6 text-white" />
               </div>
-              <span className="text-sm text-gray-700">{value}</span>
+              <span className="text-sm text-white font-medium">{value}</span>
             </div>
           ))}
         </div>
@@ -258,7 +318,9 @@ export default function Video() {
         <div className="absolute bottom-4 left-4 right-20 z-10">
           <div className="bg-white/80 backdrop-blur rounded-2xl p-4 shadow">
             <div className="flex items-center gap-3 mb-1">
-              <div className="w-9 h-9 rounded-full bg-gray-300" />
+              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center text-white font-bold">
+                {video.creator.charAt(0)}
+              </div>
               <p className="font-semibold text-gray-900">{video.creator}</p>
             </div>
 
