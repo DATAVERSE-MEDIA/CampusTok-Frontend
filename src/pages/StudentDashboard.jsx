@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppStore } from "../store/useAppStore";
 import { useAuthStore } from "../store/useAuthStore";
@@ -20,6 +20,25 @@ export default function StudentDashboard() {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
 
+  // Track previous school to detect changes
+  const prevSchoolRef = useRef(selectedSchool?.id);
+
+  // Reset pagination and posts when school changes
+  useEffect(() => {
+    if (prevSchoolRef.current !== selectedSchool?.id) {
+      console.log(
+        "[StudentDashboard] School changed from",
+        prevSchoolRef.current,
+        "to",
+        selectedSchool?.id,
+      );
+      setPosts([]);
+      setPage(1);
+      setHasMore(true);
+      prevSchoolRef.current = selectedSchool?.id;
+    }
+  }, [selectedSchool]);
+
   // Debug: Log user and userType to verify they're set correctly
   useEffect(() => {
     console.log("StudentDashboard - User:", user);
@@ -31,21 +50,33 @@ export default function StudentDashboard() {
     setIsLoading(true);
 
     try {
-      const params = {
-        page,
-        limit: 10,
-        sortBy: "created_at",
-        sortOrder: "desc",
-      };
+      let response;
+      const skip = (page - 1) * 10;
 
-      // Filter by school if selected, or get general feed
+      // If a school is selected, use the institution-specific endpoint
       if (selectedSchool?.id) {
-       // params.filters = { school_id: selectedSchool.id };
-       params.school_scope= selectedSchool?.name
+        console.log(
+          "[StudentDashboard] Fetching posts for institution:",
+          selectedSchool.id,
+        );
+        response = await apiClient.get(
+          `/posts/institution/${selectedSchool.id}`,
+          {
+            params: { skip, limit: 10 },
+          },
+        );
+      } else {
+        console.log("[StudentDashboard] Fetching general feed");
+        response = await apiClient.get("/posts", {
+          params: { skip, limit: 10 },
+        });
       }
 
-      const response = await apiClient.get("/posts", { params });
-      const newPosts = response.data.data || response.data || [];
+      console.log("[StudentDashboard] API Response:", response.data);
+      const newPosts = Array.isArray(response.data)
+        ? response.data
+        : response.data.data || [];
+      console.log("[StudentDashboard] Posts count:", newPosts.length);
 
       // For testing: use dummy data if API fails
       if (newPosts.length === 0 && page === 1) {
@@ -55,8 +86,8 @@ export default function StudentDashboard() {
             content:
               "At the University of Lagos, a new electric bus was introduced to shuttle students around campus. Silent and eco-friendly, it quickly became a symbol of innovation, inspiring students wh...",
             author: {
-              full_name: "University of Lagos",
-              profile_picture: null,
+              full_name: selectedSchool?.name || "University of Lagos",
+              profile_picture: selectedSchool?.logo || null,
               role: "institution",
             },
             media_url: null,
@@ -79,7 +110,7 @@ export default function StudentDashboard() {
 
       setHasMore(newPosts.length >= 10);
     } catch (err) {
-      console.error("Error fetching posts:", err);
+      console.error("[StudentDashboard] Error fetching posts:", err);
       // Use dummy data for testing
       setPosts([
         {
@@ -87,8 +118,8 @@ export default function StudentDashboard() {
           content:
             "At the University of Lagos, a new electric bus was introduced to shuttle students around campus. Silent and eco-friendly, it quickly became a symbol of innovation, inspiring students wh...",
           author: {
-            full_name: "University of Lagos",
-            profile_picture: null,
+            full_name: selectedSchool?.name || "University of Lagos",
+            profile_picture: selectedSchool?.logo || null,
             role: "institution",
           },
           media_url: null,
@@ -130,8 +161,8 @@ export default function StudentDashboard() {
         prev.map((post) =>
           post.id === postId
             ? { ...post, likes_count: (post.likes_count || 0) + 1, liked: true }
-            : post
-        )
+            : post,
+        ),
       );
     } catch (error) {
       // Update optimistically even if API fails
@@ -139,8 +170,8 @@ export default function StudentDashboard() {
         prev.map((post) =>
           post.id === postId
             ? { ...post, likes_count: (post.likes_count || 0) + 1, liked: true }
-            : post
-        )
+            : post,
+        ),
       );
     }
   };
@@ -156,16 +187,16 @@ export default function StudentDashboard() {
         prev.map((post) =>
           post.id === postId
             ? { ...post, shares_count: (post.shares_count || 0) + 1 }
-            : post
-        )
+            : post,
+        ),
       );
     } catch (error) {
       setPosts((prev) =>
         prev.map((post) =>
           post.id === postId
             ? { ...post, shares_count: (post.shares_count || 0) + 1 }
-            : post
-        )
+            : post,
+        ),
       );
     }
   };
@@ -262,7 +293,7 @@ const PostCard = ({ post, onLike, onComment, onShare, formatCount }) => {
   const [liked, setLiked] = useState(post.liked || false);
   const [likesCount, setLikesCount] = useState(post.likes_count || 0);
 
-  console.log("post::" ,JSON.stringify(post))
+  console.log("post::", JSON.stringify(post));
 
   const handleLike = () => {
     const newLiked = !liked;
@@ -320,7 +351,7 @@ const PostCard = ({ post, onLike, onComment, onShare, formatCount }) => {
       </div>
 
       {/* Post Image - Matching Figma design */}
-      {post.media && post.media.length >0 &&  (
+      {post.media && post.media.length > 0 && (
         <div className="w-full">
           <div className="w-full aspect-square max-h-[600px] overflow-hidden bg-amber-50">
             <img
@@ -396,9 +427,8 @@ const RightSidebar = ({ navigate }) => (
       <div className="flex items-center gap-2 lg:gap-3 mb-3 lg:mb-4">
         <div className="w-10 h-10 lg:w-20 lg:h-20 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
           <span className="text-white text-lg lg:text-xl">
-            <img src="https://res.cloudinary.com/ddcfjn03w/image/upload/v1768467101/chatbot/chatbot%20icon.png"/>
+            <img src="https://res.cloudinary.com/ddcfjn03w/image/upload/v1768467101/chatbot/chatbot%20icon.png" />
           </span>
-          
         </div>
         <div>
           <h3 className="font-bold text-white text-sm lg:text-base">

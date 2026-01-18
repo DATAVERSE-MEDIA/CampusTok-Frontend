@@ -79,7 +79,8 @@ export default function Signup() {
         console.error("Registration failed:", error);
         // Handle API errors
         setErrors({
-          submit:  error.response?.data?.detail ||
+          submit:
+            error.response?.data?.detail ||
             error?.response?.data?.message ||
             error?.message ||
             "Registration failed. Please try again.",
@@ -101,7 +102,7 @@ export default function Signup() {
             <User className="w-12 h-12 text-white" />
           </div>
           <h1 className="text-5xl xl:text-6xl font-bold text-white mb-4">
-            CampusTOK
+            CampusTok
           </h1>
           <p className="text-lg xl:text-xl text-white/90">
             Join thousands of students connecting on campus
@@ -126,14 +127,14 @@ export default function Signup() {
             <div className="w-16 h-16 bg-primary-600 rounded-full flex items-center justify-center mx-auto mb-4">
               <User className="w-8 h-8 text-white" />
             </div>
-            <h1 className="text-3xl font-bold text-primary-900">CampusTOK</h1>
+            <h1 className="text-3xl font-bold text-primary-900">CampusTok</h1>
           </div>
 
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 text-center">
             Create Account
           </h2>
           <p className="text-sm lg:text-base text-gray-600 mb-6 lg:mb-8 text-center">
-            Sign up to get started with CampusTOK
+            Sign up to get started with CampusTok
           </p>
 
           {/* Error Message */}

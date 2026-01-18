@@ -155,29 +155,32 @@ export default function LandingPage() {
 
     try {
       let response;
+      const skip = (page - 1) * 10;
 
       // If a school is selected, use the institution-specific endpoint
       if (selectedSchool?.id) {
+        console.log(
+          "[LandingPage] Fetching posts for institution:",
+          selectedSchool.id,
+        );
         response = await apiClient.get(
           `/posts/institution/${selectedSchool.id}`,
           {
-            params: {
-              skip: (page - 1) * 10,
-              limit: 10,
-            },
+            params: { skip, limit: 10 },
           },
         );
       } else {
-        // Otherwise, get the general feed
+        console.log("[LandingPage] Fetching general feed");
         response = await apiClient.get("/posts", {
-          params: {
-            skip: (page - 1) * 10,
-            limit: 10,
-          },
+          params: { skip, limit: 10 },
         });
       }
 
-      const newPosts = response.data.data || response.data || [];
+      console.log("[LandingPage] API Response:", response.data);
+      const newPosts = Array.isArray(response.data)
+        ? response.data
+        : response.data.data || [];
+      console.log("[LandingPage] Posts count:", newPosts.length);
 
       if (page === 1) {
         setPosts(newPosts);
@@ -185,10 +188,9 @@ export default function LandingPage() {
         setPosts((prev) => [...prev, ...newPosts]);
       }
 
-      // Check if there are more posts
-      setHasMore(Array.isArray(newPosts) && newPosts.length > 0);
+      setHasMore(newPosts.length > 0);
     } catch (err) {
-      console.error("Error fetching posts:", err);
+      console.error("[LandingPage] Error fetching posts:", err);
       // Use dummy data for testing matching Figma
       const dummyPost = {
         id: 1,

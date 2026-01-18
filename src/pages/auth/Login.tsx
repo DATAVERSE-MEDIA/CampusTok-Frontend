@@ -75,14 +75,14 @@
 //   const navigate = useNavigate();
 //   const location = useLocation();
 //   const { login: authStoreLogin, email: storedEmail } = useAuthStore();
-  
+
 //   const [activeTab, setActiveTab] = useState<"general" | "student" | "institution">("general");
-  
+
 //   const [generalForm, setGeneralForm] = useState({
 //     username: "",
 //     password: "",
 //   });
-  
+
 //   const [studentForm, setStudentForm] = useState({
 //     institution: "",
 //     matricNumber: "",
@@ -91,20 +91,18 @@
 //     password: "",
 //     email:""
 //   });
-  
+
 //   const [institutionForm, setInstitutionForm] = useState({
 //     institutionName: "",
 //     email: "",
 //     password: "",
 //   });
-  
+
 //   const [agreedToTerms, setAgreedToTerms] = useState(true);
 //   const [errors, setErrors] = useState<Record<string, string>>({});
 //   const [isLoading, setIsLoading] = useState(false);
 //   const [googleAuthLoading, setGoogleAuthLoading] = useState(false);
 //   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-
-  
 
 //   // Check for verification success message
 //   useEffect(() => {
@@ -124,11 +122,11 @@
 
 //   const { mutate: login, isPending } = useLogin();
 //   const { mutate: googleAuth, isPending: isGoogleAuthPending } = useGoogleAuth();
-//   const { 
-//     data: schoolsData = [], 
-//     isLoading: isLoadingSchools, 
+//   const {
+//     data: schoolsData = [],
+//     isLoading: isLoadingSchools,
 //     error: schoolsError,
-//     refetch: refetchSchools 
+//     refetch: refetchSchools
 //   } = useSchools();
 
 //   const handleContinueWithoutLogin = () => {
@@ -272,9 +270,9 @@
 
 //   const handleSubmit = async (e: React.FormEvent) => {
 //     e.preventDefault();
-    
+
 //     if (!validateForm()) return;
-    
+
 //     setIsLoading(true);
 //     setErrors({});
 
@@ -283,7 +281,7 @@
 //     login(loginData, {
 //       onSuccess: (data: any) => {
 //         const userType = data.user?.userType || data.user?.role || activeTab;
-        
+
 //         if (data.user && !data.user.userType && !data.user.role) {
 //           const updatedUser = {
 //             ...data.user,
@@ -302,16 +300,16 @@
 //           };
 //           authStoreLogin(updatedUser);
 //         }
-        
+
 //         redirectBasedOnUserType(userType);
 //       },
 //       onError: (error: any) => {
 //         console.error("Login failed:", error);
 //         // Handle 401 and other errors properly
-//         const errorMessage =  error.response?.data?.detail ||  error.response?.data?.message || 
-//                            error.message || 
+//         const errorMessage =  error.response?.data?.detail ||  error.response?.data?.message ||
+//                            error.message ||
 //                            "Login failed. Please check your credentials.";
-        
+
 //         setErrors({
 //           submit: errorMessage,
 //         });
@@ -446,7 +444,6 @@
 //         </select>
 //       </div>
 //       {errors.level && <p className="text-sm text-red-600">{errors.level}</p>}
-
 
 //        <div className="relative">
 //         <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -742,7 +739,6 @@
 //   );
 // }
 
-
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
@@ -805,29 +801,31 @@ export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
   const { login: authStoreLogin, email: storedEmail } = useAuthStore();
-  
-  const [activeTab, setActiveTab] = useState<"general" | "student" | "institution">("general");
-  
+
+  const [activeTab, setActiveTab] = useState<
+    "general" | "student" | "institution"
+  >("general");
+
   const [generalForm, setGeneralForm] = useState({
     username: "",
     password: "",
   });
-  
+
   const [studentForm, setStudentForm] = useState({
     institution: "",
     matricNumber: "",
     department: "",
     level: "",
     password: "",
-    email: ""
+    email: "",
   });
-  
+
   const [institutionForm, setInstitutionForm] = useState({
     institution: "",
     email: "",
     password: "",
   });
-  
+
   const [agreedToTerms, setAgreedToTerms] = useState(true);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
@@ -835,21 +833,21 @@ export default function Login() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // Use the useSchools hook to fetch institutions from API
-  const { 
-    data: institutions = [], 
-    isLoading: isLoadingSchools, 
-    error: schoolsError 
+  const {
+    data: institutions = [],
+    isLoading: isLoadingSchools,
+    error: schoolsError,
   } = useSchools();
 
   // Transform schools data to institution options
-  const institutionOptions = institutions.map(school => ({
+  const institutionOptions = institutions.map((school) => ({
     id: school.id,
     name: school.institution_name,
     code: school.code,
     logo: school.institution_profile_picture,
-    website:school.institution_website,
+    website: school.institution_website,
     email: school.institution_email,
-    location:school.institution_location
+    location: school.institution_location,
   }));
 
   // Check for verification success message
@@ -869,9 +867,10 @@ export default function Login() {
   }, [location.state, storedEmail]);
 
   const { mutate: login, isPending } = useLogin();
-  const { mutate: googleAuth, isPending: isGoogleAuthPending } = useGoogleAuth();
-  const { selectedSchool, setSelectedSchool, schools ,setSchools} = useAppStore();
-
+  const { mutate: googleAuth, isPending: isGoogleAuthPending } =
+    useGoogleAuth();
+  const { selectedSchool, setSelectedSchool, schools, setSchools } =
+    useAppStore();
 
   const handleContinueWithoutLogin = () => {
     authStoreLogin({
@@ -930,7 +929,9 @@ export default function Login() {
     }
   };
 
-  const handleStudentInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleStudentInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+  ) => {
     const { name, value } = e.target;
     setStudentForm((prev) => ({ ...prev, [name]: value }));
     if (errors[name]) {
@@ -938,7 +939,9 @@ export default function Login() {
     }
   };
 
-  const handleInstitutionInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleInstitutionInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+  ) => {
     const { name, value } = e.target;
     setInstitutionForm((prev) => ({ ...prev, [name]: value }));
     if (errors[name]) {
@@ -955,12 +958,16 @@ export default function Login() {
     }
 
     if (activeTab === "general") {
-      if (!generalForm.username.trim()) newErrors.username = "Username or email is required";
+      if (!generalForm.username.trim())
+        newErrors.username = "Username or email is required";
       if (!generalForm.password) newErrors.password = "Password is required";
     } else if (activeTab === "student") {
-      if (!studentForm.institution) newErrors.institution = "Institution is required";
-      if (!studentForm.matricNumber.trim()) newErrors.matricNumber = "Matric number is required";
-      if (!studentForm.department) newErrors.department = "Department is required";
+      if (!studentForm.institution)
+        newErrors.institution = "Institution is required";
+      if (!studentForm.matricNumber.trim())
+        newErrors.matricNumber = "Matric number is required";
+      if (!studentForm.department)
+        newErrors.department = "Department is required";
       if (!studentForm.level) newErrors.level = "Level is required";
       if (!studentForm.password) newErrors.password = "Password is required";
       if (!studentForm.email) newErrors.email = "Email is required";
@@ -968,10 +975,15 @@ export default function Login() {
         newErrors.email = "Please enter a valid email";
       }
     } else if (activeTab === "institution") {
-      if (!institutionForm.institution.trim()) newErrors.institution = "Institution name is required";
+      if (!institutionForm.institution.trim())
+        newErrors.institution = "Institution name is required";
       if (!institutionForm.email.trim()) newErrors.email = "Email is required";
-      if (!institutionForm.password) newErrors.password = "Password is required";
-      if (institutionForm.email && !/\S+@\S+\.\S+/.test(institutionForm.email)) {
+      if (!institutionForm.password)
+        newErrors.password = "Password is required";
+      if (
+        institutionForm.email &&
+        !/\S+@\S+\.\S+/.test(institutionForm.email)
+      ) {
         newErrors.email = "Please enter a valid email";
       }
     }
@@ -1015,9 +1027,9 @@ export default function Login() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
-    
+
     setIsLoading(true);
     setErrors({});
 
@@ -1025,9 +1037,9 @@ export default function Login() {
 
     login(loginData, {
       onSuccess: (data: any) => {
-        const userType =  data.data?.userType || data.data?.role || activeTab; //data.user?.userType || data.user?.role || activeTab;
-       // console.log("data: ",JSON.stringify(data))
-        if (data.data ) {
+        const userType = data.data?.userType || data.data?.role || activeTab; //data.user?.userType || data.user?.role || activeTab;
+        // console.log("data: ",JSON.stringify(data))
+        if (data.data) {
           const updatedUser = {
             ...data.data,
             userType: activeTab,
@@ -1044,19 +1056,21 @@ export default function Login() {
             }),
           };
           authStoreLogin(updatedUser);
-          if(activeTab === "student"){
-            setSelectedSchool(institutionOptions[studentForm.institution])
+          if (activeTab === "student") {
+            setSelectedSchool(institutionOptions[studentForm.institution]);
           }
         }
-        
+
         redirectBasedOnUserType(userType);
       },
       onError: (error: any) => {
         console.error("Login failed:", error);
-        const errorMessage = error.response?.data?.detail || error.response?.data?.message || 
-                           error.message || 
-                           "Login failed. Please check your credentials.";
-        
+        const errorMessage =
+          error.response?.data?.detail ||
+          error.response?.data?.message ||
+          error.message ||
+          "Login failed. Please check your credentials.";
+
         setErrors({
           submit: errorMessage,
         });
@@ -1097,7 +1111,9 @@ export default function Login() {
           placeholder="Username or Email"
         />
       </div>
-      {errors.username && <p className="text-sm text-red-600">{errors.username}</p>}
+      {errors.username && (
+        <p className="text-sm text-red-600">{errors.username}</p>
+      )}
 
       <div className="relative">
         <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -1113,7 +1129,9 @@ export default function Login() {
           placeholder="Password"
         />
       </div>
-      {errors.password && <p className="text-sm text-red-600">{errors.password}</p>}
+      {errors.password && (
+        <p className="text-sm text-red-600">{errors.password}</p>
+      )}
     </div>
   );
 
@@ -1132,21 +1150,29 @@ export default function Login() {
         >
           <option value="">Select Institution</option>
           {isLoadingSchools ? (
-            <option value="" disabled>Loading institutions...</option>
+            <option value="" disabled>
+              Loading institutions...
+            </option>
           ) : schoolsError ? (
-            <option value="" disabled>Error loading institutions</option>
+            <option value="" disabled>
+              Error loading institutions
+            </option>
           ) : institutionOptions.length > 0 ? (
-            institutionOptions.map((institution,index) => (
+            institutionOptions.map((institution, index) => (
               <option key={institution.id} value={index}>
                 {institution.name}
               </option>
             ))
           ) : (
-            <option value="" disabled>No institutions available</option>
+            <option value="" disabled>
+              No institutions available
+            </option>
           )}
         </select>
       </div>
-      {errors.institution && <p className="text-sm text-red-600">{errors.institution}</p>}
+      {errors.institution && (
+        <p className="text-sm text-red-600">{errors.institution}</p>
+      )}
 
       <div className="relative">
         <Hash className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -1162,7 +1188,9 @@ export default function Login() {
           placeholder="Matric Number"
         />
       </div>
-      {errors.matricNumber && <p className="text-sm text-red-600">{errors.matricNumber}</p>}
+      {errors.matricNumber && (
+        <p className="text-sm text-red-600">{errors.matricNumber}</p>
+      )}
 
       <div className="relative">
         <BookOpen className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -1177,11 +1205,15 @@ export default function Login() {
         >
           <option value="">Select Department/Faculty</option>
           {departments.map((dept) => (
-            <option key={dept} value={dept}>{dept}</option>
+            <option key={dept} value={dept}>
+              {dept}
+            </option>
           ))}
         </select>
       </div>
-      {errors.department && <p className="text-sm text-red-600">{errors.department}</p>}
+      {errors.department && (
+        <p className="text-sm text-red-600">{errors.department}</p>
+      )}
 
       <div className="relative">
         <GraduationCap className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -1196,7 +1228,9 @@ export default function Login() {
         >
           <option value="">Select Level</option>
           {levels.map((lvl) => (
-            <option key={lvl} value={lvl}>{lvl} Level</option>
+            <option key={lvl} value={lvl}>
+              {lvl} Level
+            </option>
           ))}
         </select>
       </div>
@@ -1232,7 +1266,9 @@ export default function Login() {
           placeholder="Password"
         />
       </div>
-      {errors.password && <p className="text-sm text-red-600">{errors.password}</p>}
+      {errors.password && (
+        <p className="text-sm text-red-600">{errors.password}</p>
+      )}
     </div>
   );
 
@@ -1251,21 +1287,29 @@ export default function Login() {
         >
           <option value="">Select Institution</option>
           {isLoadingSchools ? (
-            <option value="" disabled>Loading institutions...</option>
+            <option value="" disabled>
+              Loading institutions...
+            </option>
           ) : schoolsError ? (
-            <option value="" disabled>Error loading institutions</option>
+            <option value="" disabled>
+              Error loading institutions
+            </option>
           ) : institutionOptions.length > 0 ? (
-            institutionOptions.map((institution,index) => (
+            institutionOptions.map((institution, index) => (
               <option key={institution.id} value={index}>
                 {institution.name}
               </option>
             ))
           ) : (
-            <option value="" disabled>No institutions available</option>
+            <option value="" disabled>
+              No institutions available
+            </option>
           )}
         </select>
       </div>
-      {errors.institution && <p className="text-sm text-red-600">{errors.institution}</p>}
+      {errors.institution && (
+        <p className="text-sm text-red-600">{errors.institution}</p>
+      )}
 
       <div className="relative">
         <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -1297,7 +1341,9 @@ export default function Login() {
           placeholder="Password"
         />
       </div>
-      {errors.password && <p className="text-sm text-red-600">{errors.password}</p>}
+      {errors.password && (
+        <p className="text-sm text-red-600">{errors.password}</p>
+      )}
     </div>
   );
 
@@ -1314,7 +1360,7 @@ export default function Login() {
             <GraduationCap className="w-12 h-12 text-white" />
           </div>
           <h1 className="text-5xl xl:text-6xl font-bold text-white mb-4">
-            CampusTOK
+            CampusTok
           </h1>
           <p className="text-lg xl:text-xl text-white/90">
             Connect, Learn, and Grow Together
@@ -1374,12 +1420,16 @@ export default function Login() {
                         : "border-gray-200 bg-white hover:border-gray-300"
                     } disabled:opacity-50 disabled:cursor-not-allowed`}
                   >
-                    <Icon className={`w-5 h-5 ${
-                      isActive ? "text-primary-600" : "text-gray-600"
-                    }`} />
-                    <span className={`text-xs font-medium ${
-                      isActive ? "text-primary-900" : "text-gray-700"
-                    }`}>
+                    <Icon
+                      className={`w-5 h-5 ${
+                        isActive ? "text-primary-600" : "text-gray-600"
+                      }`}
+                    />
+                    <span
+                      className={`text-xs font-medium ${
+                        isActive ? "text-primary-900" : "text-gray-700"
+                      }`}
+                    >
                       {type.label}
                     </span>
                   </button>
@@ -1441,7 +1491,13 @@ export default function Login() {
 
           {/* Google Login */}
           <div className="flex justify-center mb-6">
-            <div className={isLoading || googleAuthLoading ? "opacity-50 pointer-events-none" : ""}>
+            <div
+              className={
+                isLoading || googleAuthLoading
+                  ? "opacity-50 pointer-events-none"
+                  : ""
+              }
+            >
               <GoogleLogin
                 onSuccess={handleGoogleSuccess}
                 onError={handleGoogleError}

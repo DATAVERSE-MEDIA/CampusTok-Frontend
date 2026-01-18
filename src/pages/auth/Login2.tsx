@@ -1036,7 +1036,7 @@ export default function Login() {
           ) {
             console.log(
               "Using dummy login for testing due to API error:",
-              error?.response?.status || error?.code
+              error?.response?.status || error?.code,
             );
             // Clear any previous errors
             setErrors({});
@@ -1071,127 +1071,128 @@ export default function Login() {
             setIsLoading(false);
           }
         },
-      }
+      },
     );
   };
 
   // In your Login component's handleSubmit function:
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  const newErrors = {
-    userType: "",
-    username: "",
-    password: "",
-  };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const newErrors = {
+      userType: "",
+      username: "",
+      password: "",
+    };
 
-  if (!formData.userType) {
-    newErrors.userType = "Please select a login type";
-  }
-  if (!formData.username.trim()) {
-    newErrors.username = "Username or email is required";
-  }
-  if (!formData.password) {
-    newErrors.password = "Password is required";
-  }
-  if (!agreedToTerms) {
-    alert("Please agree to Terms & Conditions");
-    return;
-  }
-
-  if (newErrors.userType || newErrors.username || newErrors.password) {
-    setErrors(newErrors);
-    return;
-  }
-
-  setIsLoading(true);
-
-  // Call login API with userType
-  login(
-    {
-      email: formData.username,
-      password: formData.password,
-      userType: formData.userType,
-    },
-    {
-      onSuccess: (data: any) => {
-        console.log("Login successful:", data);
-        // Ensure userType is set correctly
-        const userType =
-          data.user?.userType ||
-          data.user?.role ||
-          formData.userType ||
-          "general";
-
-        // Update auth store with correct userType if not already set
-        if (
-          data.user &&
-          !data.user.userType &&
-          !data.user.role &&
-          formData.userType
-        ) {
-          const updatedUser = {
-            ...data.user,
-            userType: formData.userType,
-            role: formData.userType,
-          };
-          authStoreLogin(updatedUser);
-        }
-
-        redirectBasedOnUserType(userType);
-      },
-      onError: (error: any) => {
-        console.error("Login failed:", error);
-        // Handle 401 and other errors properly
-        const errorMessage = error.response?.data?.message || 
-                           error.message || 
-                           "Login failed. Please check your credentials.";
-        
-        setErrors({
-          submit: errorMessage,
-        });
-        setIsLoading(false);
-        
-        // Don't use dummy login for 401 errors - show actual error
-        // Only use dummy for network errors or 404
-        // if (
-        //   error?.response?.status === 404 ||
-        //   error?.message?.includes("network") ||
-        //   error?.message?.includes("Network Error") ||
-        //   error?.code === "ERR_NETWORK" ||
-        //   error?.code === "ECONNREFUSED"
-        // ) {
-        //   console.log(
-        //     "Using dummy login for testing due to API error:",
-        //     error?.response?.status || error?.code
-        //   );
-        //   // Clear any previous errors
-        //   setErrors({});
-        //   const dummyUser = {
-        //     userType: formData.userType,
-        //     role: formData.userType,
-        //     name: formData.username.split("@")[0] || "User",
-        //     email: formData.username,
-        //     isAuthenticated: true,
-        //     school:
-        //       formData.userType === "student" ? "University of Lagos" : null,
-        //     department:
-        //       formData.userType === "student" ? "Civil Engineering" : null,
-        //   };
-        //   authStoreLogin(dummyUser);
-        //   redirectBasedOnUserType(formData.userType);
-        // }
-      },
-      onSettled: () => {
-        // This will run after both success and error
-        // Only reset loading if we haven't navigated away
-        if (isLoading) {
-          setIsLoading(false);
-        }
-      },
+    if (!formData.userType) {
+      newErrors.userType = "Please select a login type";
     }
-  );
-};
+    if (!formData.username.trim()) {
+      newErrors.username = "Username or email is required";
+    }
+    if (!formData.password) {
+      newErrors.password = "Password is required";
+    }
+    if (!agreedToTerms) {
+      alert("Please agree to Terms & Conditions");
+      return;
+    }
+
+    if (newErrors.userType || newErrors.username || newErrors.password) {
+      setErrors(newErrors);
+      return;
+    }
+
+    setIsLoading(true);
+
+    // Call login API with userType
+    login(
+      {
+        email: formData.username,
+        password: formData.password,
+        userType: formData.userType,
+      },
+      {
+        onSuccess: (data: any) => {
+          console.log("Login successful:", data);
+          // Ensure userType is set correctly
+          const userType =
+            data.user?.userType ||
+            data.user?.role ||
+            formData.userType ||
+            "general";
+
+          // Update auth store with correct userType if not already set
+          if (
+            data.user &&
+            !data.user.userType &&
+            !data.user.role &&
+            formData.userType
+          ) {
+            const updatedUser = {
+              ...data.user,
+              userType: formData.userType,
+              role: formData.userType,
+            };
+            authStoreLogin(updatedUser);
+          }
+
+          redirectBasedOnUserType(userType);
+        },
+        onError: (error: any) => {
+          console.error("Login failed:", error);
+          // Handle 401 and other errors properly
+          const errorMessage =
+            error.response?.data?.message ||
+            error.message ||
+            "Login failed. Please check your credentials.";
+
+          setErrors({
+            submit: errorMessage,
+          });
+          setIsLoading(false);
+
+          // Don't use dummy login for 401 errors - show actual error
+          // Only use dummy for network errors or 404
+          // if (
+          //   error?.response?.status === 404 ||
+          //   error?.message?.includes("network") ||
+          //   error?.message?.includes("Network Error") ||
+          //   error?.code === "ERR_NETWORK" ||
+          //   error?.code === "ECONNREFUSED"
+          // ) {
+          //   console.log(
+          //     "Using dummy login for testing due to API error:",
+          //     error?.response?.status || error?.code
+          //   );
+          //   // Clear any previous errors
+          //   setErrors({});
+          //   const dummyUser = {
+          //     userType: formData.userType,
+          //     role: formData.userType,
+          //     name: formData.username.split("@")[0] || "User",
+          //     email: formData.username,
+          //     isAuthenticated: true,
+          //     school:
+          //       formData.userType === "student" ? "University of Lagos" : null,
+          //     department:
+          //       formData.userType === "student" ? "Civil Engineering" : null,
+          //   };
+          //   authStoreLogin(dummyUser);
+          //   redirectBasedOnUserType(formData.userType);
+          // }
+        },
+        onSettled: () => {
+          // This will run after both success and error
+          // Only reset loading if we haven't navigated away
+          if (isLoading) {
+            setIsLoading(false);
+          }
+        },
+      },
+    );
+  };
 
   const redirectBasedOnUserType = (userType: string) => {
     setIsLoading(false);
@@ -1217,7 +1218,7 @@ const handleSubmit = async (e) => {
             <GraduationCap className="w-12 h-12 text-white" />
           </div>
           <h1 className="text-5xl xl:text-6xl font-bold text-white mb-4">
-            CampusTOK
+            CampusTok
           </h1>
           <p className="text-lg xl:text-xl text-white/90">
             Your gateway to campus information, learning and connection
@@ -1242,7 +1243,7 @@ const handleSubmit = async (e) => {
             <div className="w-16 h-16 bg-primary-600 rounded-full flex items-center justify-center mx-auto mb-4">
               <GraduationCap className="w-8 h-8 text-white" />
             </div>
-            <h1 className="text-3xl font-bold text-primary-900">CampusTOK</h1>
+            <h1 className="text-3xl font-bold text-primary-900">CampusTok</h1>
           </div>
 
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 text-center">

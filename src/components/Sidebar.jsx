@@ -21,9 +21,8 @@ import {
   AtSign,
   Building2,
   Book,
-  Loader2
+  Loader2,
 } from "lucide-react";
-
 
 // General account menu items - matching Figma
 const generalMenuItems = [
@@ -52,15 +51,15 @@ const institutionMenuItems = [
   { path: "/notifications", icon: Bell, label: "Notification" },
 ];
 
-export default function Sidebar({ isOpen, setIsOpen ,onCreatePostClick}) {
+export default function Sidebar({ isOpen, setIsOpen, onCreatePostClick }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { logout, user, userType } = useAuthStore();
-  const { selectedSchool, setSelectedSchool, schools ,setSchools} = useAppStore();
+  const { selectedSchool, setSelectedSchool, schools, setSchools } =
+    useAppStore();
   const [showSchoolDropdown, setShowSchoolDropdown] = useState(false);
   const [showSettingsDropdown, setShowSettingsDropdown] = useState(false);
-   const [isLoadingSchools, setIsLoadingSchools] = useState(false);
-
+  const [isLoadingSchools, setIsLoadingSchools] = useState(false);
 
   // Determine which menu items to show based on user type or route
   const effectiveUserType =
@@ -68,41 +67,40 @@ export default function Sidebar({ isOpen, setIsOpen ,onCreatePostClick}) {
     (location.pathname.includes("institution")
       ? "institution"
       : location.pathname.includes("student")
-      ? "student"
-      : null);
-
+        ? "student"
+        : null);
 
   // Fetch schools from API
   const fetchSchools = async () => {
     setIsLoadingSchools(true);
-    
+
     try {
       const response = await schoolApi.getAllSchools();
       const schoolsData = response.data.data || response.data || [];
 
-     // console.log("schools ::",JSON.stringify(schoolsData))
-      
+      // console.log("schools ::",JSON.stringify(schoolsData))
+
       // Format the schools data
       const formattedSchools = schoolsData.map((school) => ({
         id: school.id || school._id,
         name: school.name || school.institution_name || school.full_name,
-        
+
         code: school.code || school.abbreviation || school.short_name,
-        logo: school.logo || school.institution_profile_picture || school.image_url,
+        logo:
+          school.logo || school.institution_profile_picture || school.image_url,
         address: school.address || school.location,
         type: school.type || "university",
       }));
-      
+
       setSchools(formattedSchools);
-      
+
       // If no school is selected yet and we have schools, select the first one
       if (!selectedSchool && formattedSchools.length > 0) {
-       // setSelectedSchool(formattedSchools[0]);
+        // setSelectedSchool(formattedSchools[0]);
       }
-      
     } catch (error) {
       console.error("Error fetching schools:", error);
-      
+
       // Mock data for testing
       // const mockSchools = [
       //   {
@@ -130,7 +128,7 @@ export default function Sidebar({ isOpen, setIsOpen ,onCreatePostClick}) {
       //     type: "university",
       //   },
       // ];
-      
+
       // setSchools(mockSchools);
       // if (!selectedSchool && mockSchools.length > 0) {
       //   setSelectedSchool(mockSchools[0]);
@@ -147,8 +145,6 @@ export default function Sidebar({ isOpen, setIsOpen ,onCreatePostClick}) {
     }
   }, []);
 
-  
-
   // Debug: Log to verify userType detection
   useEffect(() => {
     console.log("Sidebar - UserType from store:", userType);
@@ -160,8 +156,8 @@ export default function Sidebar({ isOpen, setIsOpen ,onCreatePostClick}) {
     effectiveUserType === "institution"
       ? institutionMenuItems
       : effectiveUserType === "student"
-      ? studentMenuItems
-      : generalMenuItems;
+        ? studentMenuItems
+        : generalMenuItems;
 
   const handleLogout = () => {
     logout();
@@ -172,7 +168,6 @@ export default function Sidebar({ isOpen, setIsOpen ,onCreatePostClick}) {
     navigate(path);
     setIsOpen(false); // Close sidebar on mobile after navigation
   };
- 
 
   return (
     <>
@@ -204,7 +199,7 @@ export default function Sidebar({ isOpen, setIsOpen ,onCreatePostClick}) {
             className="w-full flex items-center gap-2 hover:opacity-80 transition-opacity"
           >
             <h1 className="text-lg lg:text-xl font-bold text-gray-900 flex-1 text-left">
-              CampusTOK
+              CampusTok
             </h1>
             {/* Small University Logo with Dropdown */}
             <div className="flex items-center gap-1">
@@ -245,7 +240,9 @@ export default function Sidebar({ isOpen, setIsOpen ,onCreatePostClick}) {
                   {isLoadingSchools ? (
                     <div className="px-4 py-3 text-center">
                       <Loader2 className="w-4 h-4 animate-spin mx-auto" />
-                      <p className="text-xs text-gray-500 mt-1">Loading schools...</p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Loading schools...
+                      </p>
                     </div>
                   ) : schools.length > 0 ? (
                     schools.map((school) => (
@@ -285,17 +282,19 @@ export default function Sidebar({ isOpen, setIsOpen ,onCreatePostClick}) {
                           <div className="font-medium text-sm truncate">
                             {school.name}
                           </div>
-                          <div className="text-xs text-gray-500">{school.code}</div>
+                          <div className="text-xs text-gray-500">
+                            {school.code}
+                          </div>
                         </div>
                       </button>
                     ))
-                   ) : (
+                  ) : (
                     <div className="px-4 py-3 text-center">
-                      <p className="text-xs text-gray-500">No schools available</p>
+                      <p className="text-xs text-gray-500">
+                        No schools available
+                      </p>
                     </div>
-                    )}
-                
-
+                  )}
 
                   {/* {schools.map((school) => (
                     <button
@@ -323,8 +322,6 @@ export default function Sidebar({ isOpen, setIsOpen ,onCreatePostClick}) {
                       <div className="text-xs text-gray-500">{school.code}</div>
                     </button>
                   ))} */}
-
-
                 </div>
               </div>
             </>
