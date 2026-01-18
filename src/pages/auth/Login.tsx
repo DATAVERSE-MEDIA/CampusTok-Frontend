@@ -1,744 +1,3 @@
-// import { useState, useEffect } from "react";
-// import { useNavigate, useLocation } from "react-router-dom";
-// import {
-//   User,
-//   Lock,
-//   ArrowLeft,
-//   GraduationCap,
-//   Building2,
-//   Users,
-//   LogIn,
-//   CheckCircle,
-//   Mail,
-//   BookOpen,
-//   Hash,
-//   School, // Use School instead of University
-//   Globe,
-//   Briefcase,
-//   Home,
-// } from "lucide-react";
-// import { GoogleLogin } from "@react-oauth/google";
-// import { useLogin, useGoogleAuth } from "../../hooks/useAuth";
-// import { useAuthStore } from "../../store/useAuthStore";
-// import { useSchools } from "../../hooks/useSchools";
-
-// const userTypes = [
-//   {
-//     value: "general",
-//     label: "General User",
-//     icon: Users,
-//     description: "For general platform access",
-//   },
-//   {
-//     value: "student",
-//     label: "Student",
-//     icon: GraduationCap,
-//     description: "Login as a student",
-//   },
-//   {
-//     value: "institution",
-//     label: "Institution",
-//     icon: Building2,
-//     description: "Login as an institution",
-//   },
-// ];
-
-// const institutions = [
-//   "University of Lagos",
-//   "Harvard University",
-//   "MIT",
-//   "Stanford University",
-//   "Yale University",
-//   "Oxford University",
-//   "Cambridge University",
-//   "University of Ibadan",
-//   "Covenant University",
-//   "Federal University of Technology",
-// ];
-
-// const departments = [
-//   "Computer Science",
-//   "Electrical Engineering",
-//   "Mechanical Engineering",
-//   "Civil Engineering",
-//   "Medicine",
-//   "Law",
-//   "Business Administration",
-//   "Economics",
-//   "Psychology",
-//   "Architecture",
-// ];
-
-// const levels = ["100", "200", "300", "400", "500", "Postgraduate"];
-
-// export default function Login() {
-//   const navigate = useNavigate();
-//   const location = useLocation();
-//   const { login: authStoreLogin, email: storedEmail } = useAuthStore();
-
-//   const [activeTab, setActiveTab] = useState<"general" | "student" | "institution">("general");
-
-//   const [generalForm, setGeneralForm] = useState({
-//     username: "",
-//     password: "",
-//   });
-
-//   const [studentForm, setStudentForm] = useState({
-//     institution: "",
-//     matricNumber: "",
-//     department: "",
-//     level: "",
-//     password: "",
-//     email:""
-//   });
-
-//   const [institutionForm, setInstitutionForm] = useState({
-//     institutionName: "",
-//     email: "",
-//     password: "",
-//   });
-
-//   const [agreedToTerms, setAgreedToTerms] = useState(true);
-//   const [errors, setErrors] = useState<Record<string, string>>({});
-//   const [isLoading, setIsLoading] = useState(false);
-//   const [googleAuthLoading, setGoogleAuthLoading] = useState(false);
-//   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-
-//   // Check for verification success message
-//   useEffect(() => {
-//     if (location.state?.message && location.state?.verified) {
-//       setSuccessMessage(location.state.message);
-//       if (location.state.email) {
-//         setGeneralForm((prev) => ({ ...prev, username: location.state.email }));
-//       } else if (storedEmail) {
-//         setGeneralForm((prev) => ({ ...prev, username: storedEmail }));
-//       }
-//       setTimeout(() => {
-//         setSuccessMessage(null);
-//         window.history.replaceState({}, document.title);
-//       }, 5000);
-//     }
-//   }, [location.state, storedEmail]);
-
-//   const { mutate: login, isPending } = useLogin();
-//   const { mutate: googleAuth, isPending: isGoogleAuthPending } = useGoogleAuth();
-//   const {
-//     data: schoolsData = [],
-//     isLoading: isLoadingSchools,
-//     error: schoolsError,
-//     refetch: refetchSchools
-//   } = useSchools();
-
-//   const handleContinueWithoutLogin = () => {
-//     authStoreLogin({
-//       userType: "general",
-//       name: "Guest User",
-//       isGuest: true,
-//     });
-//     navigate("/general-dashboard", { replace: true });
-//   };
-
-//   const handleGoogleSuccess = async (credentialResponse: any) => {
-//     const token = credentialResponse.credential;
-//     if (!token) return;
-
-//     setGoogleAuthLoading(true);
-//     try {
-//       googleAuth(token, {
-//         onSuccess: (data) => {
-//           const userType = data.user?.userType || data.user?.role || "general";
-//           redirectBasedOnUserType(userType);
-//         },
-//         onError: () => {
-//           const dummyUser = {
-//             userType: "general",
-//             name: "Google User",
-//             email: "user@gmail.com",
-//           };
-//           authStoreLogin(dummyUser);
-//           navigate("/general-dashboard", { replace: true });
-//         },
-//         onSettled: () => {
-//           setGoogleAuthLoading(false);
-//         },
-//       });
-//     } catch (error) {
-//       const dummyUser = {
-//         userType: "general",
-//         name: "Google User",
-//         email: "user@gmail.com",
-//       };
-//       authStoreLogin(dummyUser);
-//       navigate("/general-dashboard", { replace: true });
-//       setGoogleAuthLoading(false);
-//     }
-//   };
-
-//   const handleGoogleError = () => {
-//     alert("Google authentication failed. Please try again.");
-//   };
-
-//   const handleGeneralInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-//     const { name, value } = e.target;
-//     setGeneralForm((prev) => ({ ...prev, [name]: value }));
-//     if (errors[name]) {
-//       setErrors((prev) => ({ ...prev, [name]: "" }));
-//     }
-//   };
-
-//   const handleStudentInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-//     const { name, value } = e.target;
-//     setStudentForm((prev) => ({ ...prev, [name]: value }));
-//     if (errors[name]) {
-//       setErrors((prev) => ({ ...prev, [name]: "" }));
-//     }
-//   };
-
-//   const handleInstitutionInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-//     const { name, value } = e.target;
-//     setInstitutionForm((prev) => ({ ...prev, [name]: value }));
-//     if (errors[name]) {
-//       setErrors((prev) => ({ ...prev, [name]: "" }));
-//     }
-//   };
-
-//   const validateForm = () => {
-//     const newErrors: Record<string, string> = {};
-
-//     if (!agreedToTerms) {
-//       alert("Please agree to Terms & Conditions");
-//       return false;
-//     }
-
-//     if (activeTab === "general") {
-//       if (!generalForm.username.trim()) newErrors.username = "Username or email is required";
-//       if (!generalForm.password) newErrors.password = "Password is required";
-//     } else if (activeTab === "student") {
-//       if (!studentForm.institution) newErrors.institution = "Institution is required";
-//       if (!studentForm.matricNumber.trim()) newErrors.matricNumber = "Matric number is required";
-//       if (!studentForm.department) newErrors.department = "Department is required";
-//       if (!studentForm.level) newErrors.level = "Level is required";
-//       if (!studentForm.password) newErrors.password = "Password is required";
-//       if (!studentForm.email ) newErrors.email="Email is required" ;
-//       if (studentForm.email && !/\S+@\S+\.\S+/.test(studentForm.email)) {
-//         newErrors.email = "Please enter a valid email";
-//       }
-
-//     } else if (activeTab === "institution") {
-//       if (!institutionForm.institutionName.trim()) newErrors.institutionName = "Institution name is required";
-//       if (!institutionForm.email.trim()) newErrors.email = "Email is required";
-//       if (!institutionForm.password) newErrors.password = "Password is required";
-//       if (institutionForm.email && !/\S+@\S+\.\S+/.test(institutionForm.email)) {
-//         newErrors.email = "Please enter a valid email";
-//       }
-//     }
-
-//     if (Object.keys(newErrors).length > 0) {
-//       setErrors(newErrors);
-//       return false;
-//     }
-
-//     return true;
-//   };
-
-//   const getLoginData = () => {
-//     if (activeTab === "general") {
-//       return {
-//         email: generalForm.username,
-//         password: generalForm.password,
-//         userType: "general",
-//       };
-//     } else if (activeTab === "student") {
-//       return {
-//         email: studentForm.email,//`${studentForm.matricNumber}@${studentForm.institution.toLowerCase().replace(/\s+/g, "")}.edu`,
-//         password: studentForm.password,
-//         userType: "student",
-//         institution: studentForm.institution,
-//         matricNumber: studentForm.matricNumber,
-//         department: studentForm.department,
-//         level: studentForm.level,
-//       };
-//     } else {
-//       return {
-//         email: institutionForm.email,
-//         password: institutionForm.password,
-//         userType: "institution",
-//         institutionName: institutionForm.institutionName,
-//       };
-//     }
-//   };
-
-//   const handleSubmit = async (e: React.FormEvent) => {
-//     e.preventDefault();
-
-//     if (!validateForm()) return;
-
-//     setIsLoading(true);
-//     setErrors({});
-
-//     const loginData = getLoginData();
-
-//     login(loginData, {
-//       onSuccess: (data: any) => {
-//         const userType = data.user?.userType || data.user?.role || activeTab;
-
-//         if (data.user && !data.user.userType && !data.user.role) {
-//           const updatedUser = {
-//             ...data.user,
-//             userType: activeTab,
-//             role: activeTab,
-//             ...(activeTab === "student" && {
-//               institution: studentForm.institution,
-//               matricNumber: studentForm.matricNumber,
-//               department: studentForm.department,
-//               level: studentForm.level,
-//               email: studentForm.email
-//             }),
-//             ...(activeTab === "institution" && {
-//               institutionName: institutionForm.institutionName,
-//             }),
-//           };
-//           authStoreLogin(updatedUser);
-//         }
-
-//         redirectBasedOnUserType(userType);
-//       },
-//       onError: (error: any) => {
-//         console.error("Login failed:", error);
-//         // Handle 401 and other errors properly
-//         const errorMessage =  error.response?.data?.detail ||  error.response?.data?.message ||
-//                            error.message ||
-//                            "Login failed. Please check your credentials.";
-
-//         setErrors({
-//           submit: errorMessage,
-//         });
-//         setIsLoading(false);
-//       },
-//       onSettled: () => {
-//         if (!isLoading) {
-//           setIsLoading(false);
-//         }
-//       },
-//     });
-//   };
-
-//   const redirectBasedOnUserType = (userType: string) => {
-//     setIsLoading(false);
-//     if (userType === "student") {
-//       navigate("/student-dashboard", { replace: true });
-//     } else if (userType === "institution") {
-//       navigate("/institution-dashboard", { replace: true });
-//     } else {
-//       navigate("/general-dashboard", { replace: true });
-//     }
-//   };
-
-//   const renderGeneralForm = () => (
-//     <div className="space-y-4">
-//       <div className="relative">
-//         <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-//         <input
-//           type="text"
-//           name="username"
-//           value={generalForm.username}
-//           onChange={handleGeneralInputChange}
-//           disabled={isLoading || googleAuthLoading}
-//           className={`w-full pl-10 pr-4 py-3 bg-white rounded-lg border text-sm ${
-//             errors.username ? "border-red-500" : "border-gray-300"
-//           } focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50`}
-//           placeholder="Username or Email"
-//         />
-//       </div>
-//       {errors.username && <p className="text-sm text-red-600">{errors.username}</p>}
-
-//       <div className="relative">
-//         <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-//         <input
-//           type="password"
-//           name="password"
-//           value={generalForm.password}
-//           onChange={handleGeneralInputChange}
-//           disabled={isLoading || googleAuthLoading}
-//           className={`w-full pl-10 pr-4 py-3 bg-white rounded-lg border text-sm ${
-//             errors.password ? "border-red-500" : "border-gray-300"
-//           } focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50`}
-//           placeholder="Password"
-//         />
-//       </div>
-//       {errors.password && <p className="text-sm text-red-600">{errors.password}</p>}
-//     </div>
-//   );
-
-//   const renderStudentForm = () => (
-//     <div className="space-y-4">
-//       <div className="relative">
-//         <School className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-//         <select
-//           name="institution"
-//           value={studentForm.institution}
-//           onChange={handleStudentInputChange}
-//           disabled={isLoading || googleAuthLoading}
-//           className={`w-full pl-10 pr-4 py-3 bg-white rounded-lg border text-sm appearance-none ${
-//             errors.institution ? "border-red-500" : "border-gray-300"
-//           } focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50`}
-//         >
-//           <option value="">Select Institution</option>
-//           {institutions.map((inst) => (
-//             <option key={inst} value={inst}>{inst}</option>
-//           ))}
-//         </select>
-//       </div>
-//       {errors.institution && <p className="text-sm text-red-600">{errors.institution}</p>}
-
-//       <div className="relative">
-//         <Hash className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-//         <input
-//           type="text"
-//           name="matricNumber"
-//           value={studentForm.matricNumber}
-//           onChange={handleStudentInputChange}
-//           disabled={isLoading || googleAuthLoading}
-//           className={`w-full pl-10 pr-4 py-3 bg-white rounded-lg border text-sm ${
-//             errors.matricNumber ? "border-red-500" : "border-gray-300"
-//           } focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50`}
-//           placeholder="Matric Number"
-//         />
-//       </div>
-//       {errors.matricNumber && <p className="text-sm text-red-600">{errors.matricNumber}</p>}
-
-//       <div className="relative">
-//         <BookOpen className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-//         <select
-//           name="department"
-//           value={studentForm.department}
-//           onChange={handleStudentInputChange}
-//           disabled={isLoading || googleAuthLoading}
-//           className={`w-full pl-10 pr-4 py-3 bg-white rounded-lg border text-sm appearance-none ${
-//             errors.department ? "border-red-500" : "border-gray-300"
-//           } focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50`}
-//         >
-//           <option value="">Select Department/Faculty</option>
-//           {departments.map((dept) => (
-//             <option key={dept} value={dept}>{dept}</option>
-//           ))}
-//         </select>
-//       </div>
-//       {errors.department && <p className="text-sm text-red-600">{errors.department}</p>}
-
-//       <div className="relative">
-//         <GraduationCap className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-//         <select
-//           name="level"
-//           value={studentForm.level}
-//           onChange={handleStudentInputChange}
-//           disabled={isLoading || googleAuthLoading}
-//           className={`w-full pl-10 pr-4 py-3 bg-white rounded-lg border text-sm appearance-none ${
-//             errors.level ? "border-red-500" : "border-gray-300"
-//           } focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50`}
-//         >
-//           <option value="">Select Level</option>
-//           {levels.map((lvl) => (
-//             <option key={lvl} value={lvl}>{lvl} Level</option>
-//           ))}
-//         </select>
-//       </div>
-//       {errors.level && <p className="text-sm text-red-600">{errors.level}</p>}
-
-//        <div className="relative">
-//         <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-//         <input
-//           type="email"
-//           name="email"
-//           value={studentForm.email}
-//           onChange={handleStudentInputChange}
-//           disabled={isLoading || googleAuthLoading}
-//           className={`w-full pl-10 pr-4 py-3 bg-white rounded-lg border text-sm ${
-//             errors.email ? "border-red-500" : "border-gray-300"
-//           } focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50`}
-//           placeholder="Email"
-//         />
-//       </div>
-//       {errors.email && <p className="text-sm text-red-600">{errors.email}</p>}
-
-//       <div className="relative">
-//         <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-//         <input
-//           type="password"
-//           name="password"
-//           value={studentForm.password}
-//           onChange={handleStudentInputChange}
-//           disabled={isLoading || googleAuthLoading}
-//           className={`w-full pl-10 pr-4 py-3 bg-white rounded-lg border text-sm ${
-//             errors.password ? "border-red-500" : "border-gray-300"
-//           } focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50`}
-//           placeholder="Password"
-//         />
-//       </div>
-//       {errors.password && <p className="text-sm text-red-600">{errors.password}</p>}
-//     </div>
-//   );
-
-//   const renderInstitutionForm = () => (
-//     <div className="space-y-4">
-//       <div className="relative">
-//         <Building2 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-//         <select
-//           name="institutionName"
-//           value={institutionForm.institutionName}
-//           onChange={handleInstitutionInputChange}
-//           disabled={isLoading || googleAuthLoading}
-//           className={`w-full pl-10 pr-4 py-3 bg-white rounded-lg border text-sm appearance-none ${
-//             errors.institutionName ? "border-red-500" : "border-gray-300"
-//           } focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50`}
-//         >
-//           <option value="">Select Institution</option>
-//           {institutions.map((inst) => (
-//             <option key={inst} value={inst}>{inst}</option>
-//           ))}
-//         </select>
-//         {/* <input
-//           type="text"
-//           name="institutionName"
-//           value={institutionForm.institutionName}
-//           onChange={handleInstitutionInputChange}
-//           disabled={isLoading || googleAuthLoading}
-//           className={`w-full pl-10 pr-4 py-3 bg-white rounded-lg border text-sm ${
-//             errors.institutionName ? "border-red-500" : "border-gray-300"
-//           } focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50`}
-//           placeholder="Institution Name"
-//         /> */}
-//       </div>
-//       {errors.institutionName && <p className="text-sm text-red-600">{errors.institutionName}</p>}
-
-//       <div className="relative">
-//         <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-//         <input
-//           type="email"
-//           name="email"
-//           value={institutionForm.email}
-//           onChange={handleInstitutionInputChange}
-//           disabled={isLoading || googleAuthLoading}
-//           className={`w-full pl-10 pr-4 py-3 bg-white rounded-lg border text-sm ${
-//             errors.email ? "border-red-500" : "border-gray-300"
-//           } focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50`}
-//           placeholder="Official Email"
-//         />
-//       </div>
-//       {errors.email && <p className="text-sm text-red-600">{errors.email}</p>}
-
-//       <div className="relative">
-//         <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-//         <input
-//           type="password"
-//           name="password"
-//           value={institutionForm.password}
-//           onChange={handleInstitutionInputChange}
-//           disabled={isLoading || googleAuthLoading}
-//           className={`w-full pl-10 pr-4 py-3 bg-white rounded-lg border text-sm ${
-//             errors.password ? "border-red-500" : "border-gray-300"
-//           } focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50`}
-//           placeholder="Password"
-//         />
-//       </div>
-//       {errors.password && <p className="text-sm text-red-600">{errors.password}</p>}
-//     </div>
-//   );
-
-//   return (
-//     <div className="min-h-screen flex flex-col lg:flex-row bg-gray-50">
-//       {/* Left Panel */}
-//       <div className="hidden lg:flex lg:w-2/5 bg-gradient-to-br from-primary-900 via-primary-800 to-primary-700 rounded-r-3xl items-center justify-center relative overflow-hidden">
-//         <div className="absolute inset-0 opacity-10">
-//           <div className="absolute top-20 left-20 w-64 h-64 bg-white rounded-full blur-3xl"></div>
-//           <div className="absolute bottom-20 right-20 w-64 h-64 bg-white rounded-full blur-3xl"></div>
-//         </div>
-//         <div className="relative z-10 text-center px-8">
-//           <div className="w-24 h-24 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-6 backdrop-blur-sm">
-//             <GraduationCap className="w-12 h-12 text-white" />
-//           </div>
-//           <h1 className="text-5xl xl:text-6xl font-bold text-white mb-4">
-//             CampusTOK
-//           </h1>
-//           <p className="text-lg xl:text-xl text-white/90">
-//             Connect, Learn, and Grow Together
-//           </p>
-//         </div>
-//       </div>
-
-//       {/* Right Panel */}
-//       <div className="flex-1 bg-gray-50 flex items-center justify-center p-4 sm:p-6 lg:p-12 min-h-screen lg:min-h-0">
-//         <div className="w-full max-w-md">
-//           {/* Back Button */}
-//           <button
-//             onClick={() => navigate("/signup")}
-//             className="mb-6 w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors shadow-sm"
-//             disabled={isLoading || googleAuthLoading}
-//           >
-//             <ArrowLeft className="w-5 h-5 text-gray-700" />
-//           </button>
-
-//           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 text-center">
-//             Welcome Back!
-//           </h2>
-//           <p className="text-sm lg:text-base text-gray-600 mb-6 text-center">
-//             Login to your account to continue
-//           </p>
-
-//           {/* Success Message */}
-//           {successMessage && (
-//             <div className="mb-6 p-3 bg-green-50 border border-green-200 rounded-lg flex items-start gap-2 animate-fade-in">
-//               <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-//               <p className="text-sm text-green-700 flex-1">{successMessage}</p>
-//             </div>
-//           )}
-
-//           {/* Error Message */}
-//           {errors.submit && (
-//             <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
-//               {errors.submit}
-//             </div>
-//           )}
-
-//           {/* User Type Tabs */}
-//           <div className="mb-6">
-//             <div className="grid grid-cols-3 gap-2 mb-4">
-//               {userTypes.map((type) => {
-//                 const Icon = type.icon;
-//                 const isActive = activeTab === type.value;
-//                 return (
-//                   <button
-//                     key={type.value}
-//                     type="button"
-//                     onClick={() => setActiveTab(type.value as any)}
-//                     disabled={isLoading || googleAuthLoading}
-//                     className={`p-3 rounded-lg border transition-all flex flex-col items-center gap-2 ${
-//                       isActive
-//                         ? "border-primary-600 bg-primary-50"
-//                         : "border-gray-200 bg-white hover:border-gray-300"
-//                     } disabled:opacity-50 disabled:cursor-not-allowed`}
-//                   >
-//                     <Icon className={`w-5 h-5 ${
-//                       isActive ? "text-primary-600" : "text-gray-600"
-//                     }`} />
-//                     <span className={`text-xs font-medium ${
-//                       isActive ? "text-primary-900" : "text-gray-700"
-//                     }`}>
-//                       {type.label}
-//                     </span>
-//                   </button>
-//                 );
-//               })}
-//             </div>
-
-//             {/* Active Tab Form */}
-//             <form onSubmit={handleSubmit} className="space-y-4">
-//               {activeTab === "general" && renderGeneralForm()}
-//               {activeTab === "student" && renderStudentForm()}
-//               {activeTab === "institution" && renderInstitutionForm()}
-
-//               {/* Terms & Condition Checkbox */}
-//               <div className="flex items-start gap-2 pt-2">
-//                 <input
-//                   type="checkbox"
-//                   id="terms"
-//                   checked={agreedToTerms}
-//                   onChange={(e) => setAgreedToTerms(e.target.checked)}
-//                   disabled={isLoading || googleAuthLoading}
-//                   className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary disabled:opacity-50 mt-0.5 flex-shrink-0"
-//                 />
-//                 <label htmlFor="terms" className="text-xs text-gray-700">
-//                   Agree with{" "}
-//                   <button
-//                     type="button"
-//                     className="underline text-gray-900"
-//                     onClick={() => alert("Terms & Conditions")}
-//                     disabled={isLoading || googleAuthLoading}
-//                   >
-//                     Terms & Condition
-//                   </button>
-//                 </label>
-//               </div>
-
-//               {/* Login Button */}
-//               <button
-//                 type="submit"
-//                 disabled={isLoading || googleAuthLoading}
-//                 className="w-full bg-primary hover:bg-primary-800 text-white py-3 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
-//               >
-//                 {isLoading ? "Logging in..." : "Login"}
-//               </button>
-//             </form>
-//           </div>
-
-//           {/* Divider */}
-//           <div className="relative my-6">
-//             <div className="absolute inset-0 flex items-center">
-//               <div className="w-full border-t border-gray-300"></div>
-//             </div>
-//             <div className="relative flex justify-center text-sm">
-//               <span className="px-3 bg-gray-50 text-gray-500 font-medium">
-//                 OR
-//               </span>
-//             </div>
-//           </div>
-
-//           {/* Google Login */}
-//           <div className="flex justify-center mb-6">
-//             <div className={isLoading || googleAuthLoading ? "opacity-50 pointer-events-none" : ""}>
-//               <GoogleLogin
-//                 onSuccess={handleGoogleSuccess}
-//                 onError={handleGoogleError}
-//                 size="large"
-//                 text="continue_with"
-//                 shape="rectangular"
-//                 theme="outline"
-//                 logo_alignment="left"
-//               />
-//             </div>
-//           </div>
-
-//           {/* Google Loading */}
-//           {googleAuthLoading && (
-//             <div className="mb-6 text-center">
-//               <div className="w-6 h-6 border-2 border-gray-300 border-t-primary rounded-full animate-spin mx-auto mb-2"></div>
-//               <p className="text-sm text-gray-500">
-//                 Authenticating with Google...
-//               </p>
-//             </div>
-//           )}
-
-//           {/* Continue Without Login */}
-//           <div className="mb-6">
-//             <button
-//               onClick={handleContinueWithoutLogin}
-//               disabled={isLoading || googleAuthLoading}
-//               className="w-full px-4 py-3 bg-white border-2 border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
-//             >
-//               <LogIn className="w-4 h-4" />
-//               Continue Without Login
-//             </button>
-//           </div>
-
-//           {/* Sign up link */}
-//           <div className="text-center">
-//             <p className="text-sm text-gray-600">
-//               Don't have an account?{" "}
-//               <button
-//                 onClick={() => navigate("/signup")}
-//                 className="text-primary-600 hover:text-primary-700 underline font-medium"
-//                 disabled={isLoading || googleAuthLoading}
-//               >
-//                 Sign up
-//               </button>
-//             </p>
-//           </div>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// }
-
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
@@ -750,15 +9,10 @@ import {
   Users,
   LogIn,
   CheckCircle,
-  Mail,
-  BookOpen,
-  Hash,
-  School,
 } from "lucide-react";
 import { GoogleLogin } from "@react-oauth/google";
 import { useLogin, useGoogleAuth } from "../../hooks/useAuth";
 import { useAuthStore } from "../../store/useAuthStore";
-import { useSchools } from "../../hooks/useSchools"; // Import the hook
 import { useAppStore } from "../../store/useAppStore";
 
 const userTypes = [
@@ -766,62 +20,34 @@ const userTypes = [
     value: "general",
     label: "General User",
     icon: Users,
-    description: "For general platform access",
+    description: "Browse and explore campus content",
   },
   {
     value: "student",
     label: "Student",
     icon: GraduationCap,
-    description: "Login as a student",
+    description: "Access portal, submit complaints",
   },
   {
     value: "institution",
     label: "Institution",
     icon: Building2,
-    description: "Login as an institution",
+    description: "Manage dashboard & sentiment bank",
   },
 ];
-
-const departments = [
-  "Computer Science",
-  "Electrical Engineering",
-  "Mechanical Engineering",
-  "Civil Engineering",
-  "Medicine",
-  "Law",
-  "Business Administration",
-  "Economics",
-  "Psychology",
-  "Architecture",
-];
-
-const levels = ["100", "200", "300", "400", "500", "Postgraduate"];
 
 export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login: authStoreLogin, email: storedEmail } = useAuthStore();
+  const {
+    login: authStoreLogin,
+    email: storedEmail,
+    setDefaultInstitution,
+  } = useAuthStore();
+  const { setSelectedSchool, initializeFromAuth } = useAppStore();
 
-  const [activeTab, setActiveTab] = useState<
-    "general" | "student" | "institution"
-  >("general");
-
-  const [generalForm, setGeneralForm] = useState({
-    username: "",
-    password: "",
-  });
-
-  const [studentForm, setStudentForm] = useState({
-    institution: "",
-    matricNumber: "",
-    department: "",
-    level: "",
-    password: "",
-    email: "",
-  });
-
-  const [institutionForm, setInstitutionForm] = useState({
-    institution: "",
+  const [formData, setFormData] = useState({
+    userType: "" as "" | "general" | "student" | "institution",
     email: "",
     password: "",
   });
@@ -832,32 +58,17 @@ export default function Login() {
   const [googleAuthLoading, setGoogleAuthLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  // Use the useSchools hook to fetch institutions from API
-  const {
-    data: institutions = [],
-    isLoading: isLoadingSchools,
-    error: schoolsError,
-  } = useSchools();
-
-  // Transform schools data to institution options
-  const institutionOptions = institutions.map((school) => ({
-    id: school.id,
-    name: school.institution_name,
-    code: school.code,
-    logo: school.institution_profile_picture,
-    website: school.institution_website,
-    email: school.institution_email,
-    location: school.institution_location,
-  }));
+  const { mutate: login } = useLogin();
+  const { mutate: googleAuth } = useGoogleAuth();
 
   // Check for verification success message
   useEffect(() => {
     if (location.state?.message && location.state?.verified) {
       setSuccessMessage(location.state.message);
       if (location.state.email) {
-        setGeneralForm((prev) => ({ ...prev, username: location.state.email }));
+        setFormData((prev) => ({ ...prev, email: location.state.email }));
       } else if (storedEmail) {
-        setGeneralForm((prev) => ({ ...prev, username: storedEmail }));
+        setFormData((prev) => ({ ...prev, email: storedEmail }));
       }
       setTimeout(() => {
         setSuccessMessage(null);
@@ -866,11 +77,27 @@ export default function Login() {
     }
   }, [location.state, storedEmail]);
 
-  const { mutate: login, isPending } = useLogin();
-  const { mutate: googleAuth, isPending: isGoogleAuthPending } =
-    useGoogleAuth();
-  const { selectedSchool, setSelectedSchool, schools, setSchools } =
-    useAppStore();
+  // Initialize selected school from auth on mount
+  useEffect(() => {
+    initializeFromAuth();
+  }, []);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: "" }));
+    }
+  };
+
+  const handleUserTypeSelect = (
+    userType: "general" | "student" | "institution",
+  ) => {
+    setFormData((prev) => ({ ...prev, userType }));
+    if (errors.userType) {
+      setErrors((prev) => ({ ...prev, userType: "" }));
+    }
+  };
 
   const handleContinueWithoutLogin = () => {
     authStoreLogin({
@@ -890,6 +117,10 @@ export default function Login() {
       googleAuth(token, {
         onSuccess: (data) => {
           const userType = data.user?.userType || data.user?.role || "general";
+          if (data.user?.defaultInstitution) {
+            setDefaultInstitution(data.user.defaultInstitution);
+            setSelectedSchool(data.user.defaultInstitution);
+          }
           redirectBasedOnUserType(userType);
         },
         onError: () => {
@@ -921,34 +152,6 @@ export default function Login() {
     alert("Google authentication failed. Please try again.");
   };
 
-  const handleGeneralInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setGeneralForm((prev) => ({ ...prev, [name]: value }));
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: "" }));
-    }
-  };
-
-  const handleStudentInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
-  ) => {
-    const { name, value } = e.target;
-    setStudentForm((prev) => ({ ...prev, [name]: value }));
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: "" }));
-    }
-  };
-
-  const handleInstitutionInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
-  ) => {
-    const { name, value } = e.target;
-    setInstitutionForm((prev) => ({ ...prev, [name]: value }));
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: "" }));
-    }
-  };
-
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
@@ -957,35 +160,14 @@ export default function Login() {
       return false;
     }
 
-    if (activeTab === "general") {
-      if (!generalForm.username.trim())
-        newErrors.username = "Username or email is required";
-      if (!generalForm.password) newErrors.password = "Password is required";
-    } else if (activeTab === "student") {
-      if (!studentForm.institution)
-        newErrors.institution = "Institution is required";
-      if (!studentForm.matricNumber.trim())
-        newErrors.matricNumber = "Matric number is required";
-      if (!studentForm.department)
-        newErrors.department = "Department is required";
-      if (!studentForm.level) newErrors.level = "Level is required";
-      if (!studentForm.password) newErrors.password = "Password is required";
-      if (!studentForm.email) newErrors.email = "Email is required";
-      if (studentForm.email && !/\S+@\S+\.\S+/.test(studentForm.email)) {
-        newErrors.email = "Please enter a valid email";
-      }
-    } else if (activeTab === "institution") {
-      if (!institutionForm.institution.trim())
-        newErrors.institution = "Institution name is required";
-      if (!institutionForm.email.trim()) newErrors.email = "Email is required";
-      if (!institutionForm.password)
-        newErrors.password = "Password is required";
-      if (
-        institutionForm.email &&
-        !/\S+@\S+\.\S+/.test(institutionForm.email)
-      ) {
-        newErrors.email = "Please enter a valid email";
-      }
+    if (!formData.userType) {
+      newErrors.userType = "Please select a login type";
+    }
+    if (!formData.email.trim()) {
+      newErrors.email = "Email or username is required";
+    }
+    if (!formData.password) {
+      newErrors.password = "Password is required";
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -996,35 +178,6 @@ export default function Login() {
     return true;
   };
 
-  const getLoginData = () => {
-    if (activeTab === "general") {
-      return {
-        email: generalForm.username,
-        password: generalForm.password,
-        userType: "general",
-      };
-    } else if (activeTab === "student") {
-      setSelectedSchool(studentForm.institution);
-      return {
-        email: studentForm.email,
-        password: studentForm.password,
-        userType: "student",
-        institution: studentForm.institution,
-        matricNumber: studentForm.matricNumber,
-        department: studentForm.department,
-        level: studentForm.level,
-      };
-    } else {
-      setSelectedSchool(institutionForm.institution);
-      return {
-        email: institutionForm.email,
-        password: institutionForm.password,
-        userType: "institution",
-        institutionName: institutionForm.institution,
-      };
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -1033,32 +186,24 @@ export default function Login() {
     setIsLoading(true);
     setErrors({});
 
-    const loginData = getLoginData();
+    const loginData = {
+      email: formData.email,
+      password: formData.password,
+      userType: formData.userType,
+    };
 
     login(loginData, {
       onSuccess: (data: any) => {
-        const userType = data.data?.userType || data.data?.role || activeTab; //data.user?.userType || data.user?.role || activeTab;
-        // console.log("data: ",JSON.stringify(data))
-        if (data.data) {
-          const updatedUser = {
-            ...data.data,
-            userType: activeTab,
-            role: activeTab,
-            ...(activeTab === "student" && {
-              institution: institutionOptions[studentForm.institution],
-              matricNumber: studentForm.matricNumber,
-              department: studentForm.department,
-              level: studentForm.level,
-              email: studentForm.email,
-            }),
-            ...(activeTab === "institution" && {
-              institutionName: institutionOptions[institutionForm.institution],
-            }),
-          };
-          authStoreLogin(updatedUser);
-          if (activeTab === "student") {
-            setSelectedSchool(institutionOptions[studentForm.institution]);
-          }
+        // The useLogin hook already stores user data in auth store
+        // We just need to handle institution and redirect
+        const userData = data.user || data.data || data;
+        const userType =
+          userData?.userType || userData?.role || formData.userType;
+
+        // Set default institution if available
+        if (userData?.defaultInstitution) {
+          setDefaultInstitution(userData.defaultInstitution);
+          setSelectedSchool(userData.defaultInstitution);
         }
 
         redirectBasedOnUserType(userType);
@@ -1077,9 +222,7 @@ export default function Login() {
         setIsLoading(false);
       },
       onSettled: () => {
-        if (!isLoading) {
-          setIsLoading(false);
-        }
+        setIsLoading(false);
       },
     });
   };
@@ -1095,262 +238,10 @@ export default function Login() {
     }
   };
 
-  const renderGeneralForm = () => (
-    <div className="space-y-4">
-      <div className="relative">
-        <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-        <input
-          type="text"
-          name="username"
-          value={generalForm.username}
-          onChange={handleGeneralInputChange}
-          disabled={isLoading || googleAuthLoading}
-          className={`w-full pl-10 pr-4 py-3 bg-white rounded-lg border text-sm ${
-            errors.username ? "border-red-500" : "border-gray-300"
-          } focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50`}
-          placeholder="Username or Email"
-        />
-      </div>
-      {errors.username && (
-        <p className="text-sm text-red-600">{errors.username}</p>
-      )}
-
-      <div className="relative">
-        <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-        <input
-          type="password"
-          name="password"
-          value={generalForm.password}
-          onChange={handleGeneralInputChange}
-          disabled={isLoading || googleAuthLoading}
-          className={`w-full pl-10 pr-4 py-3 bg-white rounded-lg border text-sm ${
-            errors.password ? "border-red-500" : "border-gray-300"
-          } focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50`}
-          placeholder="Password"
-        />
-      </div>
-      {errors.password && (
-        <p className="text-sm text-red-600">{errors.password}</p>
-      )}
-    </div>
-  );
-
-  const renderStudentForm = () => (
-    <div className="space-y-4">
-      <div className="relative">
-        <School className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-        <select
-          name="institution"
-          value={studentForm.institution}
-          onChange={handleStudentInputChange}
-          disabled={isLoading || googleAuthLoading || isLoadingSchools}
-          className={`w-full pl-10 pr-4 py-3 bg-white rounded-lg border text-sm appearance-none ${
-            errors.institution ? "border-red-500" : "border-gray-300"
-          } focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50`}
-        >
-          <option value="">Select Institution</option>
-          {isLoadingSchools ? (
-            <option value="" disabled>
-              Loading institutions...
-            </option>
-          ) : schoolsError ? (
-            <option value="" disabled>
-              Error loading institutions
-            </option>
-          ) : institutionOptions.length > 0 ? (
-            institutionOptions.map((institution, index) => (
-              <option key={institution.id} value={index}>
-                {institution.name}
-              </option>
-            ))
-          ) : (
-            <option value="" disabled>
-              No institutions available
-            </option>
-          )}
-        </select>
-      </div>
-      {errors.institution && (
-        <p className="text-sm text-red-600">{errors.institution}</p>
-      )}
-
-      <div className="relative">
-        <Hash className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-        <input
-          type="text"
-          name="matricNumber"
-          value={studentForm.matricNumber}
-          onChange={handleStudentInputChange}
-          disabled={isLoading || googleAuthLoading}
-          className={`w-full pl-10 pr-4 py-3 bg-white rounded-lg border text-sm ${
-            errors.matricNumber ? "border-red-500" : "border-gray-300"
-          } focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50`}
-          placeholder="Matric Number"
-        />
-      </div>
-      {errors.matricNumber && (
-        <p className="text-sm text-red-600">{errors.matricNumber}</p>
-      )}
-
-      <div className="relative">
-        <BookOpen className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-        <select
-          name="department"
-          value={studentForm.department}
-          onChange={handleStudentInputChange}
-          disabled={isLoading || googleAuthLoading}
-          className={`w-full pl-10 pr-4 py-3 bg-white rounded-lg border text-sm appearance-none ${
-            errors.department ? "border-red-500" : "border-gray-300"
-          } focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50`}
-        >
-          <option value="">Select Department/Faculty</option>
-          {departments.map((dept) => (
-            <option key={dept} value={dept}>
-              {dept}
-            </option>
-          ))}
-        </select>
-      </div>
-      {errors.department && (
-        <p className="text-sm text-red-600">{errors.department}</p>
-      )}
-
-      <div className="relative">
-        <GraduationCap className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-        <select
-          name="level"
-          value={studentForm.level}
-          onChange={handleStudentInputChange}
-          disabled={isLoading || googleAuthLoading}
-          className={`w-full pl-10 pr-4 py-3 bg-white rounded-lg border text-sm appearance-none ${
-            errors.level ? "border-red-500" : "border-gray-300"
-          } focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50`}
-        >
-          <option value="">Select Level</option>
-          {levels.map((lvl) => (
-            <option key={lvl} value={lvl}>
-              {lvl} Level
-            </option>
-          ))}
-        </select>
-      </div>
-      {errors.level && <p className="text-sm text-red-600">{errors.level}</p>}
-
-      <div className="relative">
-        <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-        <input
-          type="email"
-          name="email"
-          value={studentForm.email}
-          onChange={handleStudentInputChange}
-          disabled={isLoading || googleAuthLoading}
-          className={`w-full pl-10 pr-4 py-3 bg-white rounded-lg border text-sm ${
-            errors.email ? "border-red-500" : "border-gray-300"
-          } focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50`}
-          placeholder="Email"
-        />
-      </div>
-      {errors.email && <p className="text-sm text-red-600">{errors.email}</p>}
-
-      <div className="relative">
-        <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-        <input
-          type="password"
-          name="password"
-          value={studentForm.password}
-          onChange={handleStudentInputChange}
-          disabled={isLoading || googleAuthLoading}
-          className={`w-full pl-10 pr-4 py-3 bg-white rounded-lg border text-sm ${
-            errors.password ? "border-red-500" : "border-gray-300"
-          } focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50`}
-          placeholder="Password"
-        />
-      </div>
-      {errors.password && (
-        <p className="text-sm text-red-600">{errors.password}</p>
-      )}
-    </div>
-  );
-
-  const renderInstitutionForm = () => (
-    <div className="space-y-4">
-      <div className="relative">
-        <Building2 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-        <select
-          name="institution"
-          value={institutionForm.institution}
-          onChange={handleInstitutionInputChange}
-          disabled={isLoading || googleAuthLoading || isLoadingSchools}
-          className={`w-full pl-10 pr-4 py-3 bg-white rounded-lg border text-sm appearance-none ${
-            errors.institutionName ? "border-red-500" : "border-gray-300"
-          } focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50`}
-        >
-          <option value="">Select Institution</option>
-          {isLoadingSchools ? (
-            <option value="" disabled>
-              Loading institutions...
-            </option>
-          ) : schoolsError ? (
-            <option value="" disabled>
-              Error loading institutions
-            </option>
-          ) : institutionOptions.length > 0 ? (
-            institutionOptions.map((institution, index) => (
-              <option key={institution.id} value={index}>
-                {institution.name}
-              </option>
-            ))
-          ) : (
-            <option value="" disabled>
-              No institutions available
-            </option>
-          )}
-        </select>
-      </div>
-      {errors.institution && (
-        <p className="text-sm text-red-600">{errors.institution}</p>
-      )}
-
-      <div className="relative">
-        <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-        <input
-          type="email"
-          name="email"
-          value={institutionForm.email}
-          onChange={handleInstitutionInputChange}
-          disabled={isLoading || googleAuthLoading}
-          className={`w-full pl-10 pr-4 py-3 bg-white rounded-lg border text-sm ${
-            errors.email ? "border-red-500" : "border-gray-300"
-          } focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50`}
-          placeholder="Official Email"
-        />
-      </div>
-      {errors.email && <p className="text-sm text-red-600">{errors.email}</p>}
-
-      <div className="relative">
-        <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-        <input
-          type="password"
-          name="password"
-          value={institutionForm.password}
-          onChange={handleInstitutionInputChange}
-          disabled={isLoading || googleAuthLoading}
-          className={`w-full pl-10 pr-4 py-3 bg-white rounded-lg border text-sm ${
-            errors.password ? "border-red-500" : "border-gray-300"
-          } focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50`}
-          placeholder="Password"
-        />
-      </div>
-      {errors.password && (
-        <p className="text-sm text-red-600">{errors.password}</p>
-      )}
-    </div>
-  );
-
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row bg-gray-50">
-      {/* Left Panel */}
-      <div className="hidden lg:flex lg:w-2/5 bg-gradient-to-br from-primary-900 via-primary-800 to-primary-700 rounded-r-3xl items-center justify-center relative overflow-hidden">
+    <div className="min-h-screen lg:h-screen flex flex-col lg:flex-row bg-gray-50 lg:overflow-hidden">
+      {/* Left Panel - Branding - Fixed height on desktop */}
+      <div className="hidden lg:flex lg:w-2/5 lg:h-screen bg-gradient-to-br from-primary-900 via-primary-800 to-primary-700 rounded-r-3xl items-center justify-center relative overflow-hidden flex-shrink-0">
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-20 left-20 w-64 h-64 bg-white rounded-full blur-3xl"></div>
           <div className="absolute bottom-20 right-20 w-64 h-64 bg-white rounded-full blur-3xl"></div>
@@ -1363,88 +254,152 @@ export default function Login() {
             CampusTok
           </h1>
           <p className="text-lg xl:text-xl text-white/90">
-            Connect, Learn, and Grow Together
+            Your gateway to campus information, learning and connection
           </p>
         </div>
       </div>
 
-      {/* Right Panel */}
-      <div className="flex-1 bg-gray-50 flex items-center justify-center p-4 sm:p-6 lg:p-12 min-h-screen lg:min-h-0">
-        <div className="w-full max-w-md">
-          {/* Back Button */}
-          <button
-            onClick={() => navigate("/signup")}
-            className="mb-6 w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors shadow-sm"
-            disabled={isLoading || googleAuthLoading}
-          >
-            <ArrowLeft className="w-5 h-5 text-gray-700" />
-          </button>
+      {/* Right Panel - Login Form - Scrollable on desktop */}
+      <div className="flex-1 bg-gray-50 lg:overflow-y-auto">
+        <div className="flex items-center justify-center p-4 sm:p-6 lg:p-12 min-h-screen lg:min-h-full">
+          <div className="w-full max-w-md">
+            {/* Back Button */}
+            <button
+              onClick={() => navigate("/signup")}
+              className="mb-6 w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors shadow-sm"
+              disabled={isLoading || googleAuthLoading}
+            >
+              <ArrowLeft className="w-5 h-5 text-gray-700" />
+            </button>
 
-          <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 text-center">
-            Welcome Back!
-          </h2>
-          <p className="text-sm lg:text-base text-gray-600 mb-6 text-center">
-            Login to your account to continue
-          </p>
-
-          {/* Success Message */}
-          {successMessage && (
-            <div className="mb-6 p-3 bg-green-50 border border-green-200 rounded-lg flex items-start gap-2 animate-fade-in">
-              <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-green-700 flex-1">{successMessage}</p>
-            </div>
-          )}
-
-          {/* Error Message */}
-          {errors.submit && (
-            <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
-              {errors.submit}
-            </div>
-          )}
-
-          {/* User Type Tabs */}
-          <div className="mb-6">
-            <div className="grid grid-cols-3 gap-2 mb-4">
-              {userTypes.map((type) => {
-                const Icon = type.icon;
-                const isActive = activeTab === type.value;
-                return (
-                  <button
-                    key={type.value}
-                    type="button"
-                    onClick={() => setActiveTab(type.value as any)}
-                    disabled={isLoading || googleAuthLoading}
-                    className={`p-3 rounded-lg border transition-all flex flex-col items-center gap-2 ${
-                      isActive
-                        ? "border-primary-600 bg-primary-50"
-                        : "border-gray-200 bg-white hover:border-gray-300"
-                    } disabled:opacity-50 disabled:cursor-not-allowed`}
-                  >
-                    <Icon
-                      className={`w-5 h-5 ${
-                        isActive ? "text-primary-600" : "text-gray-600"
-                      }`}
-                    />
-                    <span
-                      className={`text-xs font-medium ${
-                        isActive ? "text-primary-900" : "text-gray-700"
-                      }`}
-                    >
-                      {type.label}
-                    </span>
-                  </button>
-                );
-              })}
+            {/* Mobile Logo */}
+            <div className="lg:hidden mb-6 text-center">
+              <div className="w-16 h-16 bg-primary-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <GraduationCap className="w-8 h-8 text-white" />
+              </div>
+              <h1 className="text-3xl font-bold text-primary-900">CampusTok</h1>
             </div>
 
-            {/* Active Tab Form */}
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 text-center">
+              Welcome Back!
+            </h2>
+            <p className="text-sm lg:text-base text-gray-600 mb-6 text-center">
+              Login to your account to continue
+            </p>
+
+            {/* Success Message */}
+            {successMessage && (
+              <div className="mb-6 p-3 bg-green-50 border border-green-200 rounded-lg flex items-start gap-2 animate-fade-in">
+                <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-green-700 flex-1">
+                  {successMessage}
+                </p>
+              </div>
+            )}
+
+            {/* Error Message */}
+            {errors.submit && (
+              <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+                {errors.submit}
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-4">
-              {activeTab === "general" && renderGeneralForm()}
-              {activeTab === "student" && renderStudentForm()}
-              {activeTab === "institution" && renderInstitutionForm()}
+              {/* User Type Selection - Card Style */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  Login As <span className="text-red-500">*</span>
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {userTypes.map((type) => {
+                    const Icon = type.icon;
+                    const isSelected = formData.userType === type.value;
+                    return (
+                      <button
+                        key={type.value}
+                        type="button"
+                        onClick={() => handleUserTypeSelect(type.value as any)}
+                        disabled={isLoading || googleAuthLoading}
+                        className={`p-4 rounded-xl border-2 transition-all text-center ${
+                          isSelected
+                            ? "border-primary-600 bg-primary-50 ring-2 ring-primary-200"
+                            : "border-gray-200 bg-white hover:border-gray-300"
+                        } disabled:opacity-50 disabled:cursor-not-allowed`}
+                      >
+                        <div
+                          className={`w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-2 ${
+                            isSelected ? "bg-primary-600" : "bg-gray-100"
+                          }`}
+                        >
+                          <Icon
+                            className={`w-6 h-6 ${
+                              isSelected ? "text-white" : "text-gray-600"
+                            }`}
+                          />
+                        </div>
+                        <span
+                          className={`font-medium text-sm block ${
+                            isSelected ? "text-primary-900" : "text-gray-900"
+                          }`}
+                        >
+                          {type.label}
+                        </span>
+                        <p className="text-xs text-gray-500 mt-1 hidden sm:block">
+                          {type.description}
+                        </p>
+                      </button>
+                    );
+                  })}
+                </div>
+                {errors.userType && (
+                  <p className="mt-2 text-sm text-red-600">{errors.userType}</p>
+                )}
+              </div>
 
-              {/* Terms & Condition Checkbox */}
-              <div className="flex items-start gap-2 pt-2">
+              {/* Email/Username Field */}
+              <div>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <input
+                    type="text"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    disabled={isLoading || googleAuthLoading}
+                    className={`w-full pl-10 pr-4 py-3 bg-white rounded-lg border text-sm ${
+                      errors.email ? "border-red-500" : "border-gray-300"
+                    } focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50`}
+                    placeholder="Username or Email"
+                  />
+                </div>
+                {errors.email && (
+                  <p className="text-sm text-red-600 mt-1">{errors.email}</p>
+                )}
+              </div>
+
+              {/* Password Field */}
+              <div>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <input
+                    type="password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleInputChange}
+                    disabled={isLoading || googleAuthLoading}
+                    className={`w-full pl-10 pr-4 py-3 bg-white rounded-lg border text-sm ${
+                      errors.password ? "border-red-500" : "border-gray-300"
+                    } focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50`}
+                    placeholder="Password"
+                  />
+                </div>
+                {errors.password && (
+                  <p className="text-sm text-red-600 mt-1">{errors.password}</p>
+                )}
+              </div>
+
+              {/* Terms & Conditions */}
+              <div className="flex items-start gap-2">
                 <input
                   type="checkbox"
                   id="terms"
@@ -1457,11 +412,11 @@ export default function Login() {
                   Agree with{" "}
                   <button
                     type="button"
-                    className="underline text-gray-900"
+                    className="underline text-gray-900 hover:text-primary-600"
                     onClick={() => alert("Terms & Conditions")}
                     disabled={isLoading || googleAuthLoading}
                   >
-                    Terms & Condition
+                    Terms & Conditions
                   </button>
                 </label>
               </div>
@@ -1469,81 +424,83 @@ export default function Login() {
               {/* Login Button */}
               <button
                 type="submit"
-                disabled={isLoading || googleAuthLoading}
+                disabled={isLoading || googleAuthLoading || !formData.userType}
                 className="w-full bg-primary hover:bg-primary-800 text-white py-3 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
               >
-                {isLoading ? "Logging in..." : "Login"}
+                {isLoading
+                  ? "Logging in..."
+                  : formData.userType
+                    ? `Login as ${userTypes.find((t) => t.value === formData.userType)?.label}`
+                    : "Select a login type first"}
               </button>
             </form>
-          </div>
 
-          {/* Divider */}
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300"></div>
+            {/* Divider */}
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-3 bg-gray-50 text-gray-500 font-medium">
+                  OR
+                </span>
+              </div>
             </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-3 bg-gray-50 text-gray-500 font-medium">
-                OR
-              </span>
-            </div>
-          </div>
 
-          {/* Google Login */}
-          <div className="flex justify-center mb-6">
-            <div
-              className={
-                isLoading || googleAuthLoading
-                  ? "opacity-50 pointer-events-none"
-                  : ""
-              }
-            >
-              <GoogleLogin
-                onSuccess={handleGoogleSuccess}
-                onError={handleGoogleError}
-                size="large"
-                text="continue_with"
-                shape="rectangular"
-                theme="outline"
-                logo_alignment="left"
-              />
+            {/* Google Login */}
+            <div className="flex justify-center mb-4">
+              <div
+                className={
+                  isLoading || googleAuthLoading
+                    ? "opacity-50 pointer-events-none"
+                    : ""
+                }
+              >
+                <GoogleLogin
+                  onSuccess={handleGoogleSuccess}
+                  onError={handleGoogleError}
+                  size="large"
+                  text="continue_with"
+                  shape="rectangular"
+                  theme="outline"
+                  logo_alignment="left"
+                />
+              </div>
             </div>
-          </div>
 
-          {/* Google Loading */}
-          {googleAuthLoading && (
-            <div className="mb-6 text-center">
-              <div className="w-6 h-6 border-2 border-gray-300 border-t-primary rounded-full animate-spin mx-auto mb-2"></div>
-              <p className="text-sm text-gray-500">
-                Authenticating with Google...
-              </p>
-            </div>
-          )}
+            {/* Google Loading */}
+            {googleAuthLoading && (
+              <div className="mb-4 text-center">
+                <div className="w-6 h-6 border-2 border-gray-300 border-t-primary rounded-full animate-spin mx-auto mb-2"></div>
+                <p className="text-sm text-gray-500">
+                  Authenticating with Google...
+                </p>
+              </div>
+            )}
 
-          {/* Continue Without Login */}
-          <div className="mb-6">
+            {/* Continue Without Login */}
             <button
               onClick={handleContinueWithoutLogin}
               disabled={isLoading || googleAuthLoading}
-              className="w-full px-4 py-3 bg-white border-2 border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+              className="w-full px-4 py-3 bg-white border-2 border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm mb-6"
             >
               <LogIn className="w-4 h-4" />
-              Continue Without Login
+              Continue as Guest
             </button>
-          </div>
 
-          {/* Sign up link */}
-          <div className="text-center">
-            <p className="text-sm text-gray-600">
-              Don't have an account?{" "}
-              <button
-                onClick={() => navigate("/signup")}
-                className="text-primary-600 hover:text-primary-700 underline font-medium"
-                disabled={isLoading || googleAuthLoading}
-              >
-                Sign up
-              </button>
-            </p>
+            {/* Sign Up Link */}
+            <div className="text-center">
+              <p className="text-sm text-gray-600">
+                Don't have an account?{" "}
+                <button
+                  onClick={() => navigate("/signup")}
+                  className="text-primary-600 hover:text-primary-700 underline font-medium"
+                  disabled={isLoading || googleAuthLoading}
+                >
+                  Sign up
+                </button>
+              </p>
+            </div>
           </div>
         </div>
       </div>
