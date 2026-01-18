@@ -8,6 +8,9 @@ import {
   Share2,
   BarChart3,
   MoreVertical,
+  GraduationCap,
+  MessageSquare,
+  ExternalLink,
 } from "lucide-react";
 import { apiClient } from "../api";
 
@@ -242,6 +245,35 @@ export default function StudentDashboard() {
       {/* Main Content Area - Feed */}
       <div className="flex-1 overflow-y-auto w-full lg:w-auto">
         <div className="max-w-3xl mx-auto p-3 sm:p-4 lg:p-6 pb-20 lg:pb-6">
+          {/* Quick Actions for Students */}
+          <div className="mb-6 grid grid-cols-2 gap-3">
+            <button
+              onClick={() => navigate("/student-portal")}
+              className="flex items-center gap-3 p-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all shadow-md"
+            >
+              <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+                <GraduationCap className="w-5 h-5" />
+              </div>
+              <div className="text-left">
+                <p className="font-semibold text-sm">Student Portal</p>
+                <p className="text-xs text-white/80">Access your portal</p>
+              </div>
+              <ExternalLink className="w-4 h-4 ml-auto opacity-70" />
+            </button>
+            <button
+              onClick={() => navigate("/complaints")}
+              className="flex items-center gap-3 p-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl hover:from-orange-600 hover:to-orange-700 transition-all shadow-md"
+            >
+              <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+                <MessageSquare className="w-5 h-5" />
+              </div>
+              <div className="text-left">
+                <p className="font-semibold text-sm">Complaints</p>
+                <p className="text-xs text-white/80">Submit feedback</p>
+              </div>
+            </button>
+          </div>
+
           {posts.length === 0 && !isLoading ? (
             <div className="text-center py-12">
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
