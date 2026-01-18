@@ -1,53 +1,75 @@
-export default function SentimentBySchoolAreas({ areas = [] }) {
-  const defaultAreas = [
-    { name: "Academics", sentiment: 95 },
-    { name: "Faculties", sentiment: 98 },
-    { name: "Securities", sentiment: 92 },
-    { name: "Administratives", sentiment: 96 }
-  ]
+import {
+  Radar,
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  ResponsiveContainer,
+  Tooltip,
+} from "recharts";
+import { motion } from "framer-motion";
+import { SENTIMENT_BY_AREA } from "../../data/sentimentData";
 
-  const displayAreas = areas.length > 0 ? areas : defaultAreas
-
+export default function SentimentBySchoolAreas() {
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-4 lg:p-6">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">
-        Sentiment by school areas
-      </h3>
-      <div className="grid grid-cols-2 gap-6">
-        {displayAreas.map((area, index) => (
-          <div key={index} className="flex flex-col items-center">
-            {/* Circular gauge - mostly filled green */}
-            <div className="relative w-28 h-28 mb-2">
-              <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-                {/* Background circle */}
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="42"
-                  fill="none"
-                  stroke="#e5e7eb"
-                  strokeWidth="6"
-                />
-                {/* Filled circle - high sentiment (mostly green) */}
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="42"
-                  fill="none"
-                  stroke="#10b981"
-                  strokeWidth="6"
-                  strokeDasharray={`${(area.sentiment / 100) * 263.9} 263.9`}
-                  strokeLinecap="round"
-                />
-              </svg>
-            </div>
-            <p className="text-sm text-gray-700 text-center font-medium">
-              {area.name}
-            </p>
-          </div>
-        ))}
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay: 0.4 }}
+      className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm h-full"
+    >
+      <div className="flex items-center justify-between mb-2">
+        <h3 className="font-bold text-gray-900">Sentiment by Area</h3>
+        <select className="text-xs bg-gray-50 border-gray-200 rounded-md px-2 py-1 outline-none focus:ring-1 focus:ring-primary-500">
+          <option>This Week</option>
+          <option>Last Week</option>
+        </select>
       </div>
-    </div>
-  )
-}
 
+      <p className="text-sm text-gray-500 mb-6">
+        Breakdown of student satisfaction across key campus facilities.
+      </p>
+
+      <div className="h-[250px] w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <RadarChart
+            cx="50%"
+            cy="50%"
+            outerRadius="80%"
+            data={SENTIMENT_BY_AREA}
+          >
+            <PolarGrid stroke="#e5e7eb" />
+            <PolarAngleAxis
+              dataKey="subject"
+              tick={{ fill: "#6b7280", fontSize: 12, fontWeight: 500 }}
+            />
+            {/* <PolarRadiusAxis angle={30} domain={[0, 100]} /> */}
+            <Tooltip
+              contentStyle={{
+                borderRadius: "8px",
+                border: "none",
+                boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+              }}
+              itemStyle={{ color: "#4f46e5", fontWeight: 600 }}
+            />
+            <Radar
+              name="Satisfaction Score"
+              dataKey="A"
+              stroke="#8b5cf6"
+              strokeWidth={3}
+              fill="#8b5cf6"
+              fillOpacity={0.2}
+            />
+          </RadarChart>
+        </ResponsiveContainer>
+      </div>
+
+      <div className="flex justify-center gap-4 mt-2">
+        <div className="flex items-center gap-2">
+          <span className="w-3 h-3 rounded-full bg-violet-500 opacity-20 border border-violet-500"></span>
+          <span className="text-xs text-gray-500">Current Score</span>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
