@@ -132,6 +132,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
+import { useAppStore } from "../store/useAppStore";
 import {
   Heart,
   MessageCircle,
@@ -186,11 +187,10 @@ const MOCK_SOURCE = [
     id: "1",
     author: "Melody G.",
     time: "2 days ago",
+    school: "unilag",
     content:
       "The University of Lagos (UNILAG) has announced the upcoming launch of its Innovation and Entrepreneurship Hub, designed to empower students with hands-on experience in technology, research, and business development...",
-    images: [
-      "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=1200&q=80",
-    ],
+    images: ["/blog-images/UNILAG%20Campus%20Blog%20Images/image%2014.svg"],
     likes: 100,
     comments: 20,
     shares: 5,
@@ -213,28 +213,37 @@ const MOCK_SOURCE = [
     id: "3",
     author: "Sarah Johnson",
     time: "12 days ago",
+    school: "yabatech",
     content:
-      "New campus facilities are opening this semester — study lounges, maker spaces, and more. Here’s what students can expect and how to access the spaces...",
-    images: [
-      "https://images.unsplash.com/photo-1519452575417-564c1401ecc0?auto=format&fit=crop&w=1200&q=80",
-    ],
-    likes: 64,
-    comments: 9,
-    shares: 2,
+      "New campus facilities are opening this semester — study lounges, maker spaces, and more. Here's what students can expect and how to access the spaces...",
+    images: ["/blog-images/Yabatech%20Campus%20blog%20images/image%2024.svg"],
+    likes: 156,
+    comments: 38,
+    shares: 11,
   },
   {
     id: "4",
-    author: "Campus Admin",
+    author: "Michael Brown",
     time: "2 weeks ago",
+    school: "unilag",
     content:
-      "Don’t miss out on campus events this month: tech fairs, cultural festivals, and sports nights. Save the dates and invite your friends!",
-    images: [
-      "https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=1200&q=80",
-      "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1200&q=80",
-    ],
-    likes: 89,
-    comments: 24,
-    shares: 6,
+      "The campus library will be undergoing renovations next month to include silent study pods, 24/7 access zones, and digital research stations. More details to follow.",
+    images: ["/blog-images/UNILAG%20Campus%20Blog%20Images/image%2016.svg"],
+    likes: 88,
+    comments: 15,
+    shares: 9,
+  },
+  {
+    id: "2",
+    author: "Jolextom",
+    time: "4 days ago",
+    school: "oau",
+    content:
+      "A new student wellness program has been introduced at the campus, offering free mental health counseling, fitness classes, and nutritional guidance. Students can...",
+    images: ["/blog-images/OAU%20Campus%20Blog%20images/image%2028.svg"],
+    likes: 100,
+    comments: 20,
+    shares: 5,
   },
   {
     id: "5",
@@ -269,6 +278,7 @@ const MOCK_SOURCE = [
 ========================================================= */
 
 export default function CampusBlog() {
+  const { selectedSchool } = useAppStore();
   const [posts, setPosts] = useState([]);
   const [expanded, setExpanded] = useState({});
   const [openComments, setOpenComments] = useState(null);
@@ -329,13 +339,28 @@ export default function CampusBlog() {
     try {
       if (!API_URL) {
         // ---- MOCK PAGINATION ----
+        // Filter posts based on selected school
+        const schoolKey = selectedSchool?.name?.toLowerCase().includes("unilag")
+          ? "unilag"
+          : selectedSchool?.name?.toLowerCase().includes("oau") ||
+              selectedSchool?.name?.toLowerCase().includes("obafemi")
+            ? "oau"
+            : selectedSchool?.name?.toLowerCase().includes("yabatech") ||
+                selectedSchool?.name?.toLowerCase().includes("yaba")
+              ? "yabatech"
+              : null;
+
+        const filteredSource = schoolKey
+          ? MOCK_SOURCE.filter((post) => post.school === schoolKey)
+          : MOCK_SOURCE;
+
         const nextOffset = reset ? 0 : offset;
-        const slice = MOCK_SOURCE.slice(nextOffset, nextOffset + PAGE_SIZE);
+        const slice = filteredSource.slice(nextOffset, nextOffset + PAGE_SIZE);
         const newOffset = nextOffset + slice.length;
 
         setPosts((prev) => (reset ? slice : [...prev, ...slice]));
         setOffset(newOffset);
-        setHasMore(newOffset < MOCK_SOURCE.length);
+        setHasMore(newOffset < filteredSource.length);
         setCursor(null);
       } else {
         // ---- REAL BACKEND PAGINATION ----
