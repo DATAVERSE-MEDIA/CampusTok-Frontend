@@ -464,8 +464,19 @@ const PostCard = ({ post, onLike, onComment, onShare, formatDate }) => {
         </p>
       </div>
 
-      {/* Post Image/Media - Using academic regalia placeholder */}
-      {post.media_url ? (
+      {/* Post Image/Media */}
+      {post.media && post.media.length > 0 && post.media[0]?.url ? (
+        <div className="w-full">
+          <div className="w-full aspect-square max-h-[600px] overflow-hidden">
+            <img
+              src={post.media[0].url}
+              alt="Post content"
+              className="w-full h-full object-cover"
+              loading="lazy"
+            />
+          </div>
+        </div>
+      ) : post.media_url ? (
         <div className="w-full">
           <div className="w-full aspect-square max-h-[600px] overflow-hidden">
             <img
