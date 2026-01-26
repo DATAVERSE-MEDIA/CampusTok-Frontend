@@ -21,7 +21,7 @@
       
 //       {/* Main Content */}
 //       <div className="flex-1 flex flex-col w-full lg:w-auto">
-//         <TopNav onMenuClick={() => setSidebarOpen(true)} />
+//         <TopNav />
 //         <main className="flex-1 overflow-y-auto bg-white pb-16 lg:pb-0">
 //           <Outlet />
 //         </main>
@@ -105,7 +105,7 @@ export default function Layout() {
       
       {/* Main Content */}
       <div className="flex-1 flex flex-col w-full lg:w-auto">
-        <TopNav onMenuClick={() => setSidebarOpen(true)} />
+        <TopNav />
         <main className="flex-1 overflow-y-auto bg-white pb-16 lg:pb-0">
           <Outlet />
         </main>
