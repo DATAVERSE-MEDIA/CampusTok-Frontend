@@ -1,48 +1,47 @@
-import { useState } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
-import { useAuthStore } from '../store/useAuthStore'
-import {
-  Search,
-  Video,
-  Users,
-  BookOpen,
-  Home
-} from 'lucide-react'
+import { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useAuthStore } from "../store/useAuthStore";
+import { Search, Video, Users, BookOpen, Home } from "lucide-react";
 
 export default function TopNav() {
-  const navigate = useNavigate()
-  const location = useLocation()
-  const { user } = useAuthStore()
-  const [localSearchQuery, setLocalSearchQuery] = useState('')
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { user } = useAuthStore();
+  const [localSearchQuery, setLocalSearchQuery] = useState("");
 
   const handleSearch = (e) => {
-    e.preventDefault()
+    e.preventDefault();
     if (localSearchQuery.trim()) {
-      navigate(`/search?q=${encodeURIComponent(localSearchQuery)}`)
+      navigate(`/search?q=${encodeURIComponent(localSearchQuery)}`);
     }
-  }
+  };
 
   const navItems = [
-    { path: '/', icon: Home, label: 'Home' },
-    { path: '/video', icon: Video, label: 'Video' },
-    { path: '/friends', icon: Users, label: 'Friends' },
-    { path: '/blog', icon: BookOpen, label: 'Campus Blog' },
-  ]
+    { path: "/general-dashboard", icon: Home, label: "Home" },
+    { path: "/video", icon: Video, label: "Video" },
+    { path: "/friends", icon: Users, label: "Friends" },
+    { path: "/blog", icon: BookOpen, label: "Campus Blog" },
+  ];
 
   return (
     <>
-      <div className="bg-gray-200 border-b border-gray-300 sticky top-0 z-20 rounded-xl mx-auto max-w-7xl">
+      <div className="bg-gray-200 border-b border-gray-300 sticky top-0 z-20 w-full">
         <div className="px-4 sm:px-6 lg:px-8 py-3 lg:py-4 flex justify-between items-center">
           {/* Mobile Layout */}
-          <div className="lg:hidden flex items-center gap-2 py-3 px-4 rounded-[30px] bg-[#E3E3E3] w-full">
+          <div className="lg:hidden flex items-center gap-3 py-3 px-4 rounded-[30px] bg-[#E3E3E3] w-full">
             <button
-              onClick={() => navigate('/profile')}
+              onClick={() => navigate("/profile")}
               className="w-8 h-8 bg-red-600 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0"
             >
-              {user?.name?.charAt(0).toUpperCase() || user?.full_name?.charAt(0).toUpperCase() || 'F'}
+              {user?.name?.charAt(0).toUpperCase() ||
+                user?.full_name?.charAt(0).toUpperCase() ||
+                "F"}
             </button>
 
-            <form onSubmit={handleSearch} className="flex-1 flex items-center rounded-[30px] bg-[#E3E3E3] relative">
+            <form
+              onSubmit={handleSearch}
+              className="flex-1 flex items-center rounded-[30px] bg-[#E3E3E3] relative"
+            >
               <Search className="absolute left-2 text-gray-400 w-5 h-5 z-10" />
               <input
                 type="text"
@@ -50,26 +49,30 @@ export default function TopNav() {
                 onChange={(e) => setLocalSearchQuery(e.target.value)}
                 placeholder="Search here"
                 className="w-full pl-8 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-[#E3E3E3] border-none text-gray-700 placeholder:text-gray-500"
-                style={{ backgroundColor: '#E3E3E3' }}
+                style={{ backgroundColor: "#E3E3E3" }}
               />
             </form>
 
             <div className="flex gap-3 ml-auto">
               {navItems.map((item) => {
-                const Icon = item.icon
-                const isActive = location.pathname === item.path
+                const Icon = item.icon;
+                const isActive = location.pathname === item.path;
                 return (
                   <button
                     key={item.path}
                     onClick={() => navigate(item.path)}
                     className="flex flex-col items-center gap-1 p-2 hover:opacity-80 transition-opacity"
                   >
-                    <Icon className={`w-5 h-5 ${isActive ? 'text-primary' : 'text-gray-600'}`} />
-                    <span className={`text-xs whitespace-nowrap ${isActive ? 'text-primary font-medium' : 'text-gray-600'}`}>
+                    <Icon
+                      className={`w-5 h-5 ${isActive ? "text-primary" : "text-gray-600"}`}
+                    />
+                    <span
+                      className={`text-xs whitespace-nowrap ${isActive ? "text-primary font-medium" : "text-gray-600"}`}
+                    >
                       {item.label}
                     </span>
                   </button>
-                )
+                );
               })}
             </div>
           </div>
@@ -77,12 +80,12 @@ export default function TopNav() {
           {/* Desktop Layout */}
           <div className="hidden lg:flex items-center justify-between gap-8 w-full">
             {/* Search Bar with Profile Picture */}
-            <div className="flex items-center gap-6 flex-1 max-w-lg">
+            <div className="flex items-center gap-6 flex-1 max-w-xl">
               <button
-                onClick={() => navigate('/profile')}
+                onClick={() => navigate("/profile")}
                 className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center text-white font-bold hover:opacity-80 transition-opacity flex-shrink-0"
               >
-                {user?.full_name?.charAt(0).toUpperCase() || 'F'}
+                {user?.full_name?.charAt(0).toUpperCase() || "F"}
               </button>
               <form onSubmit={handleSearch} className="flex-1">
                 <div className="relative">
@@ -98,32 +101,35 @@ export default function TopNav() {
               </form>
             </div>
 
-            {/* Navigation Icons with Labels - Centered */}
-            <div className="flex items-center gap-8 xl:gap-10 flex-1 justify-center">
+            {/* Navigation Icons with Labels - Left aligned */}
+            <div className="flex items-center gap-6 xl:gap-8 flex-1 justify-start">
               {navItems.map((item) => {
-                const Icon = item.icon
-                const isActive = location.pathname === item.path
+                const Icon = item.icon;
+                const isActive = location.pathname === item.path;
                 return (
                   <button
                     key={item.path}
                     onClick={() => navigate(item.path)}
                     className="flex flex-col items-center gap-2 hover:opacity-80 transition-opacity"
                   >
-                    <Icon className={`w-6 h-6 ${isActive ? 'text-primary' : 'text-gray-600'}`} />
-                    <span className={`text-sm whitespace-nowrap ${isActive ? 'text-primary font-medium' : 'text-gray-600'}`}>
+                    <Icon
+                      className={`w-6 h-6 ${isActive ? "text-primary" : "text-gray-600"}`}
+                    />
+                    <span
+                      className={`text-sm whitespace-nowrap ${isActive ? "text-primary font-medium" : "text-gray-600"}`}
+                    >
                       {item.label}
                     </span>
                   </button>
-                )
+                );
               })}
             </div>
 
             {/* Empty space for balance */}
-            <div className="flex-1 max-w-lg"></div>
+            <div className="flex-1" />
           </div>
         </div>
       </div>
-
     </>
-  )
+  );
 }

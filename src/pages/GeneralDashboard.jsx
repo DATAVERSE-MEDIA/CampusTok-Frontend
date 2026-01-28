@@ -30,19 +30,44 @@ export default function GeneralDashboard() {
     setIsLoading(true);
 
     try {
-      const params = {
-        page,
-        limit: 10,
-        sortBy: "created_at",
-        sortOrder: "desc",
-      };
+      const limit = 10;
+      let newPosts = [];
 
-      if (selectedSchool?.id) {
-        params.filters = { school_id: selectedSchool.id };
+      // If a specific institution is selected and matches known slugs,
+      // use the institution-specific endpoints the backend exposes.
+      if (
+        selectedSchool?.id === "unilag" ||
+        selectedSchool?.id === "ileife" ||
+        selectedSchool?.id === "yabatech"
+      ) {
+        const institutionId = selectedSchool.id;
+        const params = {
+          post_type: "post",
+          skip: (page - 1) * limit,
+          limit,
+        };
+
+        const response = await apiClient.get(
+          `/posts/institution/${institutionId}`,
+          { params },
+        );
+        newPosts = response.data.data || response.data || [];
+      } else {
+        // Fallback to the generic posts endpoint with optional school filter
+        const params = {
+          page,
+          limit,
+          sortBy: "created_at",
+          sortOrder: "desc",
+        };
+
+        if (selectedSchool?.id) {
+          params.filters = { school_id: selectedSchool.id };
+        }
+
+        const response = await apiClient.get("/posts", { params });
+        newPosts = response.data.data || response.data || [];
       }
-
-      const response = await apiClient.get("/posts", { params });
-      const newPosts = response.data.data || response.data || [];
 
       // For testing: use dummy data matching Figma design
       if (newPosts.length === 0 && page === 1) {
@@ -257,6 +282,21 @@ export default function GeneralDashboard() {
             </div>
           ) : (
             <>
+              {isLoading && posts.length > 0 && (
+                <div className="flex justify-center mb-4">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/80 backdrop-blur border border-gray-200 shadow-sm text-xs text-gray-600">
+                    <span className="inline-block h-3 w-3 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+                    <span>
+                      Updating feed
+                      {selectedSchool?.name
+                        ? ` for ${selectedSchool.name}`
+                        : ""}
+                      ...
+                    </span>
+                  </div>
+                </div>
+              )}
+
               {posts.map((post) => (
                 <PostCard
                   key={post.id}

@@ -182,9 +182,9 @@ export default function Chatbot() {
 
   return (
     <div className="flex flex-col h-screen bg-gray-50">
-      {/* Header */}
+      {/* Header with School Dropdown on the right (original layout) */}
       <div className="bg-white border-b border-gray-200 px-4 py-3">
-        <div className="max-w-4xl mx-auto flex items-center justify-center">
+        <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-primary-500 rounded-full flex items-center justify-center">
               <Bot className="w-6 h-6 text-white" />
@@ -198,13 +198,8 @@ export default function Chatbot() {
               </p>
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* Centered School Dropdown */}
-      <div className="bg-white border-b border-gray-200 px-4 py-4">
-        <div className="max-w-3xl mx-auto flex items-center justify-center">
-          <div className="w-full max-w-md">
+          <div className="w-64">
             <SchoolDropdown
               schools={schools}
               selectedSchool={selectedSchool}
