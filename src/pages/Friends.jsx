@@ -140,7 +140,6 @@
 //   )
 // }
 
-
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { SlidersHorizontal, Check, BadgeCheck } from "lucide-react";
@@ -250,7 +249,7 @@ export default function FriendsPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 pb-20">
+    <div className="max-w-4xl mx-auto px-4 pb-20">
       {/* Header */}
       <div className="flex items-center justify-between mb-10">
         <h1 className="text-4xl font-bold">
@@ -266,7 +265,7 @@ export default function FriendsPage() {
       </h2>
 
       {/* Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {requests.map((person) => (
           <div
             key={person.id}
@@ -284,7 +283,7 @@ export default function FriendsPage() {
             {/* Online status */}
             <span
               className={`absolute top-4 right-4 w-4 h-4 rounded-full border-2 border-white ${statusColor(
-                person.status
+                person.status,
               )}`}
             />
 
@@ -308,7 +307,7 @@ export default function FriendsPage() {
                   className="flex-1 py-2 rounded-full bg-gray-200 hover:bg-gray-300 transition"
                   onClick={() =>
                     setRequests((prev) =>
-                      prev.filter((p) => p.id !== person.id)
+                      prev.filter((p) => p.id !== person.id),
                     )
                   }
                 >
@@ -343,4 +342,3 @@ export default function FriendsPage() {
     </div>
   );
 }
-

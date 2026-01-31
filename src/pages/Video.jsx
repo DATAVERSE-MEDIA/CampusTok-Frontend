@@ -1,161 +1,4 @@
-// import { useState } from 'react'
-// import { Play, ThumbsUp, MessageCircle, Share2, Eye, Clock } from 'lucide-react'
-
-// const videos = [
-//   {
-//     id: 1,
-//     title: 'Campus Tour 2024',
-//     creator: 'Campus Media',
-//     views: '12.5K',
-//     likes: 892,
-//     comments: 134,
-//     duration: '8:45',
-//     thumbnail: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=400',
-//     uploaded: '2 days ago'
-//   },
-//   {
-//     id: 2,
-//     title: 'Student Life Vlog: A Day in the Life',
-//     creator: 'Sarah Johnson',
-//     views: '8.3K',
-//     likes: 456,
-//     comments: 67,
-//     duration: '12:30',
-//     thumbnail: 'https://images.unsplash.com/photo-1511578314322-379afb476865?w=400',
-//     uploaded: '5 days ago'
-//   },
-//   {
-//     id: 3,
-//     title: 'Study Tips from Top Students',
-//     creator: 'Academic Success',
-//     views: '15.2K',
-//     likes: 1234,
-//     comments: 189,
-//     duration: '10:15',
-//     thumbnail: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=400',
-//     uploaded: '1 week ago'
-//   },
-//   {
-//     id: 4,
-//     title: 'Campus Events Highlights',
-//     creator: 'Event Team',
-//     views: '6.7K',
-//     likes: 321,
-//     comments: 45,
-//     duration: '6:20',
-//     thumbnail: 'https://images.unsplash.com/photo-1511578314322-379afb476865?w=400',
-//     uploaded: '3 days ago'
-//   },
-// ]
-
-// export default function Video() {
-//   const [selectedVideo, setSelectedVideo] = useState(null)
-
-//   return (
-//     <div className="max-w-7xl mx-auto">
-//       <div className="card mb-6">
-//         <div className="flex items-center gap-3 mb-2">
-//           <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center">
-//             <Play className="w-6 h-6 text-primary" />
-//           </div>
-//           <div>
-//             <h1 className="text-2xl font-bold text-gray-900">Campus Videos</h1>
-//             <p className="text-gray-600">Watch videos from the campus community</p>
-//           </div>
-//         </div>
-//       </div>
-
-//       {selectedVideo ? (
-//         <div className="card mb-6">
-//           <button
-//             onClick={() => setSelectedVideo(null)}
-//             className="mb-4 text-primary-600 hover:text-primary-700 font-medium"
-//           >
-//             ← Back to Videos
-//           </button>
-//           <div className="aspect-video bg-gray-900 rounded-lg mb-4 flex items-center justify-center">
-//             <div className="text-center text-white">
-//               <Play className="w-16 h-16 mx-auto mb-4" />
-//               <p className="text-lg">Video Player</p>
-//               <p className="text-sm text-gray-400">{selectedVideo.title}</p>
-//             </div>
-//           </div>
-//           <h2 className="text-2xl font-bold text-gray-900 mb-2">{selectedVideo.title}</h2>
-//           <div className="flex items-center gap-4 text-gray-600 mb-4">
-//             <span>{selectedVideo.creator}</span>
-//             <span>•</span>
-//             <span className="flex items-center gap-1">
-//               <Eye className="w-4 h-4" />
-//               {selectedVideo.views} views
-//             </span>
-//             <span>•</span>
-//             <span>{selectedVideo.uploaded}</span>
-//           </div>
-//           <div className="flex items-center gap-4">
-//             <button className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors">
-//               <ThumbsUp className="w-5 h-5" />
-//               <span>{selectedVideo.likes}</span>
-//             </button>
-//             <button className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors">
-//               <MessageCircle className="w-5 h-5" />
-//               <span>{selectedVideo.comments}</span>
-//             </button>
-//             <button className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors">
-//               <Share2 className="w-5 h-5" />
-//               Share
-//             </button>
-//           </div>
-//         </div>
-//       ) : (
-//         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-//           {videos.map((video) => (
-//             <div
-//               key={video.id}
-//               className="card hover:shadow-lg transition-shadow cursor-pointer"
-//               onClick={() => setSelectedVideo(video)}
-//             >
-//               <div className="relative mb-4">
-//                 <div className="aspect-video bg-gray-200 rounded-lg overflow-hidden">
-//                   <img
-//                     src={video.thumbnail}
-//                     alt={video.title}
-//                     className="w-full h-full object-cover"
-//                     onError={(e) => {
-//                       e.target.style.display = 'none'
-//                     }}
-//                   />
-//                 </div>
-//                 <div className="absolute bottom-2 right-2 bg-black bg-opacity-75 text-white px-2 py-1 rounded text-sm flex items-center gap-1">
-//                   <Clock className="w-4 h-4" />
-//                   {video.duration}
-//                 </div>
-//                 <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-0 hover:bg-opacity-30 transition-all group">
-//                   <Play className="w-16 h-16 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-//                 </div>
-//               </div>
-//               <h3 className="font-bold text-gray-900 mb-2 line-clamp-2">{video.title}</h3>
-//               <div className="flex items-center justify-between text-sm text-gray-600">
-//                 <span>{video.creator}</span>
-//                 <div className="flex items-center gap-3">
-//                   <span className="flex items-center gap-1">
-//                     <Eye className="w-4 h-4" />
-//                     {video.views}
-//                   </span>
-//                   <span className="flex items-center gap-1">
-//                     <ThumbsUp className="w-4 h-4" />
-//                     {video.likes}
-//                   </span>
-//                 </div>
-//               </div>
-//             </div>
-//           ))}
-//         </div>
-//       )}
-//     </div>
-//   )
-// }
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Play,
   ThumbsUp,
@@ -165,114 +8,196 @@ import {
   ArrowUp,
   ArrowDown,
 } from "lucide-react";
+import { useAppStore } from "../store/useAppStore";
+import { apiClient } from "../api";
 
-const videos = [
-  {
-    id: 1,
-    title: "Student Life Vlog",
-    creator: "Olawale Francis",
-    views: "8.3K",
-    likes: 120,
-    comments: 24,
-    shares: 50,
-    uploaded: "5 days ago",
-    thumbnail:
-      "https://images.unsplash.com/photo-1519452575417-564c1401ecc0?auto=format&fit=crop&w=1200&q=80",
-  },
-  {
-    id: 2,
-    title: "Campus Experience",
-    creator: "Sarah Johnson",
-    views: "12.1K",
-    likes: 456,
-    comments: 67,
-    shares: 89,
-    uploaded: "2 days ago",
-    thumbnail:
-      "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=1200&q=80",
-  },
-];
+const INSTITUTION_IDS = ["unilag", "yabatech", "ileife"];
+
+function getInstitutionId(selectedSchool) {
+  if (selectedSchool?.id && INSTITUTION_IDS.includes(selectedSchool.id)) {
+    return selectedSchool.id;
+  }
+  return "unilag";
+}
+
+function mapReelFromApi(post) {
+  const videoMedia = post.media?.find((m) => m.media_type === "video");
+  const videoUrl = videoMedia?.url || null;
+  const title =
+    typeof post.content === "string"
+      ? post.content.split("\n")[0].slice(0, 80) || "Reel"
+      : "Reel";
+  return {
+    id: post.id,
+    title,
+    creator: post.author?.full_name || "Unknown",
+    views: "—",
+    likes: 0,
+    comments: 0,
+    shares: 0,
+    uploaded: "",
+    thumbnail: null,
+    videoUrl,
+    content: post.content,
+  };
+}
 
 export default function Video() {
+  const { selectedSchool } = useAppStore();
+  const [reels, setReels] = useState([]);
   const [activeIndex, setActiveIndex] = useState(0);
-  const video = videos[activeIndex];
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const institutionId = getInstitutionId(selectedSchool);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function fetchReels() {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const params = { post_type: "reel", skip: 0, limit: 100 };
+        const response = await apiClient.get(
+          `/posts/institution/${institutionId}`,
+          { params },
+        );
+        const raw = response.data?.data ?? response.data ?? [];
+        const list = Array.isArray(raw) ? raw : [];
+        const reelsOnly = list.filter((p) => p.post_type === "reel");
+        const mapped = reelsOnly.map(mapReelFromApi).filter((r) => r.videoUrl);
+        if (!cancelled) {
+          setReels(mapped);
+          setActiveIndex(0);
+        }
+      } catch (e) {
+        if (!cancelled) {
+          setError(e.message || "Failed to load reels");
+          setReels([]);
+        }
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    }
+
+    fetchReels();
+    return () => {
+      cancelled = true;
+    };
+  }, [institutionId]);
+
+  if (isLoading) {
+    return (
+      <div className="px-4 sm:px-6 lg:px-8 flex items-center justify-center min-h-[60vh]">
+        <div className="text-gray-500">Loading reels...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="px-4 sm:px-6 lg:px-8 flex flex-col items-center justify-center min-h-[60vh] gap-2">
+        <p className="text-red-600">{error}</p>
+        <p className="text-sm text-gray-500">
+          Reels for {selectedSchool?.name || institutionId}
+        </p>
+      </div>
+    );
+  }
+
+  if (reels.length === 0) {
+    return (
+      <div className="px-4 sm:px-6 lg:px- flex flex-col items-center justify-center min-h-[60vh] gap-2">
+        <p className="text-gray-600">No reels yet</p>
+        <p className="text-sm text-gray-500">
+          for {selectedSchool?.name || institutionId}
+        </p>
+      </div>
+    );
+  }
+
+  const video = reels[activeIndex];
 
   return (
-    <div className="max-w-md mx-auto">
-      {/* Card */}
-      <div className="relative h-[88vh] rounded-3xl overflow-hidden bg-white shadow">
-        {/* Image */}
-        <img
-          src={video.thumbnail}
-          alt={video.title}
-          className="absolute inset-0 w-full h-full object-cover"
-          onError={(e) => {
-            e.currentTarget.src =
-              "https://images.unsplash.com/photo-1520975922284-8b456906c813?auto=format&fit=crop&w=1200&q=80";
-          }}
-        />
-
-        {/* Center play icon */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <Play className="w-20 h-20 text-white opacity-80" />
-        </div>
-
-        {/* Navigation arrows (top right) */}
-        <div className="absolute top-4 right-4 flex gap-2 z-10">
-          <button
-            onClick={() =>
-              setActiveIndex((i) => (i === 0 ? videos.length - 1 : i - 1))
-            }
-            className="w-10 h-10 rounded-xl bg-white shadow flex items-center justify-center"
-          >
-            <ArrowUp className="w-5 h-5 text-gray-700" />
-          </button>
-
-          <button
-            onClick={() =>
-              setActiveIndex((i) => (i === videos.length - 1 ? 0 : i + 1))
-            }
-            className="w-10 h-10 rounded-xl bg-white shadow flex items-center justify-center"
-          >
-            <ArrowDown className="w-5 h-5 text-gray-700" />
-          </button>
-        </div>
-
-        {/* Right-side actions */}
-        <div className="absolute right-4 bottom-28 flex flex-col items-center gap-6 z-10">
-          {[
-            { icon: ThumbsUp, value: video.likes },
-            { icon: MessageCircle, value: video.comments },
-            { icon: Share2, value: video.shares },
-          ].map(({ icon: Icon, value }, idx) => (
-            <div key={idx} className="flex flex-col items-center gap-1">
-              <div className="w-12 h-12 rounded-full bg-gray-100 shadow flex items-center justify-center">
-                <Icon className="w-6 h-6 text-gray-700" />
-              </div>
-              <span className="text-sm text-gray-700">{value}</span>
+    <div className="px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md mx-auto">
+        <div className="relative h-[88vh] rounded-3xl overflow-hidden bg-white shadow">
+          {/* Video or thumbnail */}
+          {video.videoUrl ? (
+            <video
+              key={video.id}
+              src={video.videoUrl}
+              className="absolute inset-0 w-full h-full object-cover"
+              controls
+              playsInline
+              loop
+              muted
+              autoPlay
+            />
+          ) : (
+            <div className="absolute inset-0 w-full h-full bg-gray-900 flex items-center justify-center">
+              <Play className="w-20 h-20 text-white opacity-80" />
             </div>
-          ))}
-        </div>
+          )}
 
-        {/* Bottom creator card */}
-        <div className="absolute bottom-4 left-4 right-20 z-10">
-          <div className="bg-white/80 backdrop-blur rounded-2xl p-4 shadow">
-            <div className="flex items-center gap-3 mb-1">
-              <div className="w-9 h-9 rounded-full bg-gray-300" />
-              <p className="font-semibold text-gray-900">{video.creator}</p>
-            </div>
-
-            <p className="font-medium text-gray-900">{video.title}</p>
-
-            <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
-              <Eye className="w-4 h-4" />
-              <span>{video.views}</span>
-              <span>• {video.uploaded}</span>
-            </div>
-
-            <button className="mt-3 px-4 py-1.5 rounded-full border border-gray-900 text-sm font-medium hover:bg-gray-900 hover:text-white transition">
-              Follow
+          {/* Navigation arrows */}
+          <div className="absolute top-4 right-4 flex gap-2 z-10">
+            <button
+              onClick={() =>
+                setActiveIndex((i) => (i === 0 ? reels.length - 1 : i - 1))
+              }
+              className="w-10 h-10 rounded-xl bg-white shadow flex items-center justify-center"
+            >
+              <ArrowUp className="w-5 h-5 text-gray-700" />
             </button>
+            <button
+              onClick={() =>
+                setActiveIndex((i) => (i === reels.length - 1 ? 0 : i + 1))
+              }
+              className="w-10 h-10 rounded-xl bg-white shadow flex items-center justify-center"
+            >
+              <ArrowDown className="w-5 h-5 text-gray-700" />
+            </button>
+          </div>
+
+          {/* Right-side actions */}
+          <div className="absolute right-4 bottom-28 flex flex-col items-center gap-6 z-10">
+            {[
+              { icon: ThumbsUp, value: video.likes },
+              { icon: MessageCircle, value: video.comments },
+              { icon: Share2, value: video.shares },
+            ].map(({ icon: Icon, value }, idx) => (
+              <div key={idx} className="flex flex-col items-center gap-1">
+                <div className="w-12 h-12 rounded-full bg-gray-100 shadow flex items-center justify-center">
+                  <Icon className="w-6 h-6 text-gray-700" />
+                </div>
+                <span className="text-sm text-gray-700">{value}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Bottom creator card - transparent */}
+          <div className="absolute bottom-4 left-4 right-20 z-10">
+            <div className="bg-transparent rounded-2xl p-4">
+              <div className="flex items-center gap-3 mb-1">
+                <div className="w-9 h-9 rounded-full bg-white/30 border border-white/50" />
+                <p className="font-semibold text-white drop-shadow-md">
+                  {video.creator}
+                </p>
+              </div>
+              <p className="font-medium text-white drop-shadow-md line-clamp-2">
+                {video.title}
+              </p>
+              <div className="flex items-center gap-2 text-sm text-white/90 drop-shadow-md mt-1">
+                <Eye className="w-4 h-4" />
+                <span>{video.views}</span>
+                {video.uploaded && <span>• {video.uploaded}</span>}
+              </div>
+              <button className="mt-3 px-4 py-1.5 rounded-full border border-white text-white text-sm font-medium hover:bg-white hover:text-gray-900 transition">
+                Follow
+              </button>
+            </div>
           </div>
         </div>
       </div>
