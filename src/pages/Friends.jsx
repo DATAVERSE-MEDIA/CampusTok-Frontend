@@ -151,7 +151,7 @@ const rawPeople = [
     id: "1",
     name: "Onasanya Olawale",
     image:
-      "https://images.unsplash.com/photo-1520975922284-8b456906c813?auto=format&fit=crop&w=900&q=80",
+      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=900&q=80",
     mutualCount: 6,
     department: "Engineering",
     verified: true,
@@ -272,11 +272,16 @@ export default function FriendsPage() {
             className="relative rounded-3xl overflow-hidden shadow-lg"
           >
             {/* Image */}
-            <Link to={`/friends/${person.id}`}>
+            <Link to={`/friends/${person.id}`} className="block w-full h-[420px] bg-gray-200">
               <img
                 src={person.image}
                 alt={person.name}
-                className="w-full h-[420px] object-cover"
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src =
+                    "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=900&q=80";
+                }}
               />
             </Link>
 
