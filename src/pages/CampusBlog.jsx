@@ -131,7 +131,7 @@
 // }
 
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Heart,
   MessageCircle,
@@ -143,29 +143,55 @@ import {
   ChevronLeft,
   ChevronRight,
   Loader2,
+  RefreshCw,
 } from "lucide-react";
+import { useAppStore } from "../store/useAppStore";
+import { apiClient } from "../api";
 
 /* =========================================================
-   1) REAL BACKEND PAGINATION (API-ready)
-   ---------------------------------------------------------
-   - If API_URL is empty, we use mock pagination.
-   - Backend shape supported:
-     GET /posts?cursor=abc&limit=10
-     Response:
-       { items: Post[], nextCursor: string | null }
-   - Also supports offset pagination if your backend uses:
-       { items: Post[], nextOffset: number | null }
+   Institution blog API: /posts/institution/{id}?post_type=blog&skip=0&limit=100
+   Schools: unilag, yabatech, ileife
 ========================================================= */
 
-const API_URL = ""; // <-- set to your backend endpoint like: 'https://your-api.com/posts'
+const INSTITUTION_IDS = ["unilag", "yabatech", "ileife"];
 const PAGE_SIZE = 6;
+
+const FALLBACK_IMAGE =
+  "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=1200&q=80";
+
+function getInstitutionId(selectedSchool) {
+  if (selectedSchool?.id && INSTITUTION_IDS.includes(selectedSchool.id)) {
+    return selectedSchool.id;
+  }
+  return "unilag";
+}
+
+function mapBlogFromApi(post) {
+  const images =
+    post.media
+      ?.filter((m) => m.media_type === "image")
+      ?.map((m) => m.url) ?? [];
+  return {
+    id: post.id,
+    author: post.author?.full_name ?? "Unknown",
+    time: post.created_at
+      ? new Date(post.created_at).toLocaleDateString(undefined, {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        })
+      : "Recently",
+    content: typeof post.content === "string" ? post.content : "",
+    images: images.length ? images : [FALLBACK_IMAGE],
+    likes: post.likes_count ?? 0,
+    comments: post.comments_count ?? 0,
+    shares: post.shares_count ?? 0,
+  };
+}
 
 /* -------------------- Helpers -------------------- */
 
 const safeId = () => `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-
-const FALLBACK_IMAGE =
-  "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=1200&q=80";
 
 const avatarFor = (name) =>
   `https://i.pravatar.cc/80?u=${encodeURIComponent(name)}`; // dummy profile images
@@ -269,6 +295,9 @@ const MOCK_SOURCE = [
 ========================================================= */
 
 export default function CampusBlog() {
+  const { selectedSchool } = useAppStore();
+  const institutionId = getInstitutionId(selectedSchool);
+
   const [posts, setPosts] = useState([]);
   const [expanded, setExpanded] = useState({});
   const [openComments, setOpenComments] = useState(null);
@@ -277,11 +306,10 @@ export default function CampusBlog() {
   const [myReaction, setMyReaction] = useState({});
   const [reactionPickerFor, setReactionPickerFor] = useState(null);
 
-  // pagination state
-  const [loading, setLoading] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
-  const [cursor, setCursor] = useState(null);
-  const [offset, setOffset] = useState(0);
+  // API only: loading, error, hasMore
+  const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(null);
+  const [hasMore, setHasMore] = useState(false);
 
   // lightbox
   const [lightbox, setLightbox] = useState(null); // { images, index, author }
@@ -295,96 +323,41 @@ export default function CampusBlog() {
 
   const inflightRef = useRef(false);
 
-  /* -------------------- Initial Load -------------------- */
-  useEffect(() => {
-    fetchNextPage(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  /* -------------------- Infinite Scroll -------------------- */
-  useEffect(() => {
-    const onScroll = () => {
-      if (loading || !hasMore || inflightRef.current) return;
-      if (
-        window.innerHeight + window.scrollY >=
-        document.body.offsetHeight - 250
-      ) {
-        fetchNextPage(false);
-      }
-    };
-    window.addEventListener("scroll", onScroll);
-    return () => window.removeEventListener("scroll", onScroll);
-  }, [loading, hasMore]);
-
-  /* =========================================================
-     fetchNextPage()
-     - real backend pagination if API_URL is set
-     - otherwise mock pagination (offset-based)
-  ========================================================= */
-  const fetchNextPage = async (reset) => {
+  /* -------------------- Fetch blogs from institution API only -------------------- */
+  const fetchBlogs = useCallback(async () => {
     if (inflightRef.current) return;
     inflightRef.current = true;
     setLoading(true);
+    setFetchError(null);
 
     try {
-      if (!API_URL) {
-        // ---- MOCK PAGINATION ----
-        const nextOffset = reset ? 0 : offset;
-        const slice = MOCK_SOURCE.slice(nextOffset, nextOffset + PAGE_SIZE);
-        const newOffset = nextOffset + slice.length;
+      const params = { post_type: "blog", skip: 0, limit: 100 };
+      const response = await apiClient.get(
+        `/posts/institution/${institutionId}`,
+        { params }
+      );
+      const raw = response.data?.data ?? response.data ?? [];
+      const list = Array.isArray(raw) ? raw : [];
+      const blogsOnly = list.filter((p) => p.post_type === "blog");
+      const mapped = blogsOnly.map(mapBlogFromApi);
 
-        setPosts((prev) => (reset ? slice : [...prev, ...slice]));
-        setOffset(newOffset);
-        setHasMore(newOffset < MOCK_SOURCE.length);
-        setCursor(null);
-      } else {
-        // ---- REAL BACKEND PAGINATION ----
-        // Support both cursor and offset (choose what your backend uses)
-        const params = new URLSearchParams();
-        params.set("limit", String(PAGE_SIZE));
-
-        if (!reset) {
-          if (cursor) params.set("cursor", cursor);
-          else params.set("offset", String(offset));
-        }
-
-        const res = await fetch(`${API_URL}?${params.toString()}`);
-        if (!res.ok) throw new Error(`API error: ${res.status}`);
-        const data = await res.json();
-
-        const items = Array.isArray(data.items) ? data.items : [];
-        setPosts((prev) => (reset ? items : [...prev, ...items]));
-
-        // cursor pagination
-        if ("nextCursor" in data) {
-          setCursor(data.nextCursor);
-          setHasMore(Boolean(data.nextCursor));
-        }
-
-        // offset pagination
-        if ("nextOffset" in data) {
-          setOffset(data.nextOffset ?? 0);
-          setHasMore(data.nextOffset != null);
-        }
-
-        // if neither provided, infer from item count
-        if (!("nextCursor" in data) && !("nextOffset" in data)) {
-          setHasMore(items.length === PAGE_SIZE);
-        }
-      }
+      setPosts(mapped);
+      setHasMore(false);
     } catch (e) {
-      // If backend fails, don’t crash the UI
       console.error(e);
+      setFetchError(e.message || "Failed to load blog posts");
+      setPosts([]);
       setHasMore(false);
     } finally {
       setLoading(false);
       inflightRef.current = false;
     }
-  };
+  }, [institutionId]);
 
-  /* =========================================================
-     Emoji reactions logic
-  ========================================================= */
+  useEffect(() => {
+    fetchBlogs();
+  }, [fetchBlogs]);
+
   const applyReaction = (postId, reaction) => {
     setMyReaction((prev) => ({ ...prev, [postId]: reaction }));
     setReactionPickerFor(null);
@@ -461,8 +434,51 @@ export default function CampusBlog() {
         </button>
       </div>
 
+      {/* Loading: API only */}
+      {loading && posts.length === 0 && (
+        <div className="flex items-center justify-center gap-2 py-16 text-gray-600">
+          <Loader2 className="w-6 h-6 animate-spin" />
+          <span>Loading blog posts...</span>
+        </div>
+      )}
+
+      {/* Error: failed to load */}
+      {!loading && fetchError && (
+        <div className="rounded-2xl border border-gray-200 bg-gray-50 p-8 text-center">
+          <p className="text-gray-700 font-medium mb-1">Could not load posts</p>
+          <p className="text-sm text-gray-500 mb-4">{fetchError}</p>
+          <p className="text-sm text-gray-600 mb-4">
+            Try refreshing or check back later.
+          </p>
+          <button
+            onClick={() => fetchBlogs()}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-900 text-white hover:bg-gray-800 transition"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Refresh
+          </button>
+        </div>
+      )}
+
+      {/* Empty: no data from API */}
+      {!loading && !fetchError && posts.length === 0 && (
+        <div className="rounded-2xl border border-gray-200 bg-gray-50 p-8 text-center">
+          <p className="text-gray-700 font-medium mb-1">No data at the moment</p>
+          <p className="text-sm text-gray-500 mb-4">
+            There are no blog posts to show. Try refreshing or check back later.
+          </p>
+          <button
+            onClick={() => fetchBlogs()}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-900 text-white hover:bg-gray-800 transition"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Refresh
+          </button>
+        </div>
+      )}
+
       {/* Feed */}
-      {posts.map((post) => {
+      {!loading && posts.length > 0 && posts.map((post) => {
         const isExpanded = expanded[post.id];
         const likeDisplay = getLikeDisplay(post);
 
@@ -610,8 +626,8 @@ export default function CampusBlog() {
         );
       })}
 
-      {/* Loading indicator */}
-      {loading && (
+      {/* Loading more (when already have posts) */}
+      {loading && posts.length > 0 && (
         <div className="flex items-center justify-center text-gray-600 gap-2 py-6">
           <Loader2 className="w-5 h-5 animate-spin" />
           Loading more posts...

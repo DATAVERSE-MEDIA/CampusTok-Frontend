@@ -42,10 +42,10 @@ const studentMenuItems = [
 ];
 
 // Institution menu items - matching Figma design
-// Faculties, Courses, Notification hidden for now ("attach pages")
+// Communities, Faculties, Courses, Notification hidden for now
 const institutionMenuItems = [
   { path: "/institution-dashboard", icon: LayoutDashboard, label: "Dashboard" },
-  { path: "/community", icon: Users, label: "Communities" },
+  // { path: "/community", icon: Users, label: "Communities" },
   { path: "/sentiment-bank", icon: Eye, label: "Sentiment Bank" },
   // { path: "/faculties", icon: FileText, label: "Faculties / Department" },
   // { path: "/courses", icon: BookOpen, label: "Courses / Programs" },

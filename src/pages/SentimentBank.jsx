@@ -4,6 +4,7 @@ import WhatPeopleAreSaying from "../components/sentimentBank/WhatPeopleAreSaying
 import SentimentBySchoolAreas from "../components/sentimentBank/SentimentBySchoolAreas";
 import ChatBotInsights from "../components/sentimentBank/ChatBotInsights";
 import RecommendedActions from "../components/sentimentBank/RecommendedActions";
+import { METRICS_DATA } from "../data/sentimentData";
 
 export default function SentimentBank() {
   return (
@@ -20,31 +21,43 @@ export default function SentimentBank() {
         {/* Top Metrics Row - 4 cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-6">
           <MetricCard
-            title="Overall Sentiment"
-            value="72% • Positive"
+            title={METRICS_DATA.overallSentiment.label}
+            value={METRICS_DATA.overallSentiment.value + "%"}
+            context={METRICS_DATA.overallSentiment.period}
+            trend={METRICS_DATA.overallSentiment.trend}
+            data={METRICS_DATA.overallSentiment.history}
             color="green"
-            showBarChart={true}
+            index={0}
           />
           <MetricCard
-            title="Total mentions"
-            value="1,250 Analyzed"
+            title={METRICS_DATA.studentVoices.label}
+            value={METRICS_DATA.studentVoices.value}
+            context={METRICS_DATA.studentVoices.context}
+            trend="positive"
+            data={METRICS_DATA.studentVoices.history}
             color="blue"
-            showLineChart={true}
+            index={1}
           />
           <MetricCard
-            title="Critical Issues"
-            value="50 Alerts"
+            title={METRICS_DATA.criticalIssues.label}
+            value={METRICS_DATA.criticalIssues.value}
+            context={METRICS_DATA.criticalIssues.context}
+            trend="negative"
+            data={METRICS_DATA.criticalIssues.history}
             color="red"
-            showLineChart={true}
+            index={2}
           />
           <PublicTrustGauge value={82} />
         </div>
 
         {/* Middle Section - Two Columns */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 mb-6">
+          {/* Left Column - Live Feed */}
           <div className="h-[320px]">
             <WhatPeopleAreSaying />
           </div>
+
+          {/* Right Column - Radar Chart */}
           <div className="h-[320px]">
             <SentimentBySchoolAreas />
           </div>
@@ -52,9 +65,12 @@ export default function SentimentBank() {
 
         {/* Bottom Section - Two Columns */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+          {/* Left Column - ChatBot Generated Insights */}
           <div className="h-full">
             <ChatBotInsights />
           </div>
+
+          {/* Right Column - Recommended Actions */}
           <div className="h-full">
             <RecommendedActions />
           </div>
