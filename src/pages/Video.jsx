@@ -13,9 +13,6 @@ import { apiClient } from "../api";
 
 const INSTITUTION_IDS = ["unilag", "yabatech", "ileife"];
 
-// ✅ tweak this ONLY if you want micro adjustment after it aligns
-const MANUAL_NUDGE_PX = 10;
-
 // scroll / swipe settings
 const WHEEL_COOLDOWN_MS = 600;
 const TOUCH_THRESHOLD_PX = 60;
@@ -54,7 +51,6 @@ export default function Video() {
 
   const [reels, setReels] = useState([]);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
   // ✅ computed horizontal offset so the reel aligns to "Campus Blog" END
@@ -78,7 +74,6 @@ export default function Video() {
     let cancelled = false;
 
     async function fetchReels() {
-      setIsLoading(true);
       setError(null);
       try {
         const params = { post_type: "reel", skip: 0, limit: 100 };
@@ -100,8 +95,6 @@ export default function Video() {
           setError(e?.message || "Failed to load reels");
           setReels([]);
         }
-      } finally {
-        if (!cancelled) setIsLoading(false);
       }
     }
 
@@ -115,10 +108,9 @@ export default function Video() {
 
   /**
    * ✅ LOCK ALIGNMENT even when sidebar width changes:
-   * We measure the Campus Blog button and align the REEL CARD RIGHT EDGE
-   * to the Campus Blog button RIGHT EDGE.
-   *
-   * We query the nav item by its href -> "/blog"
+   * Align the HORIZONTAL CENTER of the reel card
+   * with the HORIZONTAL CENTER of the top nav tabs
+   * (so the nav pill visually sits above the reels frame).
    */
   useEffect(() => {
     function compute() {
@@ -132,27 +124,38 @@ export default function Video() {
       const pageEl = pageRef.current;
       if (!cardEl || !pageEl) return;
 
-      // find the Campus Blog button in your TopNav
-      // your TopNav uses <button> with onClick, not <a>
-      // so we detect it by text content "Campus Blog"
-      const navButton = Array.from(document.querySelectorAll("button")).find(
-        (b) => (b.textContent || "").trim().includes("Campus Blog")
-      );
+      // Prefer aligning to the full nav tabs container if present,
+      // so the TOP NAV block and the VIDEO card share the same
+      // vertical center line. Fallback to the Campus Blog button.
+      let navCenterX = null;
 
-      if (!navButton) {
+      const tabsContainer = document.getElementById("nav-tabs-container");
+      if (tabsContainer) {
+        const rect = tabsContainer.getBoundingClientRect();
+        navCenterX = (rect.left + rect.right) / 2;
+      } else {
+        const navButton = Array.from(document.querySelectorAll("button")).find(
+          (b) => (b.textContent || "").trim().includes("Campus Blog")
+        );
+
+        if (navButton) {
+          const rect = navButton.getBoundingClientRect();
+          navCenterX = (rect.left + rect.right) / 2;
+        }
+      }
+
+      if (navCenterX == null) {
         setOffsetX(0);
         return;
       }
 
-      const navRect = navButton.getBoundingClientRect();
       const cardRect = cardEl.getBoundingClientRect();
       const pageRect = pageEl.getBoundingClientRect();
 
-      // ✅ align END of Campus Blog to END of card
-      const navRightX = navRect.right;
-      const cardRightX = cardRect.right;
+      // ✅ align CENTER of nav tabs to CENTER of card
+      const cardCenterX = (cardRect.left + cardRect.right) / 2;
 
-      const delta = navRightX - cardRightX + MANUAL_NUDGE_PX;
+      const delta = navCenterX - cardCenterX;
 
       // clamp so it never flies out of view
       const maxShiftLeft = pageRect.left - cardRect.left - 24;
@@ -231,14 +234,6 @@ export default function Video() {
     touchStartYRef.current = null;
   }
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-gray-500">Loading reels...</div>
-      </div>
-    );
-  }
-
   if (error) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-2">
@@ -248,11 +243,7 @@ export default function Video() {
   }
 
   if (!reels.length) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-2">
-        <p className="text-gray-600">No reels yet</p>
-      </div>
-    );
+    return null;
   }
 
   return (

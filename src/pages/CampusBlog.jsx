@@ -130,7 +130,6 @@
 //   )
 // }
 
-
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Heart,
@@ -142,7 +141,6 @@ import {
   Send,
   ChevronLeft,
   ChevronRight,
-  Loader2,
   RefreshCw,
 } from "lucide-react";
 import { useAppStore } from "../store/useAppStore";
@@ -168,9 +166,8 @@ function getInstitutionId(selectedSchool) {
 
 function mapBlogFromApi(post) {
   const images =
-    post.media
-      ?.filter((m) => m.media_type === "image")
-      ?.map((m) => m.url) ?? [];
+    post.media?.filter((m) => m.media_type === "image")?.map((m) => m.url) ??
+    [];
   return {
     id: post.id,
     author: post.author?.full_name ?? "Unknown",
@@ -434,14 +431,6 @@ export default function CampusBlog() {
         </button>
       </div>
 
-      {/* Loading: API only */}
-      {loading && posts.length === 0 && (
-        <div className="flex items-center justify-center gap-2 py-16 text-gray-600">
-          <Loader2 className="w-6 h-6 animate-spin" />
-          <span>Loading blog posts...</span>
-        </div>
-      )}
-
       {/* Error: failed to load */}
       {!loading && fetchError && (
         <div className="rounded-2xl border border-gray-200 bg-gray-50 p-8 text-center">
@@ -463,7 +452,9 @@ export default function CampusBlog() {
       {/* Empty: no data from API */}
       {!loading && !fetchError && posts.length === 0 && (
         <div className="rounded-2xl border border-gray-200 bg-gray-50 p-8 text-center">
-          <p className="text-gray-700 font-medium mb-1">No data at the moment</p>
+          <p className="text-gray-700 font-medium mb-1">
+            No data at the moment
+          </p>
           <p className="text-sm text-gray-500 mb-4">
             There are no blog posts to show. Try refreshing or check back later.
           </p>
@@ -478,161 +469,157 @@ export default function CampusBlog() {
       )}
 
       {/* Feed */}
-      {!loading && posts.length > 0 && posts.map((post) => {
-        const isExpanded = expanded[post.id];
-        const likeDisplay = getLikeDisplay(post);
+      {!loading &&
+        posts.length > 0 &&
+        posts.map((post) => {
+          const isExpanded = expanded[post.id];
+          const likeDisplay = getLikeDisplay(post);
 
-        return (
-          <article key={post.id} className="bg-white rounded-2xl shadow p-5">
-            {/* Header */}
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex items-center gap-3">
-                <img
-                  src={avatarFor(post.author)}
-                  alt={post.author}
-                  className="w-10 h-10 rounded-full object-cover"
-                  onError={(e) => {
-                    e.currentTarget.src = "https://via.placeholder.com/80";
-                  }}
-                />
-                <p className="text-sm font-semibold uppercase text-gray-900">
-                  Posted by {post.author}
-                </p>
-              </div>
-
-              <span className="text-sm text-gray-500 uppercase">
-                {post.time}
-              </span>
-            </div>
-
-            {/* Content + Read more */}
-            <p className="text-gray-700 mb-2 leading-relaxed">
-              {isExpanded ? post.content : post.content.slice(0, 140)}
-              {post.content.length > 140 && (
-                <button
-                  onClick={() =>
-                    setExpanded((p) => ({ ...p, [post.id]: !p[post.id] }))
-                  }
-                  className="ml-2 text-blue-600 text-sm font-medium"
-                >
-                  {isExpanded ? "Show less" : "Read more"}
-                </button>
-              )}
-            </p>
-
-            {/* 2) Single image vs collage logic */}
-            {post.images?.length === 1 ? (
-              <button
-                type="button"
-                onClick={() => openLightbox(post, 0)}
-                className="block w-full mt-4"
-                aria-label="Open image"
-              >
-                <img
-                  src={post.images[0]}
-                  alt=""
-                  className="w-full h-72 object-cover rounded-xl"
-                  onError={(e) => {
-                    e.currentTarget.src = FALLBACK_IMAGE;
-                  }}
-                />
-              </button>
-            ) : (
-              <div className="grid grid-cols-2 gap-2 mt-4">
-                {post.images.slice(0, 2).map((img, i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    onClick={() => openLightbox(post, i)}
-                    className="block w-full"
-                    aria-label="Open image"
-                  >
-                    <img
-                      src={img}
-                      alt=""
-                      className="w-full h-56 object-cover rounded-xl"
-                      onError={(e) => {
-                        e.currentTarget.src = FALLBACK_IMAGE;
-                      }}
-                    />
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {/* Engagement row */}
-            <div className="flex items-center gap-6 text-gray-600 mt-4 relative">
-              {/* 3) Emoji reactions + 5) Like animation */}
-              <div
-                className="relative"
-                onMouseLeave={() => setReactionPickerFor(null)}
-              >
-                <button
-                  onClick={() =>
-                    setReactionPickerFor((p) =>
-                      p === post.id ? null : post.id
-                    )
-                  }
-                  className={`flex items-center gap-2 transition active:scale-95 ${
-                    myReaction[post.id] ? "text-red-600" : "hover:text-red-600"
-                  }`}
-                >
-                  <Heart
-                    className={`w-5 h-5 ${
-                      myReaction[post.id] ? "fill-red-600" : ""
-                    }`}
+          return (
+            <article key={post.id} className="bg-white rounded-2xl shadow p-5">
+              {/* Header */}
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <img
+                    src={avatarFor(post.author)}
+                    alt={post.author}
+                    className="w-10 h-10 rounded-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.src = "https://via.placeholder.com/80";
+                    }}
                   />
-                  <span className="flex items-center gap-1">
-                    {likeDisplay.emoji && (
-                      <span className="text-base">{likeDisplay.emoji}</span>
-                    )}
-                    {likeDisplay.text}
-                  </span>
-                </button>
+                  <p className="text-sm font-semibold uppercase text-gray-900">
+                    Posted by {post.author}
+                  </p>
+                </div>
 
-                {/* Reaction picker */}
-                {reactionPickerFor === post.id && (
-                  <div className="absolute -top-14 left-0 bg-white shadow rounded-full px-3 py-2 flex gap-2 border">
-                    {REACTIONS.map((r) => (
-                      <button
-                        key={r.key}
-                        onClick={() => applyReaction(post.id, r)}
-                        className="w-9 h-9 rounded-full hover:bg-gray-100 flex items-center justify-center text-lg transition active:scale-95"
-                        title={r.label}
-                      >
-                        {r.emoji}
-                      </button>
-                    ))}
-                  </div>
-                )}
+                <span className="text-sm text-gray-500 uppercase">
+                  {post.time}
+                </span>
               </div>
 
-              {/* Comments */}
-              <button
-                onClick={() => setOpenComments(post.id)}
-                className="flex items-center gap-2 hover:text-blue-600 transition active:scale-95"
-              >
-                <MessageCircle className="w-5 h-5" />
-                {post.comments}
-              </button>
+              {/* Content + Read more */}
+              <p className="text-gray-700 mb-2 leading-relaxed">
+                {isExpanded ? post.content : post.content.slice(0, 140)}
+                {post.content.length > 140 && (
+                  <button
+                    onClick={() =>
+                      setExpanded((p) => ({ ...p, [post.id]: !p[post.id] }))
+                    }
+                    className="ml-2 text-blue-600 text-sm font-medium"
+                  >
+                    {isExpanded ? "Show less" : "Read more"}
+                  </button>
+                )}
+              </p>
 
-              {/* Share */}
-              <button className="flex items-center gap-2 hover:text-green-600 transition active:scale-95">
-                <Share2 className="w-5 h-5" />
-                {post.shares}
-              </button>
-            </div>
-          </article>
-        );
-      })}
+              {/* 2) Single image vs collage logic */}
+              {post.images?.length === 1 ? (
+                <button
+                  type="button"
+                  onClick={() => openLightbox(post, 0)}
+                  className="block w-full mt-4"
+                  aria-label="Open image"
+                >
+                  <img
+                    src={post.images[0]}
+                    alt=""
+                    className="w-full h-72 object-cover rounded-xl"
+                    onError={(e) => {
+                      e.currentTarget.src = FALLBACK_IMAGE;
+                    }}
+                  />
+                </button>
+              ) : (
+                <div className="grid grid-cols-2 gap-2 mt-4">
+                  {post.images.slice(0, 2).map((img, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => openLightbox(post, i)}
+                      className="block w-full"
+                      aria-label="Open image"
+                    >
+                      <img
+                        src={img}
+                        alt=""
+                        className="w-full h-56 object-cover rounded-xl"
+                        onError={(e) => {
+                          e.currentTarget.src = FALLBACK_IMAGE;
+                        }}
+                      />
+                    </button>
+                  ))}
+                </div>
+              )}
 
-      {/* Loading more (when already have posts) */}
-      {loading && posts.length > 0 && (
-        <div className="flex items-center justify-center text-gray-600 gap-2 py-6">
-          <Loader2 className="w-5 h-5 animate-spin" />
-          Loading more posts...
-        </div>
-      )}
+              {/* Engagement row */}
+              <div className="flex items-center gap-6 text-gray-600 mt-4 relative">
+                {/* 3) Emoji reactions + 5) Like animation */}
+                <div
+                  className="relative"
+                  onMouseLeave={() => setReactionPickerFor(null)}
+                >
+                  <button
+                    onClick={() =>
+                      setReactionPickerFor((p) =>
+                        p === post.id ? null : post.id
+                      )
+                    }
+                    className={`flex items-center gap-2 transition active:scale-95 ${
+                      myReaction[post.id]
+                        ? "text-red-600"
+                        : "hover:text-red-600"
+                    }`}
+                  >
+                    <Heart
+                      className={`w-5 h-5 ${
+                        myReaction[post.id] ? "fill-red-600" : ""
+                      }`}
+                    />
+                    <span className="flex items-center gap-1">
+                      {likeDisplay.emoji && (
+                        <span className="text-base">{likeDisplay.emoji}</span>
+                      )}
+                      {likeDisplay.text}
+                    </span>
+                  </button>
+
+                  {/* Reaction picker */}
+                  {reactionPickerFor === post.id && (
+                    <div className="absolute -top-14 left-0 bg-white shadow rounded-full px-3 py-2 flex gap-2 border">
+                      {REACTIONS.map((r) => (
+                        <button
+                          key={r.key}
+                          onClick={() => applyReaction(post.id, r)}
+                          className="w-9 h-9 rounded-full hover:bg-gray-100 flex items-center justify-center text-lg transition active:scale-95"
+                          title={r.label}
+                        >
+                          {r.emoji}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Comments */}
+                <button
+                  onClick={() => setOpenComments(post.id)}
+                  className="flex items-center gap-2 hover:text-blue-600 transition active:scale-95"
+                >
+                  <MessageCircle className="w-5 h-5" />
+                  {post.comments}
+                </button>
+
+                {/* Share */}
+                <button className="flex items-center gap-2 hover:text-green-600 transition active:scale-95">
+                  <Share2 className="w-5 h-5" />
+                  {post.shares}
+                </button>
+              </div>
+            </article>
+          );
+        })}
 
       {!hasMore && posts.length > 0 && (
         <div className="text-center text-sm text-gray-500 py-6">

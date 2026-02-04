@@ -87,9 +87,9 @@ export default function TopNav() {
         </div>
 
         {/* Desktop Layout */}
-        <div className="hidden lg:flex items-center justify-between gap-8 w-full">
+        <div className="hidden lg:flex items-center gap-8 w-full">
           {/* Search Bar with Profile Picture */}
-          <div className="flex items-center gap-6 flex-1 max-w-xl">
+          <div className="flex items-center gap-6 flex-none max-w-xl">
             <button
               onClick={() => navigate("/profile")}
               className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center text-white font-bold hover:opacity-80 transition-opacity flex-shrink-0"
@@ -112,41 +112,43 @@ export default function TopNav() {
           </div>
 
           {/* Navigation Icons with Labels */}
-          <div className="flex items-center gap-6 xl:gap-8 flex-1 justify-start">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = location.pathname === item.path;
+          <div className="flex-1 flex justify-center">
+            <div
+              id="nav-tabs-container"
+              className="flex items-center gap-6 xl:gap-8 bg-[#E3E3E3] rounded-[30px] px-8 py-3"
+            >
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = location.pathname === item.path;
 
-              // add id ONLY for Campus Blog (so Video page can target it)
-              const extraProps =
-                item.path === "/blog" ? { id: "nav-campus-blog" } : {};
+                // still keep id on Campus Blog button for any legacy logic
+                const extraProps =
+                  item.path === "/blog" ? { id: "nav-campus-blog" } : {};
 
-              return (
-                <button
-                  key={item.path}
-                  onClick={() => navigate(item.path)}
-                  className="flex flex-col items-center gap-2 hover:opacity-80 transition-opacity"
-                  {...extraProps}
-                >
-                  <Icon
-                    className={`w-6 h-6 ${
-                      isActive ? "text-primary" : "text-gray-600"
-                    }`}
-                  />
-                  <span
-                    className={`text-sm whitespace-nowrap ${
-                      isActive ? "text-primary font-medium" : "text-gray-600"
-                    }`}
+                return (
+                  <button
+                    key={item.path}
+                    onClick={() => navigate(item.path)}
+                    className="flex flex-col items-center gap-2 hover:opacity-80 transition-opacity"
+                    {...extraProps}
                   >
-                    {item.label}
-                  </span>
-                </button>
-              );
-            })}
+                    <Icon
+                      className={`w-6 h-6 ${
+                        isActive ? "text-primary" : "text-gray-600"
+                      }`}
+                    />
+                    <span
+                      className={`text-sm whitespace-nowrap ${
+                        isActive ? "text-primary font-medium" : "text-gray-600"
+                      }`}
+                    >
+                      {item.label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
-
-          {/* Empty space for balance */}
-          <div className="flex-1" />
         </div>
       </div>
     </div>

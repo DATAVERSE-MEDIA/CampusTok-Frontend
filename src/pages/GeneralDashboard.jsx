@@ -1,20 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuthStore } from "../store/useAuthStore";
 import { useAppStore } from "../store/useAppStore";
-import {
-  Heart,
-  MessageCircle,
-  Share2,
-  MoreVertical,
-  UserPlus,
-} from "lucide-react";
+import { Heart, MessageCircle, Share2 } from "lucide-react";
 import { apiClient } from "../api";
 
 export default function GeneralDashboard() {
   const navigate = useNavigate();
-  const { user } = useAuthStore();
-  const { selectedSchool } = useAppStore();
+  const { selectedSchool, feedRefreshToken, lastCreatedPost } = useAppStore();
   const [posts, setPosts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -23,148 +15,63 @@ export default function GeneralDashboard() {
 
   // Fetch posts for general dashboard
   useEffect(() => {
-    fetchPosts();
-  }, [selectedSchool, page]);
+    const fetchPosts = async () => {
+      setIsLoading(true);
 
-  const fetchPosts = async () => {
-    setIsLoading(true);
+      try {
+        const limit = 10;
+        const skip = (page - 1) * limit;
+        let newPosts = [];
 
-    try {
-      const limit = 10;
-      let newPosts = [];
-
-      // If a specific institution is selected and matches known slugs,
-      // use the institution-specific endpoints the backend exposes.
-      if (
-        selectedSchool?.id === "unilag" ||
-        selectedSchool?.id === "ileife" ||
-        selectedSchool?.id === "yabatech"
-      ) {
-        const institutionId = selectedSchool.id;
+        // Always use the main posts endpoint; filter by school when available.
         const params = {
+          skip,
+          limit,
           post_type: "post",
-          skip: (page - 1) * limit,
-          limit,
-        };
-
-        const response = await apiClient.get(
-          `/posts/institution/${institutionId}`,
-          { params },
-        );
-        newPosts = response.data.data || response.data || [];
-      } else {
-        // Fallback to the generic posts endpoint with optional school filter
-        const params = {
-          page,
-          limit,
-          sortBy: "created_at",
-          sortOrder: "desc",
         };
 
         if (selectedSchool?.id) {
-          params.filters = { school_id: selectedSchool.id };
+          params.institution_id = selectedSchool.id;
         }
 
         const response = await apiClient.get("/posts", { params });
         newPosts = response.data.data || response.data || [];
-      }
 
-      // For testing: use dummy data matching Figma design
-      if (newPosts.length === 0 && page === 1) {
-        setPosts([
-          {
-            id: 1,
-            content:
-              "When people talk about university, they often focus only on GPAs, exams, and deadlines. But real growth happens outside the classroom. It's in the late-night study sessions where friendships form, in the student clubs where leadership skills emerge, and in the moments when you step out of your comfort zone to try something new. These experiences shape who you become, not just as a student, but as a person ready to make an impact in the world.",
-            author: {
-              full_name: "Farinloye Joseph",
-              profile_picture: null,
-              role: "student",
-              school: "University of Lagos",
-              department: "Marine Engineering",
-              level: "100L",
-            },
-            media_url: null, // Will show lecture hall placeholder
-            likes_count: 100,
-            comments_count: 20,
-            shares_count: 5,
-            created_at: new Date().toISOString(),
-          },
-          {
-            id: 2,
-            content:
-              "The beauty of campus life is in its diversity. Every day, you meet people from different backgrounds, cultures, and perspectives. This melting pot of ideas and experiences is what makes university truly transformative. Embrace it, learn from it, and let it broaden your horizons.",
-            author: {
-              full_name: "Olawale Francis",
-              profile_picture: null,
-              role: "student",
-              school: "University of Lagos",
-              department: "Civil Engineering",
-              level: "300L",
-            },
-            media_url: null,
-            likes_count: 85,
-            comments_count: 15,
-            shares_count: 3,
-            created_at: new Date(Date.now() - 3600000).toISOString(),
-          },
-        ]);
+        setPosts((prev) => {
+          // Base list depending on page
+          let nextPosts;
+          if (page === 1) {
+            nextPosts = newPosts;
+          } else {
+            nextPosts = [...prev, ...newPosts];
+          }
+
+          // Ensure the very latest created post is always present
+          // even if the backend feed response is stale or cached.
+          if (
+            lastCreatedPost &&
+            !nextPosts.find((p) => p.id === lastCreatedPost.id)
+          ) {
+            nextPosts = [lastCreatedPost, ...nextPosts];
+          }
+
+          return nextPosts;
+        });
+
+        setHasMore(newPosts.length >= 10);
+      } catch (err) {
+        console.error("Error fetching posts:", err);
+        // On error, show whatever posts we already had (if any)
+        if (page === 1) {
+          setPosts([]);
+        }
+      } finally {
         setIsLoading(false);
-        return;
       }
+    };
 
-      if (page === 1) {
-        setPosts(newPosts);
-      } else {
-        setPosts((prev) => [...prev, ...newPosts]);
-      }
-
-      setHasMore(newPosts.length >= 10);
-    } catch (err) {
-      console.error("Error fetching posts:", err);
-      // Use dummy data for testing matching Figma
-      setPosts([
-        {
-          id: 1,
-          content:
-            "When people talk about university, they often focus only on GPAs, exams, and deadlines. But real growth happens outside the classroom. It's in the late-night study sessions where friendships form, in the student clubs where leadership skills emerge, and in the moments when you step out of your comfort zone to try something new. These experiences shape who you become, not just as a student, but as a person ready to make an impact in the world.",
-          author: {
-            full_name: "Farinloye Joseph",
-            profile_picture: null,
-            role: "student",
-            school: "University of Lagos",
-            department: "Marine Engineering",
-            level: "100L",
-          },
-          media_url: null,
-          likes_count: 100,
-          comments_count: 20,
-          shares_count: 5,
-          created_at: new Date().toISOString(),
-        },
-        {
-          id: 2,
-          content:
-            "The beauty of campus life is in its diversity. Every day, you meet people from different backgrounds, cultures, and perspectives. This melting pot of ideas and experiences is what makes university truly transformative. Embrace it, learn from it, and let it broaden your horizons.",
-          author: {
-            full_name: "Olawale Francis",
-            profile_picture: null,
-            role: "student",
-            school: "University of Lagos",
-            department: "Civil Engineering",
-            level: "300L",
-          },
-          media_url: null,
-          likes_count: 85,
-          comments_count: 15,
-          shares_count: 3,
-          created_at: new Date(Date.now() - 3600000).toISOString(),
-        },
-      ]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    fetchPosts();
+  }, [selectedSchool, page, feedRefreshToken, lastCreatedPost]);
 
   const loadMorePosts = () => {
     if (!isLoading && hasMore) {
@@ -179,16 +86,16 @@ export default function GeneralDashboard() {
         prev.map((post) =>
           post.id === postId
             ? { ...post, likes_count: (post.likes_count || 0) + 1, liked: true }
-            : post,
-        ),
+            : post
+        )
       );
     } catch (error) {
       setPosts((prev) =>
         prev.map((post) =>
           post.id === postId
             ? { ...post, likes_count: (post.likes_count || 0) + 1, liked: true }
-            : post,
-        ),
+            : post
+        )
       );
     }
   };
@@ -204,16 +111,16 @@ export default function GeneralDashboard() {
         prev.map((post) =>
           post.id === postId
             ? { ...post, shares_count: (post.shares_count || 0) + 1 }
-            : post,
-        ),
+            : post
+        )
       );
     } catch (error) {
       setPosts((prev) =>
         prev.map((post) =>
           post.id === postId
             ? { ...post, shares_count: (post.shares_count || 0) + 1 }
-            : post,
-        ),
+            : post
+        )
       );
     }
   };
@@ -357,7 +264,9 @@ const PostCard = ({
   const authorName = post.author?.full_name || "Anonymous";
   const authorDetails =
     post.author?.level && post.author?.department
-      ? `${post.author.school || "University of Lagos"} | ${post.author.level} ${post.author.department}`
+      ? `${post.author.school || "University of Lagos"} | ${
+          post.author.level
+        } ${post.author.department}`
       : post.author?.school || "University of Lagos";
 
   return (
@@ -518,7 +427,7 @@ const RightSidebar = ({ navigate }) => (
         </div>
         <div>
           <h3 className="font-bold text-gray-900 text-sm lg:text-base">
-            HI, I'm ChatBot
+            HI, I am ChatBot
           </h3>
         </div>
       </div>
