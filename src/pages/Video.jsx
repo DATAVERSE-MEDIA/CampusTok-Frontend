@@ -107,7 +107,7 @@ export default function Video() {
   const video = useMemo(() => reels[activeIndex], [reels, activeIndex]);
 
   /**
-   * ✅ LOCK ALIGNMENT even when sidebar width changes:
+   * ✅ PERFECT ALIGNMENT on desktop:
    * Align the HORIZONTAL CENTER of the reel card
    * with the HORIZONTAL CENTER of the top nav tabs
    * (so the nav pill visually sits above the reels frame).
@@ -121,51 +121,29 @@ export default function Video() {
       }
 
       const cardEl = cardRef.current;
-      const pageEl = pageRef.current;
-      if (!cardEl || !pageEl) return;
+      if (!cardEl) return;
 
-      // Prefer aligning to the full nav tabs container if present,
-      // so the TOP NAV block and the VIDEO card share the same
-      // vertical center line. Fallback to the Campus Blog button.
-      let navCenterX = null;
-
+      // Get the nav tabs container (desktop only)
       const tabsContainer = document.getElementById("nav-tabs-container");
-      if (tabsContainer) {
-        const rect = tabsContainer.getBoundingClientRect();
-        navCenterX = (rect.left + rect.right) / 2;
-      } else {
-        const navButton = Array.from(document.querySelectorAll("button")).find(
-          (b) => (b.textContent || "").trim().includes("Campus Blog")
-        );
-
-        if (navButton) {
-          const rect = navButton.getBoundingClientRect();
-          navCenterX = (rect.left + rect.right) / 2;
-        }
-      }
-
-      if (navCenterX == null) {
+      if (!tabsContainer) {
         setOffsetX(0);
         return;
       }
 
-      const cardRect = cardEl.getBoundingClientRect();
-      const pageRect = pageEl.getBoundingClientRect();
+      const navRect = tabsContainer.getBoundingClientRect();
+      const navCenterX = (navRect.left + navRect.right) / 2;
 
-      // ✅ align CENTER of nav tabs to CENTER of card
+      const cardRect = cardEl.getBoundingClientRect();
       const cardCenterX = (cardRect.left + cardRect.right) / 2;
 
-      const delta = navCenterX - cardCenterX;
+      // Calculate the exact offset needed to align centers
+      const offsetNeeded = navCenterX - cardCenterX;
 
-      // clamp so it never flies out of view
-      const maxShiftLeft = pageRect.left - cardRect.left - 24;
-      const maxShiftRight = pageRect.right - cardRect.right + 24;
-      const clamped = Math.max(maxShiftLeft, Math.min(delta, maxShiftRight));
-
-      setOffsetX(clamped);
+      setOffsetX(offsetNeeded);
     }
 
-    compute();
+    // Compute alignment after a small delay to ensure all elements are rendered
+    const initialTimer = setTimeout(compute, 100);
 
     // Recompute on resize & layout shifts
     const onResize = () => compute();
@@ -175,13 +153,17 @@ export default function Video() {
     const ro = new ResizeObserver(() => compute());
     ro.observe(document.body);
 
-    // in case fonts load later etc
-    const t = setTimeout(compute, 250);
+    // Recompute when fonts load
+    document.fonts.ready.then(() => compute());
+
+    // Additional safety recompute after a longer delay
+    const safetyTimer = setTimeout(compute, 500);
 
     return () => {
+      clearTimeout(initialTimer);
+      clearTimeout(safetyTimer);
       window.removeEventListener("resize", onResize);
       ro.disconnect();
-      clearTimeout(t);
     };
   }, []);
 
@@ -247,22 +229,21 @@ export default function Video() {
   }
 
   return (
-    <div ref={pageRef} className="px-4 sm:px-6 lg:px-8">
-      {/* ✅ Responsive layout: always centered baseline; desktop auto-shifts to match Campus Blog */}
-      <div className="flex justify-center">
+    <div ref={pageRef} className="w-full">
+      <div className="flex justify-center items-center px-3 sm:px-4 lg:px-8 py-4 lg:py-6">
         <div
           className="w-full max-w-md"
           style={{
-            transform: `translateX(${offsetX}px)`,
+            // transform: `translateX(${offsetX}px)`,
             transition: "transform 320ms cubic-bezier(0.22, 1, 0.36, 1)",
           }}
         >
-          {/* ✅ Reel card with fade animation between reels */}
+          {/* ✅ Reel card with responsive height and perfect aspect ratio */}
           <div
             ref={cardRef}
             onTouchStart={onTouchStart}
             onTouchEnd={onTouchEnd}
-            className="relative h-[88vh] rounded-3xl overflow-hidden bg-white shadow"
+            className="relative w-full aspect-[9/16] rounded-3xl overflow-hidden bg-white shadow-lg"
           >
             {/* Video or placeholder */}
             {video?.videoUrl ? (
@@ -283,58 +264,58 @@ export default function Video() {
             )}
 
             {/* Navigation arrows */}
-            <div className="absolute top-4 right-4 flex gap-2 z-10">
+            <div className="absolute top-3 right-3 sm:top-4 sm:right-4 flex gap-2 z-10">
               <button
                 onClick={goPrev}
-                className="w-10 h-10 rounded-xl bg-white shadow flex items-center justify-center"
+                className="w-10 h-10 rounded-xl bg-white shadow flex items-center justify-center hover:bg-gray-100 transition-colors"
               >
                 <ArrowUp className="w-5 h-5 text-gray-700" />
               </button>
               <button
                 onClick={goNext}
-                className="w-10 h-10 rounded-xl bg-white shadow flex items-center justify-center"
+                className="w-10 h-10 rounded-xl bg-white shadow flex items-center justify-center hover:bg-gray-100 transition-colors"
               >
                 <ArrowDown className="w-5 h-5 text-gray-700" />
               </button>
             </div>
 
             {/* Right-side actions */}
-            <div className="absolute right-4 bottom-28 flex flex-col items-center gap-6 z-10">
+            <div className="absolute right-2 sm:right-4 bottom-24 sm:bottom-28 flex flex-col items-center gap-4 sm:gap-6 z-10">
               {[
                 { icon: ThumbsUp, value: video.likes },
                 { icon: MessageCircle, value: video.comments },
                 { icon: Share2, value: video.shares },
               ].map(({ icon: Icon, value }, idx) => (
                 <div key={idx} className="flex flex-col items-center gap-1">
-                  <div className="w-12 h-12 rounded-full bg-gray-100 shadow flex items-center justify-center">
-                    <Icon className="w-6 h-6 text-gray-700" />
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gray-100 shadow flex items-center justify-center hover:bg-gray-200 transition-colors cursor-pointer">
+                    <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-gray-700" />
                   </div>
-                  <span className="text-sm text-gray-700">{value}</span>
+                  <span className="text-xs sm:text-sm text-gray-700 font-medium">{value}</span>
                 </div>
               ))}
             </div>
 
             {/* Bottom creator card */}
-            <div className="absolute bottom-4 left-4 right-20 z-10">
-              <div className="bg-transparent rounded-2xl p-4">
-                <div className="flex items-center gap-3 mb-1">
-                  <div className="w-9 h-9 rounded-full bg-white/30 border border-white/50" />
-                  <p className="font-semibold text-white drop-shadow-md">
+            <div className="absolute bottom-2 left-2 right-14 sm:bottom-4 sm:left-4 sm:right-20 z-10">
+              <div className="bg-transparent rounded-2xl p-3 sm:p-4">
+                <div className="flex items-center gap-2 sm:gap-3 mb-1">
+                  <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/30 border border-white/50 flex-shrink-0" />
+                  <p className="font-semibold text-white drop-shadow-md text-sm sm:text-base">
                     {video.creator}
                   </p>
                 </div>
 
-                <p className="font-medium text-white drop-shadow-md line-clamp-2">
+                <p className="font-medium text-white drop-shadow-md line-clamp-2 text-sm sm:text-base">
                   {video.title}
                 </p>
 
-                <div className="flex items-center gap-2 text-sm text-white/90 drop-shadow-md mt-1">
-                  <Eye className="w-4 h-4" />
+                <div className="flex items-center gap-2 text-xs sm:text-sm text-white/90 drop-shadow-md mt-1">
+                  <Eye className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
                   <span>{video.views}</span>
                   {video.uploaded && <span>• {video.uploaded}</span>}
                 </div>
 
-                <button className="mt-3 px-4 py-1.5 rounded-full border border-white text-white text-sm font-medium hover:bg-white hover:text-gray-900 transition">
+                <button className="mt-2 sm:mt-3 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full border border-white text-white text-xs sm:text-sm font-medium hover:bg-white hover:text-gray-900 transition-colors">
                   Follow
                 </button>
               </div>

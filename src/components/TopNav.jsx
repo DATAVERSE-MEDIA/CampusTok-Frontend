@@ -85,11 +85,11 @@ export default function TopNav() {
             })}
           </div>
         </div>
-
+        
         {/* Desktop Layout */}
-        <div className="hidden lg:flex items-center gap-8 w-full">
-          {/* Search Bar with Profile Picture */}
-          <div className="flex items-center gap-6 flex-none max-w-xl">
+        <div className="hidden lg:flex items-center w-full relative">
+          {/* Search Bar with Profile Picture (Left Side) */}
+          <div className="flex items-center gap-4 max-w-xl">
             <button
               onClick={() => navigate("/profile")}
               className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center text-white font-bold hover:opacity-80 transition-opacity flex-shrink-0"
@@ -97,7 +97,7 @@ export default function TopNav() {
               {user?.full_name?.charAt(0).toUpperCase() || "F"}
             </button>
 
-            <form onSubmit={handleSearch} className="flex-1">
+            <form onSubmit={handleSearch} className="w-80">
               <div className="relative">
                 <Search className="absolute left-5 top-1/2 transform -translate-y-1/2 text-gray-400 w-6 h-6" />
                 <input
@@ -105,23 +105,22 @@ export default function TopNav() {
                   value={localSearchQuery}
                   onChange={(e) => setLocalSearchQuery(e.target.value)}
                   placeholder="Search here"
-                  className="w-full pl-12 pr-6 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="max-w-[300px] pl-12 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
             </form>
           </div>
 
-          {/* Navigation Icons with Labels */}
-          <div className="flex-1 flex justify-center">
+          {/* Centered Navigation Icons */}
+          <div className="absolute left-1/2 transform -translate-x-1/2">
             <div
               id="nav-tabs-container"
-              className="flex items-center gap-6 xl:gap-8 bg-[#E3E3E3] rounded-[30px] px-8 py-3"
+              className="flex items-center gap-4 xl:gap-8 bg-[#E3E3E3] rounded-[30px] px-8 py-3"
             >
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = location.pathname === item.path;
 
-                // still keep id on Campus Blog button for any legacy logic
                 const extraProps =
                   item.path === "/blog" ? { id: "nav-campus-blog" } : {};
 
@@ -150,6 +149,9 @@ export default function TopNav() {
             </div>
           </div>
         </div>
+
+
+        
       </div>
     </div>
   );
