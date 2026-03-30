@@ -1,161 +1,4 @@
-// import { useState } from 'react'
-// import { Play, ThumbsUp, MessageCircle, Share2, Eye, Clock } from 'lucide-react'
-
-// const videos = [
-//   {
-//     id: 1,
-//     title: 'Campus Tour 2024',
-//     creator: 'Campus Media',
-//     views: '12.5K',
-//     likes: 892,
-//     comments: 134,
-//     duration: '8:45',
-//     thumbnail: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=400',
-//     uploaded: '2 days ago'
-//   },
-//   {
-//     id: 2,
-//     title: 'Student Life Vlog: A Day in the Life',
-//     creator: 'Sarah Johnson',
-//     views: '8.3K',
-//     likes: 456,
-//     comments: 67,
-//     duration: '12:30',
-//     thumbnail: 'https://images.unsplash.com/photo-1511578314322-379afb476865?w=400',
-//     uploaded: '5 days ago'
-//   },
-//   {
-//     id: 3,
-//     title: 'Study Tips from Top Students',
-//     creator: 'Academic Success',
-//     views: '15.2K',
-//     likes: 1234,
-//     comments: 189,
-//     duration: '10:15',
-//     thumbnail: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=400',
-//     uploaded: '1 week ago'
-//   },
-//   {
-//     id: 4,
-//     title: 'Campus Events Highlights',
-//     creator: 'Event Team',
-//     views: '6.7K',
-//     likes: 321,
-//     comments: 45,
-//     duration: '6:20',
-//     thumbnail: 'https://images.unsplash.com/photo-1511578314322-379afb476865?w=400',
-//     uploaded: '3 days ago'
-//   },
-// ]
-
-// export default function Video() {
-//   const [selectedVideo, setSelectedVideo] = useState(null)
-
-//   return (
-//     <div className="max-w-7xl mx-auto">
-//       <div className="card mb-6">
-//         <div className="flex items-center gap-3 mb-2">
-//           <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center">
-//             <Play className="w-6 h-6 text-primary" />
-//           </div>
-//           <div>
-//             <h1 className="text-2xl font-bold text-gray-900">Campus Videos</h1>
-//             <p className="text-gray-600">Watch videos from the campus community</p>
-//           </div>
-//         </div>
-//       </div>
-
-//       {selectedVideo ? (
-//         <div className="card mb-6">
-//           <button
-//             onClick={() => setSelectedVideo(null)}
-//             className="mb-4 text-primary-600 hover:text-primary-700 font-medium"
-//           >
-//             ← Back to Videos
-//           </button>
-//           <div className="aspect-video bg-gray-900 rounded-lg mb-4 flex items-center justify-center">
-//             <div className="text-center text-white">
-//               <Play className="w-16 h-16 mx-auto mb-4" />
-//               <p className="text-lg">Video Player</p>
-//               <p className="text-sm text-gray-400">{selectedVideo.title}</p>
-//             </div>
-//           </div>
-//           <h2 className="text-2xl font-bold text-gray-900 mb-2">{selectedVideo.title}</h2>
-//           <div className="flex items-center gap-4 text-gray-600 mb-4">
-//             <span>{selectedVideo.creator}</span>
-//             <span>•</span>
-//             <span className="flex items-center gap-1">
-//               <Eye className="w-4 h-4" />
-//               {selectedVideo.views} views
-//             </span>
-//             <span>•</span>
-//             <span>{selectedVideo.uploaded}</span>
-//           </div>
-//           <div className="flex items-center gap-4">
-//             <button className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors">
-//               <ThumbsUp className="w-5 h-5" />
-//               <span>{selectedVideo.likes}</span>
-//             </button>
-//             <button className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors">
-//               <MessageCircle className="w-5 h-5" />
-//               <span>{selectedVideo.comments}</span>
-//             </button>
-//             <button className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-gray-100 transition-colors">
-//               <Share2 className="w-5 h-5" />
-//               Share
-//             </button>
-//           </div>
-//         </div>
-//       ) : (
-//         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-//           {videos.map((video) => (
-//             <div
-//               key={video.id}
-//               className="card hover:shadow-lg transition-shadow cursor-pointer"
-//               onClick={() => setSelectedVideo(video)}
-//             >
-//               <div className="relative mb-4">
-//                 <div className="aspect-video bg-gray-200 rounded-lg overflow-hidden">
-//                   <img
-//                     src={video.thumbnail}
-//                     alt={video.title}
-//                     className="w-full h-full object-cover"
-//                     onError={(e) => {
-//                       e.target.style.display = 'none'
-//                     }}
-//                   />
-//                 </div>
-//                 <div className="absolute bottom-2 right-2 bg-black bg-opacity-75 text-white px-2 py-1 rounded text-sm flex items-center gap-1">
-//                   <Clock className="w-4 h-4" />
-//                   {video.duration}
-//                 </div>
-//                 <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-0 hover:bg-opacity-30 transition-all group">
-//                   <Play className="w-16 h-16 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-//                 </div>
-//               </div>
-//               <h3 className="font-bold text-gray-900 mb-2 line-clamp-2">{video.title}</h3>
-//               <div className="flex items-center justify-between text-sm text-gray-600">
-//                 <span>{video.creator}</span>
-//                 <div className="flex items-center gap-3">
-//                   <span className="flex items-center gap-1">
-//                     <Eye className="w-4 h-4" />
-//                     {video.views}
-//                   </span>
-//                   <span className="flex items-center gap-1">
-//                     <ThumbsUp className="w-4 h-4" />
-//                     {video.likes}
-//                   </span>
-//                 </div>
-//               </div>
-//             </div>
-//           ))}
-//         </div>
-//       )}
-//     </div>
-//   )
-// }
-
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Play,
   ThumbsUp,
@@ -165,114 +8,326 @@ import {
   ArrowUp,
   ArrowDown,
 } from "lucide-react";
+import { useAppStore } from "../store/useAppStore";
+import { apiClient } from "../api";
 
-const videos = [
-  {
-    id: 1,
-    title: "Student Life Vlog",
-    creator: "Olawale Francis",
-    views: "8.3K",
-    likes: 120,
-    comments: 24,
-    shares: 50,
-    uploaded: "5 days ago",
-    thumbnail:
-      "https://images.unsplash.com/photo-1519452575417-564c1401ecc0?auto=format&fit=crop&w=1200&q=80",
-  },
-  {
-    id: 2,
-    title: "Campus Experience",
-    creator: "Sarah Johnson",
-    views: "12.1K",
-    likes: 456,
-    comments: 67,
-    shares: 89,
-    uploaded: "2 days ago",
-    thumbnail:
-      "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=1200&q=80",
-  },
-];
+const INSTITUTION_IDS = ["unilag", "yabatech", "ileife"];
+
+// scroll / swipe settings
+const WHEEL_COOLDOWN_MS = 600;
+const TOUCH_THRESHOLD_PX = 60;
+
+function getInstitutionId(selectedSchool) {
+  if (selectedSchool?.id && INSTITUTION_IDS.includes(selectedSchool.id)) {
+    return selectedSchool.id;
+  }
+  return "unilag";
+}
+
+function mapReelFromApi(post) {
+  const videoMedia = post.media?.find((m) => m.media_type === "video");
+  const videoUrl = videoMedia?.url || null;
+  const title =
+    typeof post.content === "string"
+      ? post.content.split("\n")[0].slice(0, 80) || "Reel"
+      : "Reel";
+  return {
+    id: post.id,
+    title,
+    creator: post.author?.full_name || "Unknown",
+    views: "—",
+    likes: 0,
+    comments: 0,
+    shares: 0,
+    uploaded: "",
+    thumbnail: null,
+    videoUrl,
+    content: post.content,
+  };
+}
 
 export default function Video() {
+  const { selectedSchool } = useAppStore();
+
+  const [reels, setReels] = useState([]);
   const [activeIndex, setActiveIndex] = useState(0);
-  const video = videos[activeIndex];
+  const [error, setError] = useState(null);
+
+  // ✅ computed horizontal offset so the reel aligns to "Campus Blog" END
+  const [offsetX, setOffsetX] = useState(0);
+
+  const institutionId = getInstitutionId(selectedSchool);
+
+  const cardRef = useRef(null);
+  const pageRef = useRef(null);
+
+  // wheel/touch state
+  const wheelLockRef = useRef(false);
+  const touchStartYRef = useRef(null);
+
+  const goPrev = () =>
+    setActiveIndex((i) => (i === 0 ? reels.length - 1 : i - 1));
+  const goNext = () =>
+    setActiveIndex((i) => (i === reels.length - 1 ? 0 : i + 1));
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function fetchReels() {
+      setError(null);
+      try {
+        const params = { post_type: "reel", skip: 0, limit: 100 };
+        const response = await apiClient.get(
+          `/posts/institution/${institutionId}`,
+          { params }
+        );
+        const raw = response.data?.data ?? response.data ?? [];
+        const list = Array.isArray(raw) ? raw : [];
+        const reelsOnly = list.filter((p) => p.post_type === "reel");
+        const mapped = reelsOnly.map(mapReelFromApi).filter((r) => r.videoUrl);
+
+        if (!cancelled) {
+          setReels(mapped);
+          setActiveIndex(0);
+        }
+      } catch (e) {
+        if (!cancelled) {
+          setError(e?.message || "Failed to load reels");
+          setReels([]);
+        }
+      }
+    }
+
+    fetchReels();
+    return () => {
+      cancelled = true;
+    };
+  }, [institutionId]);
+
+  const video = useMemo(() => reels[activeIndex], [reels, activeIndex]);
+
+  /**
+   * ✅ PERFECT ALIGNMENT on desktop:
+   * Align the HORIZONTAL CENTER of the reel card
+   * with the HORIZONTAL CENTER of the top nav tabs
+   * (so the nav pill visually sits above the reels frame).
+   */
+  useEffect(() => {
+    function compute() {
+      // only on lg+ (desktop)
+      if (window.innerWidth < 1024) {
+        setOffsetX(0);
+        return;
+      }
+
+      const cardEl = cardRef.current;
+      if (!cardEl) return;
+
+      // Get the nav tabs container (desktop only)
+      const tabsContainer = document.getElementById("nav-tabs-container");
+      if (!tabsContainer) {
+        setOffsetX(0);
+        return;
+      }
+
+      const navRect = tabsContainer.getBoundingClientRect();
+      const navCenterX = (navRect.left + navRect.right) / 2;
+
+      const cardRect = cardEl.getBoundingClientRect();
+      const cardCenterX = (cardRect.left + cardRect.right) / 2;
+
+      // Calculate the exact offset needed to align centers
+      const offsetNeeded = navCenterX - cardCenterX;
+
+      setOffsetX(offsetNeeded);
+    }
+
+    // Compute alignment after a small delay to ensure all elements are rendered
+    const initialTimer = setTimeout(compute, 100);
+
+    // Recompute on resize & layout shifts
+    const onResize = () => compute();
+    window.addEventListener("resize", onResize);
+
+    // watch for sidebar width changes / DOM shifts
+    const ro = new ResizeObserver(() => compute());
+    ro.observe(document.body);
+
+    // Recompute when fonts load
+    document.fonts.ready.then(() => compute());
+
+    // Additional safety recompute after a longer delay
+    const safetyTimer = setTimeout(compute, 500);
+
+    return () => {
+      clearTimeout(initialTimer);
+      clearTimeout(safetyTimer);
+      window.removeEventListener("resize", onResize);
+      ro.disconnect();
+    };
+  }, []);
+
+  /**
+   * ✅ TikTok-style scroll snapping:
+   * - mouse wheel up/down changes active reel with cooldown
+   * - touch swipe up/down changes active reel
+   */
+  useEffect(() => {
+    function onWheel(e) {
+      if (window.innerWidth < 1024) return; // keep wheel normal on mobile if you want
+      if (wheelLockRef.current) return;
+
+      const dy = e.deltaY;
+      if (Math.abs(dy) < 20) return;
+
+      wheelLockRef.current = true;
+      if (dy > 0) goNext();
+      else goPrev();
+
+      setTimeout(() => {
+        wheelLockRef.current = false;
+      }, WHEEL_COOLDOWN_MS);
+    }
+
+    const el = pageRef.current;
+    if (!el) return;
+
+    el.addEventListener("wheel", onWheel, { passive: true });
+    return () => el.removeEventListener("wheel", onWheel);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reels.length]);
+
+  function onTouchStart(e) {
+    touchStartYRef.current = e.touches?.[0]?.clientY ?? null;
+  }
+
+  function onTouchEnd(e) {
+    const startY = touchStartYRef.current;
+    if (startY == null) return;
+
+    const endY = e.changedTouches?.[0]?.clientY ?? startY;
+    const diff = startY - endY;
+
+    if (Math.abs(diff) >= TOUCH_THRESHOLD_PX) {
+      if (diff > 0) goNext(); // swipe up
+      else goPrev(); // swipe down
+    }
+
+    touchStartYRef.current = null;
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-2">
+        <p className="text-red-600">{error}</p>
+      </div>
+    );
+  }
+
+  if (!reels.length) {
+    return null;
+  }
 
   return (
-    <div className="max-w-md mx-auto">
-      {/* Card */}
-      <div className="relative h-[88vh] rounded-3xl overflow-hidden bg-white shadow">
-        {/* Image */}
-        <img
-          src={video.thumbnail}
-          alt={video.title}
-          className="absolute inset-0 w-full h-full object-cover"
-          onError={(e) => {
-            e.currentTarget.src =
-              "https://images.unsplash.com/photo-1520975922284-8b456906c813?auto=format&fit=crop&w=1200&q=80";
+    <div ref={pageRef} className="w-full">
+      <div className="flex justify-center items-center px-3 sm:px-4 lg:px-8 py-4 lg:py-6">
+        <div
+          className="w-full max-w-md"
+          style={{
+            // transform: `translateX(${offsetX}px)`,
+            transition: "transform 320ms cubic-bezier(0.22, 1, 0.36, 1)",
           }}
-        />
-
-        {/* Center play icon */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <Play className="w-20 h-20 text-white opacity-80" />
-        </div>
-
-        {/* Navigation arrows (top right) */}
-        <div className="absolute top-4 right-4 flex gap-2 z-10">
-          <button
-            onClick={() =>
-              setActiveIndex((i) => (i === 0 ? videos.length - 1 : i - 1))
-            }
-            className="w-10 h-10 rounded-xl bg-white shadow flex items-center justify-center"
+        >
+          {/* ✅ Reel card with responsive height and perfect aspect ratio */}
+          <div
+            ref={cardRef}
+            onTouchStart={onTouchStart}
+            onTouchEnd={onTouchEnd}
+            className="relative w-full aspect-[9/16] rounded-3xl overflow-hidden bg-white shadow-lg"
           >
-            <ArrowUp className="w-5 h-5 text-gray-700" />
-          </button>
-
-          <button
-            onClick={() =>
-              setActiveIndex((i) => (i === videos.length - 1 ? 0 : i + 1))
-            }
-            className="w-10 h-10 rounded-xl bg-white shadow flex items-center justify-center"
-          >
-            <ArrowDown className="w-5 h-5 text-gray-700" />
-          </button>
-        </div>
-
-        {/* Right-side actions */}
-        <div className="absolute right-4 bottom-28 flex flex-col items-center gap-6 z-10">
-          {[
-            { icon: ThumbsUp, value: video.likes },
-            { icon: MessageCircle, value: video.comments },
-            { icon: Share2, value: video.shares },
-          ].map(({ icon: Icon, value }, idx) => (
-            <div key={idx} className="flex flex-col items-center gap-1">
-              <div className="w-12 h-12 rounded-full bg-gray-100 shadow flex items-center justify-center">
-                <Icon className="w-6 h-6 text-gray-700" />
+            {/* Video or placeholder */}
+            {video?.videoUrl ? (
+              <video
+                key={video.id}
+                src={video.videoUrl}
+                className="absolute inset-0 w-full h-full object-cover animate-[fadeIn_280ms_ease-out]"
+                controls
+                playsInline
+                loop
+                muted
+                autoPlay
+              />
+            ) : (
+              <div className="absolute inset-0 w-full h-full bg-gray-900 flex items-center justify-center">
+                <Play className="w-20 h-20 text-white opacity-80" />
               </div>
-              <span className="text-sm text-gray-700">{value}</span>
-            </div>
-          ))}
-        </div>
+            )}
 
-        {/* Bottom creator card */}
-        <div className="absolute bottom-4 left-4 right-20 z-10">
-          <div className="bg-white/80 backdrop-blur rounded-2xl p-4 shadow">
-            <div className="flex items-center gap-3 mb-1">
-              <div className="w-9 h-9 rounded-full bg-gray-300" />
-              <p className="font-semibold text-gray-900">{video.creator}</p>
-            </div>
-
-            <p className="font-medium text-gray-900">{video.title}</p>
-
-            <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
-              <Eye className="w-4 h-4" />
-              <span>{video.views}</span>
-              <span>• {video.uploaded}</span>
+            {/* Navigation arrows */}
+            <div className="absolute top-3 right-3 sm:top-4 sm:right-4 flex gap-2 z-10">
+              <button
+                onClick={goPrev}
+                className="w-10 h-10 rounded-xl bg-white shadow flex items-center justify-center hover:bg-gray-100 transition-colors"
+              >
+                <ArrowUp className="w-5 h-5 text-gray-700" />
+              </button>
+              <button
+                onClick={goNext}
+                className="w-10 h-10 rounded-xl bg-white shadow flex items-center justify-center hover:bg-gray-100 transition-colors"
+              >
+                <ArrowDown className="w-5 h-5 text-gray-700" />
+              </button>
             </div>
 
-            <button className="mt-3 px-4 py-1.5 rounded-full border border-gray-900 text-sm font-medium hover:bg-gray-900 hover:text-white transition">
-              Follow
-            </button>
+            {/* Right-side actions */}
+            <div className="absolute right-2 sm:right-4 bottom-24 sm:bottom-28 flex flex-col items-center gap-4 sm:gap-6 z-10">
+              {[
+                { icon: ThumbsUp, value: video.likes },
+                { icon: MessageCircle, value: video.comments },
+                { icon: Share2, value: video.shares },
+              ].map(({ icon: Icon, value }, idx) => (
+                <div key={idx} className="flex flex-col items-center gap-1">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gray-100 shadow flex items-center justify-center hover:bg-gray-200 transition-colors cursor-pointer">
+                    <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-gray-700" />
+                  </div>
+                  <span className="text-xs sm:text-sm text-gray-700 font-medium">{value}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Bottom creator card */}
+            <div className="absolute bottom-2 left-2 right-14 sm:bottom-4 sm:left-4 sm:right-20 z-10">
+              <div className="bg-transparent rounded-2xl p-3 sm:p-4">
+                <div className="flex items-center gap-2 sm:gap-3 mb-1">
+                  <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/30 border border-white/50 flex-shrink-0" />
+                  <p className="font-semibold text-white drop-shadow-md text-sm sm:text-base">
+                    {video.creator}
+                  </p>
+                </div>
+
+                <p className="font-medium text-white drop-shadow-md line-clamp-2 text-sm sm:text-base">
+                  {video.title}
+                </p>
+
+                <div className="flex items-center gap-2 text-xs sm:text-sm text-white/90 drop-shadow-md mt-1">
+                  <Eye className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                  <span>{video.views}</span>
+                  {video.uploaded && <span>• {video.uploaded}</span>}
+                </div>
+
+                <button className="mt-2 sm:mt-3 px-3 sm:px-4 py-1 sm:py-1.5 rounded-full border border-white text-white text-xs sm:text-sm font-medium hover:bg-white hover:text-gray-900 transition-colors">
+                  Follow
+                </button>
+              </div>
+            </div>
+
+            {/* Keyframes */}
+            <style>{`
+              @keyframes fadeIn {
+                from { opacity: 0; transform: scale(1.01); }
+                to { opacity: 1; transform: scale(1); }
+              }
+            `}</style>
           </div>
         </div>
       </div>

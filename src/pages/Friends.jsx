@@ -140,7 +140,6 @@
 //   )
 // }
 
-
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { SlidersHorizontal, Check, BadgeCheck } from "lucide-react";
@@ -152,7 +151,7 @@ const rawPeople = [
     id: "1",
     name: "Onasanya Olawale",
     image:
-      "https://images.unsplash.com/photo-1520975922284-8b456906c813?auto=format&fit=crop&w=900&q=80",
+      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=900&q=80",
     mutualCount: 6,
     department: "Engineering",
     verified: true,
@@ -250,7 +249,7 @@ export default function FriendsPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 pb-20">
+    <div className="max-w-4xl mx-auto px-4 pb-20">
       {/* Header */}
       <div className="flex items-center justify-between mb-10">
         <h1 className="text-4xl font-bold">
@@ -266,25 +265,30 @@ export default function FriendsPage() {
       </h2>
 
       {/* Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {requests.map((person) => (
           <div
             key={person.id}
             className="relative rounded-3xl overflow-hidden shadow-lg"
           >
             {/* Image */}
-            <Link to={`/friends/${person.id}`}>
+            <Link to={`/friends/${person.id}`} className="block w-full h-[420px] bg-gray-200">
               <img
                 src={person.image}
                 alt={person.name}
-                className="w-full h-[420px] object-cover"
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src =
+                    "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=900&q=80";
+                }}
               />
             </Link>
 
             {/* Online status */}
             <span
               className={`absolute top-4 right-4 w-4 h-4 rounded-full border-2 border-white ${statusColor(
-                person.status
+                person.status,
               )}`}
             />
 
@@ -308,7 +312,7 @@ export default function FriendsPage() {
                   className="flex-1 py-2 rounded-full bg-gray-200 hover:bg-gray-300 transition"
                   onClick={() =>
                     setRequests((prev) =>
-                      prev.filter((p) => p.id !== person.id)
+                      prev.filter((p) => p.id !== person.id),
                     )
                   }
                 >
@@ -343,4 +347,3 @@ export default function FriendsPage() {
     </div>
   );
 }
-

@@ -130,8 +130,7 @@
 //   )
 // }
 
-
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Heart,
   MessageCircle,
@@ -142,30 +141,54 @@ import {
   Send,
   ChevronLeft,
   ChevronRight,
-  Loader2,
+  RefreshCw,
 } from "lucide-react";
+import { useAppStore } from "../store/useAppStore";
+import { apiClient } from "../api";
 
 /* =========================================================
-   1) REAL BACKEND PAGINATION (API-ready)
-   ---------------------------------------------------------
-   - If API_URL is empty, we use mock pagination.
-   - Backend shape supported:
-     GET /posts?cursor=abc&limit=10
-     Response:
-       { items: Post[], nextCursor: string | null }
-   - Also supports offset pagination if your backend uses:
-       { items: Post[], nextOffset: number | null }
+   Institution blog API: /posts/institution/{id}?post_type=blog&skip=0&limit=100
+   Schools: unilag, yabatech, ileife
 ========================================================= */
 
-const API_URL = ""; // <-- set to your backend endpoint like: 'https://your-api.com/posts'
+const INSTITUTION_IDS = ["unilag", "yabatech", "ileife"];
 const PAGE_SIZE = 6;
+
+const FALLBACK_IMAGE =
+  "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=1200&q=80";
+
+function getInstitutionId(selectedSchool) {
+  if (selectedSchool?.id && INSTITUTION_IDS.includes(selectedSchool.id)) {
+    return selectedSchool.id;
+  }
+  return "unilag";
+}
+
+function mapBlogFromApi(post) {
+  const images =
+    post.media?.filter((m) => m.media_type === "image")?.map((m) => m.url) ??
+    [];
+  return {
+    id: post.id,
+    author: post.author?.full_name ?? "Unknown",
+    time: post.created_at
+      ? new Date(post.created_at).toLocaleDateString(undefined, {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        })
+      : "Recently",
+    content: typeof post.content === "string" ? post.content : "",
+    images: images.length ? images : [FALLBACK_IMAGE],
+    likes: post.likes_count ?? 0,
+    comments: post.comments_count ?? 0,
+    shares: post.shares_count ?? 0,
+  };
+}
 
 /* -------------------- Helpers -------------------- */
 
 const safeId = () => `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-
-const FALLBACK_IMAGE =
-  "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=1200&q=80";
 
 const avatarFor = (name) =>
   `https://i.pravatar.cc/80?u=${encodeURIComponent(name)}`; // dummy profile images
@@ -269,6 +292,9 @@ const MOCK_SOURCE = [
 ========================================================= */
 
 export default function CampusBlog() {
+  const { selectedSchool } = useAppStore();
+  const institutionId = getInstitutionId(selectedSchool);
+
   const [posts, setPosts] = useState([]);
   const [expanded, setExpanded] = useState({});
   const [openComments, setOpenComments] = useState(null);
@@ -277,11 +303,10 @@ export default function CampusBlog() {
   const [myReaction, setMyReaction] = useState({});
   const [reactionPickerFor, setReactionPickerFor] = useState(null);
 
-  // pagination state
-  const [loading, setLoading] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
-  const [cursor, setCursor] = useState(null);
-  const [offset, setOffset] = useState(0);
+  // API only: loading, error, hasMore
+  const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(null);
+  const [hasMore, setHasMore] = useState(false);
 
   // lightbox
   const [lightbox, setLightbox] = useState(null); // { images, index, author }
@@ -295,96 +320,41 @@ export default function CampusBlog() {
 
   const inflightRef = useRef(false);
 
-  /* -------------------- Initial Load -------------------- */
-  useEffect(() => {
-    fetchNextPage(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  /* -------------------- Infinite Scroll -------------------- */
-  useEffect(() => {
-    const onScroll = () => {
-      if (loading || !hasMore || inflightRef.current) return;
-      if (
-        window.innerHeight + window.scrollY >=
-        document.body.offsetHeight - 250
-      ) {
-        fetchNextPage(false);
-      }
-    };
-    window.addEventListener("scroll", onScroll);
-    return () => window.removeEventListener("scroll", onScroll);
-  }, [loading, hasMore]);
-
-  /* =========================================================
-     fetchNextPage()
-     - real backend pagination if API_URL is set
-     - otherwise mock pagination (offset-based)
-  ========================================================= */
-  const fetchNextPage = async (reset) => {
+  /* -------------------- Fetch blogs from institution API only -------------------- */
+  const fetchBlogs = useCallback(async () => {
     if (inflightRef.current) return;
     inflightRef.current = true;
     setLoading(true);
+    setFetchError(null);
 
     try {
-      if (!API_URL) {
-        // ---- MOCK PAGINATION ----
-        const nextOffset = reset ? 0 : offset;
-        const slice = MOCK_SOURCE.slice(nextOffset, nextOffset + PAGE_SIZE);
-        const newOffset = nextOffset + slice.length;
+      const params = { post_type: "blog", skip: 0, limit: 100 };
+      const response = await apiClient.get(
+        `/posts/institution/${institutionId}`,
+        { params }
+      );
+      const raw = response.data?.data ?? response.data ?? [];
+      const list = Array.isArray(raw) ? raw : [];
+      const blogsOnly = list.filter((p) => p.post_type === "blog");
+      const mapped = blogsOnly.map(mapBlogFromApi);
 
-        setPosts((prev) => (reset ? slice : [...prev, ...slice]));
-        setOffset(newOffset);
-        setHasMore(newOffset < MOCK_SOURCE.length);
-        setCursor(null);
-      } else {
-        // ---- REAL BACKEND PAGINATION ----
-        // Support both cursor and offset (choose what your backend uses)
-        const params = new URLSearchParams();
-        params.set("limit", String(PAGE_SIZE));
-
-        if (!reset) {
-          if (cursor) params.set("cursor", cursor);
-          else params.set("offset", String(offset));
-        }
-
-        const res = await fetch(`${API_URL}?${params.toString()}`);
-        if (!res.ok) throw new Error(`API error: ${res.status}`);
-        const data = await res.json();
-
-        const items = Array.isArray(data.items) ? data.items : [];
-        setPosts((prev) => (reset ? items : [...prev, ...items]));
-
-        // cursor pagination
-        if ("nextCursor" in data) {
-          setCursor(data.nextCursor);
-          setHasMore(Boolean(data.nextCursor));
-        }
-
-        // offset pagination
-        if ("nextOffset" in data) {
-          setOffset(data.nextOffset ?? 0);
-          setHasMore(data.nextOffset != null);
-        }
-
-        // if neither provided, infer from item count
-        if (!("nextCursor" in data) && !("nextOffset" in data)) {
-          setHasMore(items.length === PAGE_SIZE);
-        }
-      }
+      setPosts(mapped);
+      setHasMore(false);
     } catch (e) {
-      // If backend fails, don’t crash the UI
       console.error(e);
+      setFetchError(e.message || "Failed to load blog posts");
+      setPosts([]);
       setHasMore(false);
     } finally {
       setLoading(false);
       inflightRef.current = false;
     }
-  };
+  }, [institutionId]);
 
-  /* =========================================================
-     Emoji reactions logic
-  ========================================================= */
+  useEffect(() => {
+    fetchBlogs();
+  }, [fetchBlogs]);
+
   const applyReaction = (postId, reaction) => {
     setMyReaction((prev) => ({ ...prev, [postId]: reaction }));
     setReactionPickerFor(null);
@@ -461,162 +431,195 @@ export default function CampusBlog() {
         </button>
       </div>
 
-      {/* Feed */}
-      {posts.map((post) => {
-        const isExpanded = expanded[post.id];
-        const likeDisplay = getLikeDisplay(post);
-
-        return (
-          <article key={post.id} className="bg-white rounded-2xl shadow p-5">
-            {/* Header */}
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex items-center gap-3">
-                <img
-                  src={avatarFor(post.author)}
-                  alt={post.author}
-                  className="w-10 h-10 rounded-full object-cover"
-                  onError={(e) => {
-                    e.currentTarget.src = "https://via.placeholder.com/80";
-                  }}
-                />
-                <p className="text-sm font-semibold uppercase text-gray-900">
-                  Posted by {post.author}
-                </p>
-              </div>
-
-              <span className="text-sm text-gray-500 uppercase">
-                {post.time}
-              </span>
-            </div>
-
-            {/* Content + Read more */}
-            <p className="text-gray-700 mb-2 leading-relaxed">
-              {isExpanded ? post.content : post.content.slice(0, 140)}
-              {post.content.length > 140 && (
-                <button
-                  onClick={() =>
-                    setExpanded((p) => ({ ...p, [post.id]: !p[post.id] }))
-                  }
-                  className="ml-2 text-blue-600 text-sm font-medium"
-                >
-                  {isExpanded ? "Show less" : "Read more"}
-                </button>
-              )}
-            </p>
-
-            {/* 2) Single image vs collage logic */}
-            {post.images?.length === 1 ? (
-              <button
-                type="button"
-                onClick={() => openLightbox(post, 0)}
-                className="block w-full mt-4"
-                aria-label="Open image"
-              >
-                <img
-                  src={post.images[0]}
-                  alt=""
-                  className="w-full h-72 object-cover rounded-xl"
-                  onError={(e) => {
-                    e.currentTarget.src = FALLBACK_IMAGE;
-                  }}
-                />
-              </button>
-            ) : (
-              <div className="grid grid-cols-2 gap-2 mt-4">
-                {post.images.slice(0, 2).map((img, i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    onClick={() => openLightbox(post, i)}
-                    className="block w-full"
-                    aria-label="Open image"
-                  >
-                    <img
-                      src={img}
-                      alt=""
-                      className="w-full h-56 object-cover rounded-xl"
-                      onError={(e) => {
-                        e.currentTarget.src = FALLBACK_IMAGE;
-                      }}
-                    />
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {/* Engagement row */}
-            <div className="flex items-center gap-6 text-gray-600 mt-4 relative">
-              {/* 3) Emoji reactions + 5) Like animation */}
-              <div
-                className="relative"
-                onMouseLeave={() => setReactionPickerFor(null)}
-              >
-                <button
-                  onClick={() =>
-                    setReactionPickerFor((p) =>
-                      p === post.id ? null : post.id
-                    )
-                  }
-                  className={`flex items-center gap-2 transition active:scale-95 ${
-                    myReaction[post.id] ? "text-red-600" : "hover:text-red-600"
-                  }`}
-                >
-                  <Heart
-                    className={`w-5 h-5 ${
-                      myReaction[post.id] ? "fill-red-600" : ""
-                    }`}
-                  />
-                  <span className="flex items-center gap-1">
-                    {likeDisplay.emoji && (
-                      <span className="text-base">{likeDisplay.emoji}</span>
-                    )}
-                    {likeDisplay.text}
-                  </span>
-                </button>
-
-                {/* Reaction picker */}
-                {reactionPickerFor === post.id && (
-                  <div className="absolute -top-14 left-0 bg-white shadow rounded-full px-3 py-2 flex gap-2 border">
-                    {REACTIONS.map((r) => (
-                      <button
-                        key={r.key}
-                        onClick={() => applyReaction(post.id, r)}
-                        className="w-9 h-9 rounded-full hover:bg-gray-100 flex items-center justify-center text-lg transition active:scale-95"
-                        title={r.label}
-                      >
-                        {r.emoji}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Comments */}
-              <button
-                onClick={() => setOpenComments(post.id)}
-                className="flex items-center gap-2 hover:text-blue-600 transition active:scale-95"
-              >
-                <MessageCircle className="w-5 h-5" />
-                {post.comments}
-              </button>
-
-              {/* Share */}
-              <button className="flex items-center gap-2 hover:text-green-600 transition active:scale-95">
-                <Share2 className="w-5 h-5" />
-                {post.shares}
-              </button>
-            </div>
-          </article>
-        );
-      })}
-
-      {/* Loading indicator */}
-      {loading && (
-        <div className="flex items-center justify-center text-gray-600 gap-2 py-6">
-          <Loader2 className="w-5 h-5 animate-spin" />
-          Loading more posts...
+      {/* Error: failed to load */}
+      {!loading && fetchError && (
+        <div className="rounded-2xl border border-gray-200 bg-gray-50 p-8 text-center">
+          <p className="text-gray-700 font-medium mb-1">Could not load posts</p>
+          <p className="text-sm text-gray-500 mb-4">{fetchError}</p>
+          <p className="text-sm text-gray-600 mb-4">
+            Try refreshing or check back later.
+          </p>
+          <button
+            onClick={() => fetchBlogs()}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-900 text-white hover:bg-gray-800 transition"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Refresh
+          </button>
         </div>
       )}
+
+      {/* Empty: no data from API */}
+      {!loading && !fetchError && posts.length === 0 && (
+        <div className="rounded-2xl border border-gray-200 bg-gray-50 p-8 text-center">
+          <p className="text-gray-700 font-medium mb-1">
+            No data at the moment
+          </p>
+          <p className="text-sm text-gray-500 mb-4">
+            There are no blog posts to show. Try refreshing or check back later.
+          </p>
+          <button
+            onClick={() => fetchBlogs()}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-900 text-white hover:bg-gray-800 transition"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Refresh
+          </button>
+        </div>
+      )}
+
+      {/* Feed */}
+      {!loading &&
+        posts.length > 0 &&
+        posts.map((post) => {
+          const isExpanded = expanded[post.id];
+          const likeDisplay = getLikeDisplay(post);
+
+          return (
+            <article key={post.id} className="bg-white rounded-2xl shadow p-5">
+              {/* Header */}
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <img
+                    src={avatarFor(post.author)}
+                    alt={post.author}
+                    className="w-10 h-10 rounded-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.src = "https://via.placeholder.com/80";
+                    }}
+                  />
+                  <p className="text-sm font-semibold uppercase text-gray-900">
+                    Posted by {post.author}
+                  </p>
+                </div>
+
+                <span className="text-sm text-gray-500 uppercase">
+                  {post.time}
+                </span>
+              </div>
+
+              {/* Content + Read more */}
+              <p className="text-gray-700 mb-2 leading-relaxed">
+                {isExpanded ? post.content : post.content.slice(0, 140)}
+                {post.content.length > 140 && (
+                  <button
+                    onClick={() =>
+                      setExpanded((p) => ({ ...p, [post.id]: !p[post.id] }))
+                    }
+                    className="ml-2 text-blue-600 text-sm font-medium"
+                  >
+                    {isExpanded ? "Show less" : "Read more"}
+                  </button>
+                )}
+              </p>
+
+              {/* 2) Single image vs collage logic */}
+              {post.images?.length === 1 ? (
+                <button
+                  type="button"
+                  onClick={() => openLightbox(post, 0)}
+                  className="block w-full mt-4"
+                  aria-label="Open image"
+                >
+                  <img
+                    src={post.images[0]}
+                    alt=""
+                    className="w-full h-72 object-cover rounded-xl"
+                    onError={(e) => {
+                      e.currentTarget.src = FALLBACK_IMAGE;
+                    }}
+                  />
+                </button>
+              ) : (
+                <div className="grid grid-cols-2 gap-2 mt-4">
+                  {post.images.slice(0, 2).map((img, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => openLightbox(post, i)}
+                      className="block w-full"
+                      aria-label="Open image"
+                    >
+                      <img
+                        src={img}
+                        alt=""
+                        className="w-full h-56 object-cover rounded-xl"
+                        onError={(e) => {
+                          e.currentTarget.src = FALLBACK_IMAGE;
+                        }}
+                      />
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Engagement row */}
+              <div className="flex items-center gap-6 text-gray-600 mt-4 relative">
+                {/* 3) Emoji reactions + 5) Like animation */}
+                <div
+                  className="relative"
+                  onMouseLeave={() => setReactionPickerFor(null)}
+                >
+                  <button
+                    onClick={() =>
+                      setReactionPickerFor((p) =>
+                        p === post.id ? null : post.id
+                      )
+                    }
+                    className={`flex items-center gap-2 transition active:scale-95 ${
+                      myReaction[post.id]
+                        ? "text-red-600"
+                        : "hover:text-red-600"
+                    }`}
+                  >
+                    <Heart
+                      className={`w-5 h-5 ${
+                        myReaction[post.id] ? "fill-red-600" : ""
+                      }`}
+                    />
+                    <span className="flex items-center gap-1">
+                      {likeDisplay.emoji && (
+                        <span className="text-base">{likeDisplay.emoji}</span>
+                      )}
+                      {likeDisplay.text}
+                    </span>
+                  </button>
+
+                  {/* Reaction picker */}
+                  {reactionPickerFor === post.id && (
+                    <div className="absolute -top-14 left-0 bg-white shadow rounded-full px-3 py-2 flex gap-2 border">
+                      {REACTIONS.map((r) => (
+                        <button
+                          key={r.key}
+                          onClick={() => applyReaction(post.id, r)}
+                          className="w-9 h-9 rounded-full hover:bg-gray-100 flex items-center justify-center text-lg transition active:scale-95"
+                          title={r.label}
+                        >
+                          {r.emoji}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Comments */}
+                <button
+                  onClick={() => setOpenComments(post.id)}
+                  className="flex items-center gap-2 hover:text-blue-600 transition active:scale-95"
+                >
+                  <MessageCircle className="w-5 h-5" />
+                  {post.comments}
+                </button>
+
+                {/* Share */}
+                <button className="flex items-center gap-2 hover:text-green-600 transition active:scale-95">
+                  <Share2 className="w-5 h-5" />
+                  {post.shares}
+                </button>
+              </div>
+            </article>
+          );
+        })}
 
       {!hasMore && posts.length > 0 && (
         <div className="text-center text-sm text-gray-500 py-6">
