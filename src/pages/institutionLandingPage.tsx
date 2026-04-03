@@ -661,27 +661,32 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/useAuthStore'
-import { Heart, MessageCircle, Share2, BarChart3, MoreVertical, Loader2 } from 'lucide-react'
+import { Heart, MessageCircle, Share2, BarChart3, Loader2 } from 'lucide-react'
 import RightSidebar from '../components/RightSideBar'
-import { useFetchInstitutionPosts } from '../hooks/usePosts'
-import { useCurrentUser } from "../hooks/useAuth";
+import { useFetchInstitutionPosts, usePostMutations } from '../hooks/usePosts'
 import { useAppStore } from '../store/useAppStore'
+import PostActionsMenu from '../components/PostActionsMenu'
+import { canDeletePost } from '../utils/postPermissions'
+import { requestOpenCreatePost } from '../utils/createPost'
+import { requestAuthNotice } from '../utils/authNotice'
+import { CREATE_POST_AUTH_NOTICE } from '../utils/authNoticeContent'
+import { isUserSessionAuthenticated } from '../utils/sessionAuth'
 
 export default function InstitutionLandingPage() {
   const navigate = useNavigate()
-  const { user } = useAuthStore()
-  const { selectedSchool, setSelectedSchool, schools ,setSchools} = useAppStore();
+  const { user, isAuthenticated } = useAuthStore()
+  const { selectedSchool } = useAppStore();
+  const canCreatePost = isUserSessionAuthenticated(isAuthenticated)
 
  // console.log(JSON.stringify(selectedSchool))
 
-  // Get current user data including institution profile
-  //const { data: userData, isLoading: meIsLoading, error: userError } = useCurrentUser();
-  const [meIsLoading ,setmeIsLoading] = useState(false)
-  
   // State for posts
   const [posts, setPosts] = useState<any[]>([])
   const [skip, setSkip] = useState(0)
   const [hasMore, setHasMore] = useState(true)
+  const [deletingPostId, setDeletingPostId] = useState<string | number | null>(
+    null
+  )
 
   // Use the mutation to fetch institution posts
   const { 
@@ -704,6 +709,17 @@ export default function InstitutionLandingPage() {
       console.error('Error fetching institution posts:', error)
     }
   })
+
+  const { deletePost } = usePostMutations()
+
+  const handleCreatePostClick = () => {
+    if (!canCreatePost) {
+      requestAuthNotice(CREATE_POST_AUTH_NOTICE)
+      return
+    }
+
+    requestOpenCreatePost()
+  }
 
   // Extract institution ID from user data
   const institutionId = selectedSchool?.id //userData?.institution_profile?.id
@@ -775,6 +791,29 @@ export default function InstitutionLandingPage() {
     ))
     // You would call your sharePost mutation here
     // sharePost.mutate(postId)
+  }
+
+  const handleDelete = async (postId: string | number) => {
+    const shouldDelete = window.confirm(
+      'Delete this post? This action cannot be undone.'
+    )
+
+    if (!shouldDelete) return
+
+    setDeletingPostId(postId)
+
+    try {
+      await deletePost.mutateAsync(postId)
+      setPosts((prev) => prev.filter((post) => post.id !== postId))
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.message ||
+        error?.response?.data?.detail ||
+        'Failed to delete post. Please try again.'
+      window.alert(message)
+    } finally {
+      setDeletingPostId(null)
+    }
   }
 
   // Loading skeleton for user data
@@ -907,7 +946,7 @@ export default function InstitutionLandingPage() {
               <h3 className="text-lg font-semibold text-gray-900 mb-2">No posts yet</h3>
               <p className="text-gray-600">Create your first post to engage with your community</p>
               <button
-                // onClick={() => navigate('/create-post')}
+                onClick={handleCreatePostClick}
                 className="mt-4 px-6 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary-800 transition-colors"
               >
                 Create Post
@@ -922,6 +961,9 @@ export default function InstitutionLandingPage() {
                   onLike={handleLike}
                   onComment={handleComment}
                   onShare={handleShare}
+                  onDelete={handleDelete}
+                  canDelete={canDeletePost(post, user)}
+                  isDeleting={deletingPostId === post.id}
                   formatCount={formatCount}
                 />
               ))}
@@ -966,7 +1008,16 @@ export default function InstitutionLandingPage() {
 }
 
 // Post Card Component matching Figma design
-const PostCard = ({ post, onLike, onComment, onShare, formatCount }: any) => {
+const PostCard = ({
+  post,
+  onLike,
+  onComment,
+  onShare,
+  onDelete,
+  canDelete,
+  isDeleting,
+  formatCount,
+}: any) => {
   const [liked, setLiked] = useState(post.liked || false)
   const [likesCount, setLikesCount] = useState(post.likes_count || 0)
 
@@ -1009,9 +1060,11 @@ const PostCard = ({ post, onLike, onComment, onShare, formatCount }: any) => {
             </p>
           </div>
         </div>
-        <button className="p-1.5 lg:p-2 hover:bg-gray-100 rounded-full flex-shrink-0">
-          <MoreVertical className="w-4 h-4 lg:w-5 lg:h-5 text-gray-400" />
-        </button>
+        <PostActionsMenu
+          canDelete={canDelete}
+          isDeleting={isDeleting}
+          onDelete={() => onDelete(post.id)}
+        />
       </div>
 
       {/* Post Content */}
@@ -1064,7 +1117,7 @@ const PostCard = ({ post, onLike, onComment, onShare, formatCount }: any) => {
       )}
 
       {/* Engagement Metrics */}
-      <div className="px-3 lg:px-4 py-3 lg:py-4 border-t border-gray-200 flex items-center gap-4 lg:gap-6">
+      <div className="px-3 lg:px-4 py-3 lg:py-4 border-t border-gray-200 flex flex-wrap items-center gap-x-4 gap-y-3 lg:gap-x-6">
         <button 
           onClick={handleLike}
           className="flex items-center gap-2 text-gray-600 hover:text-red-600 transition-colors"

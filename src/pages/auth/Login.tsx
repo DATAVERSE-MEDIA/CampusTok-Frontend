@@ -765,6 +765,16 @@ import { useAuthStore } from "../../store/useAuthStore";
 import { useSchools } from "../../hooks/useSchools"; // Import the hook
 import { useAppStore } from "../../store/useAppStore";
 import { useCreateInstitutionProfile, useCreateStudentProfile } from '../../hooks/useProfile'
+import {
+  clearStoredPostLoginAction,
+  clearStoredPostLoginRedirect,
+  resolvePostLoginAction,
+  resolvePostLoginRedirect,
+  sanitizePostLoginAction,
+  sanitizePostLoginRedirect,
+  storePostLoginAction,
+  storePostLoginRedirect,
+} from "../../utils/postLoginRedirect";
 
 const userTypes = [
   {
@@ -806,6 +816,10 @@ export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
   const { login: authStoreLogin, email: storedEmail } = useAuthStore();
+  const requestedRedirect = sanitizePostLoginRedirect(location.state?.from);
+  const requestedPostLoginAction = sanitizePostLoginAction(
+    location.state?.postLoginAction
+  );
   
   const [activeTab, setActiveTab] = useState<"general" | "student" | "institution">("general");
   
@@ -869,6 +883,22 @@ export default function Login() {
     }
   }, [location.state, storedEmail]);
 
+  useEffect(() => {
+    if (requestedRedirect) {
+      storePostLoginRedirect(requestedRedirect);
+    } else {
+      clearStoredPostLoginRedirect();
+    }
+  }, [requestedRedirect]);
+
+  useEffect(() => {
+    if (requestedPostLoginAction) {
+      storePostLoginAction(requestedPostLoginAction);
+    } else {
+      clearStoredPostLoginAction();
+    }
+  }, [requestedPostLoginAction]);
+
   const { mutate: login, isPending } = useLogin();
   const { mutate: googleAuth, isPending: isGoogleAuthPending } = useGoogleAuth();
   const { selectedSchool, setSelectedSchool, schools ,setSchools} = useAppStore();
@@ -884,6 +914,8 @@ export default function Login() {
       name: "Guest User",
       isGuest: true,
     });
+    clearStoredPostLoginAction();
+    clearStoredPostLoginRedirect();
     navigate("/general-dashboard", { replace: true });
   };
 
@@ -905,7 +937,7 @@ export default function Login() {
             email: "user@gmail.com",
           };
           authStoreLogin(dummyUser);
-          navigate("/general-dashboard", { replace: true });
+          redirectBasedOnUserType("general");
         },
         onSettled: () => {
           setGoogleAuthLoading(false);
@@ -918,7 +950,7 @@ export default function Login() {
         email: "user@gmail.com",
       };
       authStoreLogin(dummyUser);
-      navigate("/general-dashboard", { replace: true });
+      redirectBasedOnUserType("general");
       setGoogleAuthLoading(false);
     }
   };
@@ -1088,13 +1120,18 @@ export default function Login() {
 
   const redirectBasedOnUserType = (userType: string) => {
     setIsLoading(false);
-    if (userType === "student") {
-      navigate("/student-dashboard", { replace: true });
-    } else if (userType === "institution") {
-      navigate("/institution-dashboard", { replace: true });
-    } else {
-      navigate("/general-dashboard", { replace: true });
-    }
+    const redirectTarget = resolvePostLoginRedirect({
+      requestedPath: requestedRedirect,
+      userType,
+    });
+    const postLoginAction = resolvePostLoginAction(requestedPostLoginAction);
+
+    clearStoredPostLoginAction();
+    clearStoredPostLoginRedirect();
+    navigate(redirectTarget, {
+      replace: true,
+      state: postLoginAction ? { postLoginAction } : null,
+    });
   };
 
   const renderGeneralForm = () => (

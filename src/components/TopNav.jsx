@@ -2,13 +2,29 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "../store/useAuthStore";
-import { Search, Video, Users, BookOpen, Home } from "lucide-react";
+import { requestAuthNotice } from "../utils/authNotice";
+import { getAuthNoticeForPath } from "../utils/authNoticeContent";
+import { isUserSessionAuthenticated } from "../utils/sessionAuth";
+import { Search, Video, Users, BookOpen, Home, Menu } from "lucide-react";
 
-export default function TopNav() {
+export default function TopNav({ onMenuClick }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuthStore();
+  const { user, isAuthenticated } = useAuthStore();
   const [localSearchQuery, setLocalSearchQuery] = useState("");
+  const canAccessProfile = isUserSessionAuthenticated(isAuthenticated);
+
+  const handleProfileClick = () => {
+    if (!canAccessProfile) {
+      requestAuthNotice({
+        ...getAuthNoticeForPath("/profile"),
+        from: "/profile",
+      });
+      return;
+    }
+
+    navigate("/profile");
+  };
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -28,62 +44,68 @@ export default function TopNav() {
     <div className="bg-gray-200 border-b border-gray-300 sticky top-0 z-20 w-full">
       <div className="px-4 sm:px-6 lg:px-8 py-3 lg:py-4 flex justify-between items-center">
         {/* Mobile Layout */}
-        <div className="lg:hidden flex items-center gap-3 py-3 px-4 rounded-[30px] bg-[#E3E3E3] w-full">
-          <button
-            onClick={() => navigate("/profile")}
-            className="w-8 h-8 bg-red-600 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0"
-          >
-            {user?.name?.charAt(0).toUpperCase() ||
-              user?.full_name?.charAt(0).toUpperCase() ||
-              "F"}
-          </button>
+        <div className="lg:hidden w-full space-y-3">
+          <div className="flex items-center gap-3 rounded-[24px] bg-[#E3E3E3] px-3 py-2.5">
+            <button
+              type="button"
+              onClick={onMenuClick}
+              className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-white/90 text-gray-700 shadow-sm"
+              aria-label="Open menu"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
 
-          <form
-            onSubmit={handleSearch}
-            className="flex-1 flex items-center rounded-[30px] bg-[#E3E3E3] relative"
-          >
-            <Search className="absolute left-2 text-gray-400 w-5 h-5 z-10" />
-            <input
-              type="text"
-              value={localSearchQuery}
-              onChange={(e) => setLocalSearchQuery(e.target.value)}
-              placeholder="Search here"
-              className="w-full pl-8 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary bg-[#E3E3E3] border-none text-gray-700 placeholder:text-gray-500"
-              style={{ backgroundColor: "#E3E3E3" }}
-            />
-          </form>
+            <button
+              onClick={handleProfileClick}
+              className="w-9 h-9 bg-red-600 text-white rounded-full flex items-center justify-center font-bold flex-shrink-0"
+            >
+              {user?.name?.charAt(0).toUpperCase() ||
+                user?.full_name?.charAt(0).toUpperCase() ||
+                "F"}
+            </button>
 
-          <div className="flex gap-3 ml-auto">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = location.pathname === item.path;
+            <form onSubmit={handleSearch} className="flex-1 min-w-0">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 z-10" />
+                <input
+                  type="text"
+                  value={localSearchQuery}
+                  onChange={(e) => setLocalSearchQuery(e.target.value)}
+                  placeholder="Search here"
+                  className="w-full rounded-full border-none bg-white/90 py-2 pl-9 pr-3 text-sm text-gray-700 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+            </form>
+          </div>
 
-              // add id ONLY for Campus Blog (so Video page can target it)
-              const extraProps =
-                item.path === "/blog" ? { id: "nav-campus-blog" } : {};
+          <div className="-mx-1 overflow-x-auto scrollbar-hide">
+            <div className="flex min-w-max items-stretch gap-2 px-1">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = location.pathname === item.path;
 
-              return (
-                <button
-                  key={item.path}
-                  onClick={() => navigate(item.path)}
-                  className="flex flex-col items-center gap-1 p-2 hover:opacity-80 transition-opacity"
-                  {...extraProps}
-                >
-                  <Icon
-                    className={`w-5 h-5 ${
-                      isActive ? "text-primary" : "text-gray-600"
+                const extraProps =
+                  item.path === "/blog" ? { id: "nav-campus-blog" } : {};
+
+                return (
+                  <button
+                    key={item.path}
+                    onClick={() => navigate(item.path)}
+                    className={`flex min-w-[84px] flex-col items-center justify-center gap-1 rounded-2xl px-3 py-2 transition-colors ${
+                      isActive
+                        ? "bg-white text-primary shadow-sm"
+                        : "bg-transparent text-gray-600"
                     }`}
-                  />
-                  <span
-                    className={`text-xs whitespace-nowrap ${
-                      isActive ? "text-primary font-medium" : "text-gray-600"
-                    }`}
+                    {...extraProps}
                   >
-                    {item.label}
-                  </span>
-                </button>
-              );
-            })}
+                    <Icon className="w-5 h-5" />
+                    <span className="text-[11px] font-medium leading-tight text-center whitespace-nowrap">
+                      {item.label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
         
@@ -92,7 +114,7 @@ export default function TopNav() {
           {/* Search Bar with Profile Picture (Left Side) */}
           <div className="flex items-center gap-4 max-w-xl">
             <button
-              onClick={() => navigate("/profile")}
+              onClick={handleProfileClick}
               className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center text-white font-bold hover:opacity-80 transition-opacity flex-shrink-0"
             >
               {user?.full_name?.charAt(0).toUpperCase() || "F"}

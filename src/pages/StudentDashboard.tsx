@@ -1,6 +1,5 @@
-export default function StudentDashboard() {
+import StudentLandingPage from "./studentLandingPage";
 
-   return <div>
-          student dashboard
-   </div>
+export default function StudentDashboard() {
+  return <StudentLandingPage />;
 }

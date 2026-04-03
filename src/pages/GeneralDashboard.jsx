@@ -1,20 +1,44 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuthStore } from "../store/useAuthStore";
 import { useAppStore } from "../store/useAppStore";
 import { Heart, MessageCircle, Share2 } from "lucide-react";
 import { apiClient } from "../api";
+import { usePostMutations } from "../hooks/usePosts";
+import PostActionsMenu from "../components/PostActionsMenu";
+import { canDeletePost } from "../utils/postPermissions";
 
 export default function GeneralDashboard() {
   const navigate = useNavigate();
   const { selectedSchool, feedRefreshToken, lastCreatedPost } = useAppStore();
+  const { user } = useAuthStore();
+  const selectedSchoolId = selectedSchool?.id || null;
   const [posts, setPosts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [following, setFollowing] = useState(new Set());
+  const [deletingPostId, setDeletingPostId] = useState(null);
+  const { deletePost } = usePostMutations();
+  const previousSchoolIdRef = useRef(selectedSchoolId);
 
   // Fetch posts for general dashboard
   useEffect(() => {
+    const schoolChanged = previousSchoolIdRef.current !== selectedSchoolId;
+    previousSchoolIdRef.current = selectedSchoolId;
+
+    if (schoolChanged) {
+      setPosts([]);
+      setHasMore(true);
+
+      if (page !== 1) {
+        setPage(1);
+        return;
+      }
+    }
+
+    let cancelled = false;
+
     const fetchPosts = async () => {
       setIsLoading(true);
 
@@ -23,19 +47,22 @@ export default function GeneralDashboard() {
         const skip = (page - 1) * limit;
         let newPosts = [];
 
-        // Always use the main posts endpoint; filter by school when available.
         const params = {
           skip,
           limit,
           post_type: "post",
         };
 
-        if (selectedSchool?.id) {
-          params.institution_id = selectedSchool.id;
-        }
+        const response = selectedSchoolId
+          ? await apiClient.get(`/posts/institution/${selectedSchoolId}`, {
+              params,
+            })
+          : await apiClient.get("/posts", { params });
 
-        const response = await apiClient.get("/posts", { params });
-        newPosts = response.data.data || response.data || [];
+        const raw = response.data?.data ?? response.data ?? [];
+        newPosts = Array.isArray(raw) ? raw : raw?.posts ?? [];
+
+        if (cancelled) return;
 
         setPosts((prev) => {
           // Base list depending on page
@@ -48,7 +75,10 @@ export default function GeneralDashboard() {
 
           // Ensure the very latest created post is always present
           // even if the backend feed response is stale or cached.
+          // Keep this only for the unscoped feed so school feeds
+          // do not inherit a post created under a different school.
           if (
+            !selectedSchoolId &&
             lastCreatedPost &&
             !nextPosts.find((p) => p.id === lastCreatedPost.id)
           ) {
@@ -60,6 +90,7 @@ export default function GeneralDashboard() {
 
         setHasMore(newPosts.length >= 10);
       } catch (err) {
+        if (cancelled) return;
         console.error("Error fetching posts:", err);
         // On error, show whatever posts we already had (if any)
         if (page === 1) {
@@ -71,7 +102,11 @@ export default function GeneralDashboard() {
     };
 
     fetchPosts();
-  }, [selectedSchool, page, feedRefreshToken, lastCreatedPost]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedSchoolId, page, feedRefreshToken, lastCreatedPost]);
 
   const loadMorePosts = () => {
     if (!isLoading && hasMore) {
@@ -135,6 +170,29 @@ export default function GeneralDashboard() {
       }
       return newSet;
     });
+  };
+
+  const handleDelete = async (postId) => {
+    const shouldDelete = window.confirm(
+      "Delete this post? This action cannot be undone."
+    );
+
+    if (!shouldDelete) return;
+
+    setDeletingPostId(postId);
+
+    try {
+      await deletePost.mutateAsync(postId);
+      setPosts((prev) => prev.filter((post) => post.id !== postId));
+    } catch (error) {
+      const message =
+        error?.response?.data?.message ||
+        error?.response?.data?.detail ||
+        "Failed to delete post. Please try again.";
+      window.alert(message);
+    } finally {
+      setDeletingPostId(null);
+    }
   };
 
   // Loading skeleton
@@ -211,7 +269,10 @@ export default function GeneralDashboard() {
                   onLike={handleLike}
                   onComment={handleComment}
                   onShare={handleShare}
+                  onDelete={handleDelete}
                   onFollow={handleFollow}
+                  canDelete={canDeletePost(post, user)}
+                  isDeleting={deletingPostId === post.id}
                   isFollowing={following.has(post.author?.id || post.id)}
                 />
               ))}
@@ -246,7 +307,10 @@ const PostCard = ({
   onLike,
   onComment,
   onShare,
+  onDelete,
   onFollow,
+  canDelete,
+  isDeleting,
   isFollowing,
 }) => {
   const [liked, setLiked] = useState(post.liked || false);
@@ -299,17 +363,23 @@ const PostCard = ({
             </p>
           </div>
         </div>
-        {/* Follow Button - Matching Figma */}
-        <button
-          onClick={() => onFollow(post.author?.id || post.id)}
-          className={`px-4 py-1.5 lg:py-2 rounded-lg font-medium text-xs lg:text-sm transition-colors flex-shrink-0 ${
-            isFollowing
-              ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
-              : "bg-primary text-white hover:bg-primary-800"
-          }`}
-        >
-          {isFollowing ? "Following" : "Follow"}
-        </button>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <button
+            onClick={() => onFollow(post.author?.id || post.id)}
+            className={`px-4 py-1.5 lg:py-2 rounded-lg font-medium text-xs lg:text-sm transition-colors ${
+              isFollowing
+                ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                : "bg-primary text-white hover:bg-primary-800"
+            }`}
+          >
+            {isFollowing ? "Following" : "Follow"}
+          </button>
+          <PostActionsMenu
+            canDelete={canDelete}
+            isDeleting={isDeleting}
+            onDelete={() => onDelete(post.id)}
+          />
+        </div>
       </div>
 
       {/* Post Content */}
@@ -379,7 +449,7 @@ const PostCard = ({
       )}
 
       {/* Engagement Metrics - Matching Figma (NO views metric) */}
-      <div className="px-3 lg:px-4 py-3 lg:py-4 border-t border-gray-200 flex items-center gap-4 lg:gap-6">
+      <div className="px-3 lg:px-4 py-3 lg:py-4 border-t border-gray-200 flex flex-wrap items-center gap-x-4 gap-y-3 lg:gap-x-6">
         <button
           onClick={handleLike}
           className="flex items-center gap-2 text-gray-600 hover:text-red-600 transition-colors"

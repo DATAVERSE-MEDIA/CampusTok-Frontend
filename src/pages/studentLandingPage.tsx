@@ -765,17 +765,22 @@ import {
   MessageCircle,
   Share2,
   BarChart3,
-  MoreVertical,
   Loader2,
   School,
 } from "lucide-react";
 import { useFetchInstitutionPosts, usePostMutations } from "../hooks/usePosts";
-import { useCurrentUser } from "../hooks/useAuth";
+import PostActionsMenu from "../components/PostActionsMenu";
+import { canDeletePost } from "../utils/postPermissions";
+import { requestOpenCreatePost } from "../utils/createPost";
+import { requestAuthNotice } from "../utils/authNotice";
+import { CREATE_POST_AUTH_NOTICE } from "../utils/authNoticeContent";
+import { isUserSessionAuthenticated } from "../utils/sessionAuth";
 
 export default function StudentLandingPage() {
   const navigate = useNavigate();
   const { selectedSchool } = useAppStore();
-  const { user } = useAuthStore();
+  const { user, isAuthenticated } = useAuthStore();
+  const canCreatePost = isUserSessionAuthenticated(isAuthenticated);
 
   // Get current user data including student profile
   //const { data: userData, isLoading: meIsLoading, error: userError } = useCurrentUser()
@@ -784,6 +789,9 @@ export default function StudentLandingPage() {
   const [posts, setPosts] = useState<any[]>([])
   const [skip, setSkip] = useState(0)
   const [hasMore, setHasMore] = useState(true)
+  const [deletingPostId, setDeletingPostId] = useState<string | number | null>(
+    null
+  );
 
   // Use the mutation to fetch institution posts for the student's school
   const { 
@@ -827,7 +835,16 @@ export default function StudentLandingPage() {
   }, [selectedSchool?.id, fetchPosts])
 
   // Use post mutations
-  const { likePost, sharePost } = usePostMutations();
+  const { likePost, sharePost, deletePost } = usePostMutations();
+
+  const handleCreatePostClick = () => {
+    if (!canCreatePost) {
+      requestAuthNotice(CREATE_POST_AUTH_NOTICE);
+      return;
+    }
+
+    requestOpenCreatePost();
+  };
 
   const loadMorePosts = () => {
     const targetInstitutionId = selectedSchool?.id //|| institutionId
@@ -882,6 +899,29 @@ export default function StudentLandingPage() {
         : post
     ))
     sharePost.mutate(postId);
+  };
+
+  const handleDelete = async (postId: string | number) => {
+    const shouldDelete = window.confirm(
+      "Delete this post? This action cannot be undone."
+    );
+
+    if (!shouldDelete) return;
+
+    setDeletingPostId(postId);
+
+    try {
+      await deletePost.mutateAsync(postId);
+      setPosts((prev) => prev.filter((post) => post.id !== postId));
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.message ||
+        error?.response?.data?.detail ||
+        "Failed to delete post. Please try again.";
+      window.alert(message);
+    } finally {
+      setDeletingPostId(null);
+    }
   };
 
   // Loading skeleton for user data
@@ -1052,7 +1092,7 @@ export default function StudentLandingPage() {
                   : "Follow schools or browse posts to get started"}
               </p>
               <button
-                onClick={() => navigate('/create-post')}
+                onClick={handleCreatePostClick}
                 className="px-6 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary-800 transition-colors"
               >
                 Create Post
@@ -1067,6 +1107,9 @@ export default function StudentLandingPage() {
                   onLike={handleLike}
                   onComment={handleComment}
                   onShare={handleShare}
+                  onDelete={handleDelete}
+                  canDelete={canDeletePost(post, user)}
+                  isDeleting={deletingPostId === post.id}
                   formatCount={formatCount}
                 />
               ))}
@@ -1113,7 +1156,16 @@ export default function StudentLandingPage() {
 }
 
 // Post Card Component matching Figma design
-const PostCard = ({ post, onLike, onComment, onShare, formatCount }: any) => {
+const PostCard = ({
+  post,
+  onLike,
+  onComment,
+  onShare,
+  onDelete,
+  canDelete,
+  isDeleting,
+  formatCount,
+}: any) => {
   const [liked, setLiked] = useState(post.liked || false);
   const [likesCount, setLikesCount] = useState(post.likes_count || 0);
 
@@ -1158,9 +1210,11 @@ const PostCard = ({ post, onLike, onComment, onShare, formatCount }: any) => {
             </p>
           </div>
         </div>
-        <button className="p-1.5 lg:p-2 hover:bg-gray-100 rounded-full flex-shrink-0">
-          <MoreVertical className="w-4 h-4 lg:w-5 lg:h-5 text-gray-400" />
-        </button>
+        <PostActionsMenu
+          canDelete={canDelete}
+          isDeleting={isDeleting}
+          onDelete={() => onDelete(post.id)}
+        />
       </div>
 
       {/* Post Content */}
@@ -1199,7 +1253,7 @@ const PostCard = ({ post, onLike, onComment, onShare, formatCount }: any) => {
       )}
 
       {/* Engagement Metrics - Matching Figma */}
-      <div className="px-3 lg:px-4 py-3 lg:py-4 border-t border-gray-200 flex items-center gap-4 lg:gap-6">
+      <div className="px-3 lg:px-4 py-3 lg:py-4 border-t border-gray-200 flex flex-wrap items-center gap-x-4 gap-y-3 lg:gap-x-6">
         <button
           onClick={handleLike}
           className="flex items-center gap-2 text-gray-600 hover:text-red-600 transition-colors"
