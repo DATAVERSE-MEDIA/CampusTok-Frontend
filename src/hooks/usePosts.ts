@@ -991,7 +991,18 @@ export const usePostMutations = () => {
         }
       });
 
+      queryClient.removeQueries({ queryKey: postKeys.detail(postId) });
+      queryClient.invalidateQueries({ queryKey: postKeys.all });
+
+      const lastCreatedPost = useAppStore.getState().lastCreatedPost;
+      if (lastCreatedPost?.id === postId) {
+        useAppStore.setState({ lastCreatedPost: null });
+      }
+
       console.log("Post deleted successfully!");
+    },
+    onError: (error) => {
+      console.error("Error deleting post:", error);
     },
   });
 

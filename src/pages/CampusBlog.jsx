@@ -144,7 +144,11 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { useAppStore } from "../store/useAppStore";
+import { useAuthStore } from "../store/useAuthStore";
 import { apiClient } from "../api";
+import { requestAuthNotice } from "../utils/authNotice";
+import { CREATE_POST_AUTH_NOTICE } from "../utils/authNoticeContent";
+import { isUserSessionAuthenticated } from "../utils/sessionAuth";
 
 /* =========================================================
    Institution blog API: /posts/institution/{id}?post_type=blog&skip=0&limit=100
@@ -293,7 +297,9 @@ const MOCK_SOURCE = [
 
 export default function CampusBlog() {
   const { selectedSchool } = useAppStore();
+  const { isAuthenticated } = useAuthStore();
   const institutionId = getInstitutionId(selectedSchool);
+  const canCreatePost = isUserSessionAuthenticated(isAuthenticated);
 
   const [posts, setPosts] = useState([]);
   const [expanded, setExpanded] = useState({});
@@ -319,6 +325,15 @@ export default function CampusBlog() {
   const [newImage2, setNewImage2] = useState("");
 
   const inflightRef = useRef(false);
+
+  const handleCreatePostClick = () => {
+    if (!canCreatePost) {
+      requestAuthNotice(CREATE_POST_AUTH_NOTICE);
+      return;
+    }
+
+    setCreateOpen(true);
+  };
 
   /* -------------------- Fetch blogs from institution API only -------------------- */
   const fetchBlogs = useCallback(async () => {
@@ -423,7 +438,7 @@ export default function CampusBlog() {
         <h1 className="text-xl font-bold text-gray-900">Campus Feed</h1>
 
         <button
-          onClick={() => setCreateOpen(true)}
+          onClick={handleCreatePostClick}
           className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-900 text-white hover:bg-gray-800 transition"
         >
           <Plus className="w-4 h-4" />

@@ -1,10 +1,19 @@
 import { useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useGoogleAuth } from '../../hooks/useAuth'
 import React from 'react'
+import {
+  clearStoredPostLoginAction,
+  clearStoredPostLoginRedirect,
+  getStoredPostLoginAction,
+  getStoredPostLoginRedirect,
+  resolvePostLoginAction,
+  resolvePostLoginRedirect,
+} from '../../utils/postLoginRedirect'
 
 export default function GoogleCallback() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { mutate: googleAuth, isPending } = useGoogleAuth()
 
   useEffect(() => {
@@ -19,14 +28,26 @@ export default function GoogleCallback() {
       if (errorParam) {
         console.error('Google OAuth error:', errorParam)
         alert(`Google login failed: ${errorParam}`)
-        navigate('/login', { replace: true })
+        navigate('/login', {
+          replace: true,
+          state: {
+            from: getStoredPostLoginRedirect(),
+            postLoginAction: getStoredPostLoginAction(),
+          },
+        })
         return
       }
 
       if (!code || !state) {
         console.error('Missing code or state parameters')
         alert('Authentication failed: Missing parameters')
-        navigate('/login', { replace: true })
+        navigate('/login', {
+          replace: true,
+          state: {
+            from: getStoredPostLoginRedirect(),
+            postLoginAction: getStoredPostLoginAction(),
+          },
+        })
         return
       }
 
@@ -36,13 +57,25 @@ export default function GoogleCallback() {
       
       if (!savedState) {
         alert('Security error: Session expired. Please try again.')
-        navigate('/login', { replace: true })
+        navigate('/login', {
+          replace: true,
+          state: {
+            from: getStoredPostLoginRedirect(),
+            postLoginAction: getStoredPostLoginAction(),
+          },
+        })
         return
       }
 
       if (state !== savedState) {
         alert('Security error: Invalid authentication request.')
-        navigate('/login', { replace: true })
+        navigate('/login', {
+          replace: true,
+          state: {
+            from: getStoredPostLoginRedirect(),
+            postLoginAction: getStoredPostLoginAction(),
+          },
+        })
         return
       }
 
@@ -61,18 +94,31 @@ export default function GoogleCallback() {
 
           // Redirect based on user type
           const userType = data.user?.userType || data.user?.role || 'general'
-          if (userType === 'student') {
-            navigate('/student-dashboard', { replace: true })
-          } else if (userType === 'institution') {
-            navigate('/institution-dashboard', { replace: true })
-          } else {
-            navigate('/general-dashboard', { replace: true })
-          }
+          const redirectTarget = resolvePostLoginRedirect({
+            requestedPath: location.state?.from,
+            userType,
+          })
+          const postLoginAction = resolvePostLoginAction(
+            location.state?.postLoginAction
+          )
+
+          clearStoredPostLoginAction()
+          clearStoredPostLoginRedirect()
+          navigate(redirectTarget, {
+            replace: true,
+            state: postLoginAction ? { postLoginAction } : null,
+          })
         },
         onError: (error) => {
           console.error('Google authentication error:', error)
           alert(error.response?.data?.message || error.message || 'Authentication failed')
-          navigate('/login', { replace: true })
+          navigate('/login', {
+            replace: true,
+            state: {
+              from: getStoredPostLoginRedirect(),
+              postLoginAction: getStoredPostLoginAction(),
+            },
+          })
         },
         onSettled: () => {
           // Clean URL

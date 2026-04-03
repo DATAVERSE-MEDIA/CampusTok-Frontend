@@ -117,6 +117,7 @@ import { apiClient } from '../api'
 import { useAuthStore } from "../store/useAuthStore";
 import InstitutionLandingPage from './institutionLandingPage'
 import StudentLandingPage from './studentLandingPage'
+import GeneralDashboard from './GeneralDashboard'
 
 // export default function LandingPage() {
 //   const navigate = useNavigate()
@@ -522,19 +523,9 @@ const RightSidebar = ({ navigate }) => (
 
 
 export default function LandingPage() {
+    const { userType } = useAuthStore();
 
-
-
-    const { logout, user, userType } = useAuthStore();
-
-    console.log(userType)
-
-    if(userType === 'institution')
-       return <InstitutionLandingPage/>
-    else if( userType === 'student')
-       return <StudentLandingPage/>
-
-    else 
-       return <div>general</div>
-
+    if (userType === 'institution') return <InstitutionLandingPage />
+    if (userType === 'student') return <StudentLandingPage />
+    return <GeneralDashboard />
 }

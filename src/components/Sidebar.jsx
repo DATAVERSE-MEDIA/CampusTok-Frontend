@@ -2,7 +2,12 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "../store/useAuthStore";
 import { useAppStore } from "../store/useAppStore";
+import { requestAuthNotice } from "../utils/authNotice";
+import {
+  protectedRouteNotices,
+} from "../utils/authNoticeContent";
 import { schoolApi } from "../api";
+import { isUserSessionAuthenticated } from "../utils/sessionAuth";
 import {
   User,
   MessageSquare,
@@ -16,13 +21,22 @@ import {
   HelpCircle,
   LayoutDashboard,
   Eye,
+  Video,
   FileText,
   BookOpen,
+  Home,
   AtSign,
   Building2,
   Book,
   Loader2,
 } from "lucide-react";
+
+const guestMenuItems = [
+  { path: "/general-dashboard", icon: Home, label: "Home" },
+  { path: "/video", icon: Video, label: "Video" },
+  { path: "/friends", icon: Users, label: "Friends" },
+  { path: "/blog", icon: BookOpen, label: "Campus Blog" },
+];
 
 // General account menu items - matching Figma
 const generalMenuItems = [
@@ -55,12 +69,13 @@ const institutionMenuItems = [
 export default function Sidebar({ isOpen, setIsOpen, onCreatePostClick }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { logout, user, userType } = useAuthStore();
+  const { logout, user, userType, isAuthenticated } = useAuthStore();
   const { selectedSchool, setSelectedSchool, schools, setSchools } =
     useAppStore();
   const [showSchoolDropdown, setShowSchoolDropdown] = useState(false);
   const [showSettingsDropdown, setShowSettingsDropdown] = useState(false);
   const [isLoadingSchools, setIsLoadingSchools] = useState(false);
+  const canAccessProtectedRoutes = isUserSessionAuthenticated(isAuthenticated);
 
   // Determine which menu items to show based on user type or route
   const effectiveUserType =
@@ -154,11 +169,16 @@ export default function Sidebar({ isOpen, setIsOpen, onCreatePostClick }) {
   }, [userType, effectiveUserType, location.pathname]);
 
   const menuItems =
-    effectiveUserType === "institution"
+    !canAccessProtectedRoutes
+      ? guestMenuItems
+      : effectiveUserType === "institution"
       ? institutionMenuItems
       : effectiveUserType === "student"
         ? studentMenuItems
         : generalMenuItems;
+  const schoolOrUserLogo = selectedSchool?.logo || user?.logo || null;
+  const institutionProfileImage =
+    user?.profile_picture || selectedSchool?.logo || null;
 
   const handleLogout = () => {
     logout();
@@ -166,6 +186,15 @@ export default function Sidebar({ isOpen, setIsOpen, onCreatePostClick }) {
   };
 
   const handleNavigate = (path) => {
+    if (!canAccessProtectedRoutes && protectedRouteNotices[path]) {
+      requestAuthNotice({
+        ...protectedRouteNotices[path],
+        from: path,
+      });
+      setIsOpen(false);
+      return;
+    }
+
     navigate(path);
     setIsOpen(false); // Close sidebar on mobile after navigation
   };
@@ -205,9 +234,9 @@ export default function Sidebar({ isOpen, setIsOpen, onCreatePostClick }) {
             {/* Small University Logo with Dropdown */}
             <div className="flex items-center gap-1">
               <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 border border-gray-300 bg-white">
-                {selectedSchool?.logo || user?.logo ? (
+                {schoolOrUserLogo ? (
                   <img
-                    src={selectedSchool.logo || user.logo}
+                    src={schoolOrUserLogo}
                     alt={selectedSchool?.name || "University"}
                     className="w-full h-full object-cover"
                   />
@@ -336,9 +365,9 @@ export default function Sidebar({ isOpen, setIsOpen, onCreatePostClick }) {
             <div className="flex items-start gap-3">
               {/* Larger University Crest/Logo - Matching Figma */}
               <div className="w-16 h-16 lg:w-20 lg:h-20 rounded-full overflow-hidden flex-shrink-0 border-2 border-gray-200 bg-white flex items-center justify-center">
-                {user?.profile_picture || selectedSchool?.logo ? (
+                {institutionProfileImage ? (
                   <img
-                    src={user.profile_picture || selectedSchool.logo}
+                    src={institutionProfileImage}
                     alt={user?.name || selectedSchool?.name || "Institution"}
                     className="w-full h-full object-cover"
                   />
