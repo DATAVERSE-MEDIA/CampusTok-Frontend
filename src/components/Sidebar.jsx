@@ -3,9 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "../store/useAuthStore";
 import { useAppStore } from "../store/useAppStore";
 import { requestAuthNotice } from "../utils/authNotice";
-import {
-  protectedRouteNotices,
-} from "../utils/authNoticeContent";
+import { protectedRouteNotices } from "../utils/authNoticeContent";
 import { schoolApi } from "../api";
 import { isUserSessionAuthenticated } from "../utils/sessionAuth";
 import {
@@ -40,7 +38,6 @@ const guestMenuItems = [
 
 // General account menu items - matching Figma
 const generalMenuItems = [
-  { path: "/profile", icon: User, label: "Profile" },
   { path: "/community", icon: Users, label: "Communities" },
   { path: "/messages", icon: MessageSquare, label: "Messages" },
 ];
@@ -59,6 +56,7 @@ const studentMenuItems = [
 // Communities, Faculties, Courses, Notification hidden for now
 const institutionMenuItems = [
   { path: "/institution-dashboard", icon: LayoutDashboard, label: "Dashboard" },
+  { path: "/profile", icon: User, label: "Profile" },
   // { path: "/community", icon: Users, label: "Communities" },
   { path: "/sentiment-bank", icon: Eye, label: "Sentiment Bank" },
   // { path: "/faculties", icon: FileText, label: "Faculties / Department" },
@@ -168,10 +166,9 @@ export default function Sidebar({ isOpen, setIsOpen, onCreatePostClick }) {
     console.log("Sidebar - Current pathname:", location.pathname);
   }, [userType, effectiveUserType, location.pathname]);
 
-  const menuItems =
-    !canAccessProtectedRoutes
-      ? guestMenuItems
-      : effectiveUserType === "institution"
+  const menuItems = !canAccessProtectedRoutes
+    ? guestMenuItems
+    : effectiveUserType === "institution"
       ? institutionMenuItems
       : effectiveUserType === "student"
         ? studentMenuItems
@@ -414,7 +411,7 @@ export default function Sidebar({ isOpen, setIsOpen, onCreatePostClick }) {
               </div>
               <div className="flex-1 min-w-0">
                 <h3 className="font-bold text-gray-900 text-sm lg:text-base truncate">
-                  {user?.name || "Felix Gabriel"}
+                  {user?.name || "Guest User"}
                 </h3>
                 <p className="text-xs lg:text-sm text-gray-600 truncate">
                   General Account

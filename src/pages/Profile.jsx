@@ -28,8 +28,6 @@
 
 //    const { data, isLoading, error }  = useProfile()
 
-  
-
 //   return (
 //     <div className="max-w-4xl mx-auto">
 //       <div className="card mb-6">
@@ -130,7 +128,6 @@
 //     </div>
 //   )
 // }
-
 
 // import { useState, useEffect } from 'react'
 // import { useAuthStore } from '../store/useAuthStore'
@@ -266,8 +263,8 @@
 //         major: apiData.major || apiData.field_of_study || prev.major,
 //         year: apiData.year || apiData.year_level || prev.year,
 //         // Format join date
-//         joinDate: apiData.created_at ? 
-//           new Date(apiData.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 
+//         joinDate: apiData.created_at ?
+//           new Date(apiData.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) :
 //           prev.joinDate
 //       }))
 //     }
@@ -300,11 +297,11 @@
 //             <Edit className="w-4 h-4" />
 //             Edit Cover
 //           </button>
-          
+
 //           {/* Show profile picture from API if available */}
 //           {apiData?.profile_picture && (
-//             <img 
-//               src={apiData.profile_picture} 
+//             <img
+//               src={apiData.profile_picture}
 //               alt={profileData.name}
 //               className="w-32 h-32 rounded-full border-4 border-white absolute -bottom-16 left-6 object-cover"
 //             />
@@ -325,7 +322,7 @@
 //                 <h1 className="text-3xl font-bold text-gray-900 mb-1">{profileData.name}</h1>
 //                 <p className="text-gray-600 mb-2">{profileData.username}</p>
 //                 <p className="text-gray-700">{profileData.bio}</p>
-                
+
 //                 {/* Show user type from API if available */}
 //                 {apiData?.userType && (
 //                   <span className="inline-block mt-2 px-3 py-1 bg-primary-100 text-primary-700 text-sm font-medium rounded-full">
@@ -411,25 +408,23 @@
 //   )
 // }
 
-
-
-import { useState, useEffect, useRef } from 'react'
-import { useAuthStore } from '../store/useAuthStore'
-import { 
-  Edit, 
-  MapPin, 
-  Calendar, 
-  Mail, 
-  Phone, 
-  GraduationCap, 
+import { useState, useEffect, useRef } from "react";
+import { useAuthStore } from "../store/useAuthStore";
+import {
+  Edit,
+  MapPin,
+  Calendar,
+  Mail,
+  Phone,
+  GraduationCap,
   Camera,
   X,
   Check,
   Upload,
-  Image
-} from 'lucide-react'
-import { useProfile, useUpdateProfile } from '../hooks/useAuth'
-import {useProfilePicture} from '../hooks/useProfilePicture'
+  Image,
+} from "lucide-react";
+import { useProfile, useUpdateProfile } from "../hooks/useAuth";
+import { useProfilePicture } from "../hooks/useProfilePicture";
 
 // Skeleton Loading Component
 const ProfileSkeleton = () => (
@@ -478,7 +473,7 @@ const ProfileSkeleton = () => (
       </div>
     </div>
   </div>
-)
+);
 
 // Error Display Component
 const ErrorDisplay = ({ error, onRetry }) => (
@@ -487,81 +482,88 @@ const ErrorDisplay = ({ error, onRetry }) => (
       <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
         <X className="w-8 h-8 text-red-500" />
       </div>
-      <h2 className="text-xl font-bold text-gray-900 mb-2">Failed to Load Profile</h2>
-      <p className="text-gray-600 mb-4">{error?.message || 'An error occurred while loading your profile'}</p>
-      <button onClick={onRetry} className="btn-primary">Try Again</button>
+      <h2 className="text-xl font-bold text-gray-900 mb-2">
+        Failed to Load Profile
+      </h2>
+      <p className="text-gray-600 mb-4">
+        {error?.message || "An error occurred while loading your profile"}
+      </p>
+      <button onClick={onRetry} className="btn-primary">
+        Try Again
+      </button>
     </div>
   </div>
-)
+);
 
 // Profile Picture Upload Component
-const ProfilePictureUpload = ({ 
-  currentPicture, 
-  onUpload, 
+const ProfilePictureUpload = ({
+  currentPicture,
+  onUpload,
   onRemove,
-  isUploading 
+  isUploading,
 }) => {
-  const fileInputRef = useRef(null)
-  const [previewUrl, setPreviewUrl] = useState('')
-  const [selectedFile, setSelectedFile] = useState(null)
-  const [dragOver, setDragOver] = useState(false)
+  const fileInputRef = useRef(null);
+  const [previewUrl, setPreviewUrl] = useState("");
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [dragOver, setDragOver] = useState(false);
 
   const handleFileSelect = (file) => {
-    if (!file) return
-    
-    if (!file.type.startsWith('image/')) {
-      alert('Please select an image file (JPG, PNG, GIF, etc.)')
-      return
-    }
-    
-    if (file.size > 5 * 1024 * 1024) { // 5MB limit
-      alert('File size must be less than 5MB')
-      return
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      alert("Please select an image file (JPG, PNG, GIF, etc.)");
+      return;
     }
 
-    setSelectedFile(file)
-    const reader = new FileReader()
-    reader.onload = (e) => setPreviewUrl(e.target.result)
-    reader.readAsDataURL(file)
-  }
+    if (file.size > 5 * 1024 * 1024) {
+      // 5MB limit
+      alert("File size must be less than 5MB");
+      return;
+    }
+
+    setSelectedFile(file);
+    const reader = new FileReader();
+    reader.onload = (e) => setPreviewUrl(e.target.result);
+    reader.readAsDataURL(file);
+  };
 
   const handleFileChange = (e) => {
-    const file = e.target.files?.[0]
-    handleFileSelect(file)
-  }
+    const file = e.target.files?.[0];
+    handleFileSelect(file);
+  };
 
   const handleDrop = (e) => {
-    e.preventDefault()
-    setDragOver(false)
-    const file = e.dataTransfer.files?.[0]
-    handleFileSelect(file)
-  }
+    e.preventDefault();
+    setDragOver(false);
+    const file = e.dataTransfer.files?.[0];
+    handleFileSelect(file);
+  };
 
   const handleDragOver = (e) => {
-    e.preventDefault()
-    setDragOver(true)
-  }
+    e.preventDefault();
+    setDragOver(true);
+  };
 
   const handleDragLeave = () => {
-    setDragOver(false)
-  }
+    setDragOver(false);
+  };
 
   const handleUpload = async () => {
     if (selectedFile && onUpload) {
-      await onUpload(selectedFile)
-      setSelectedFile(null)
-      setPreviewUrl('')
+      await onUpload(selectedFile);
+      setSelectedFile(null);
+      setPreviewUrl("");
     }
-  }
+  };
 
   const handleCancel = () => {
-    setSelectedFile(null)
-    setPreviewUrl('')
-  }
+    setSelectedFile(null);
+    setPreviewUrl("");
+  };
 
   const triggerFileInput = () => {
-    fileInputRef.current?.click()
-  }
+    fileInputRef.current?.click();
+  };
 
   return (
     <div className="relative">
@@ -569,18 +571,18 @@ const ProfilePictureUpload = ({
       <div className="relative group">
         <div className="w-24 h-24 sm:w-28 sm:h-28 lg:w-32 lg:h-32 rounded-full border-2 sm:border-4 border-white overflow-hidden bg-gradient-to-r from-primary-500 to-primary-700">
           {currentPicture ? (
-            <img 
-              src={currentPicture} 
-              alt="Profile" 
+            <img
+              src={currentPicture}
+              alt="Profile"
               className="w-full h-full object-cover"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-white text-2xl sm:text-3xl lg:text-4xl font-bold">
-              {currentPicture ? '' : '?'}
+              {currentPicture ? "" : "?"}
             </div>
           )}
         </div>
-        
+
         {/* Upload Button Overlay */}
         <button
           onClick={triggerFileInput}
@@ -604,8 +606,13 @@ const ProfilePictureUpload = ({
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-xl max-w-md w-full p-6">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Preview Profile Picture</h3>
-              <button onClick={handleCancel} className="text-gray-400 hover:text-gray-600">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Preview Profile Picture
+              </h3>
+              <button
+                onClick={handleCancel}
+                className="text-gray-400 hover:text-gray-600"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -613,9 +620,9 @@ const ProfilePictureUpload = ({
             {/* Preview */}
             <div className="mb-6">
               <div className="w-40 h-40 mx-auto rounded-full overflow-hidden border-4 border-gray-200">
-                <img 
-                  src={previewUrl} 
-                  alt="Preview" 
+                <img
+                  src={previewUrl}
+                  alt="Preview"
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -667,118 +674,125 @@ const ProfilePictureUpload = ({
         </button>
       )}
     </div>
-  )
-}
+  );
+};
 
 // Main Profile Component
 export default function Profile() {
-  const { user, updateUser } = useAuthStore()
-  const [isEditing, setIsEditing] = useState(false)
+  const { user, updateUser } = useAuthStore();
+  const [isEditing, setIsEditing] = useState(false);
   const [profileData, setProfileData] = useState({
-    name: 'John Doe',
-    username: '@johndoe',
-    bio: 'Computer Science student passionate about technology and innovation.',
-    location: 'Boston, MA',
-    email: 'john.doe@university.edu',
-    phone: '(555) 123-4567',
-    school: 'Harvard University',
-    major: 'Computer Science',
-    year: 'Junior',
-    joinDate: 'September 2022'
-  })
-  
-  const [isUploading, setIsUploading] = useState(false)
-  const [uploadError, setUploadError] = useState(null)
-  const [uploadSuccess, setUploadSuccess] = useState(false)
+    name: "John Doe",
+    username: "@johndoe",
+    bio: "Computer Science student passionate about technology and innovation.",
+    location: "Boston, MA",
+    email: "john.doe@university.edu",
+    phone: "(555) 123-4567",
+    school: "Harvard University",
+    major: "Computer Science",
+    year: "Junior",
+    joinDate: "September 2022",
+  });
 
-  const { data: apiData, isLoading, error, refetch } = useProfile()
-  const { mutate: updateProfile } = useUpdateProfile()
-  const { 
-  uploadProfilePicture, 
-  removeProfilePicture, 
-  isUploading: isPictureUploading,
-  error: pictureError,
-  success: pictureSuccess,
-  resetState 
-} = useProfilePicture()
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState(null);
+  const [uploadSuccess, setUploadSuccess] = useState(false);
+
+  const { data: apiData, isLoading, error, refetch } = useProfile();
+  const { mutate: updateProfile } = useUpdateProfile();
+  const {
+    uploadProfilePicture,
+    removeProfilePicture,
+    isUploading: isPictureUploading,
+    error: pictureError,
+    success: pictureSuccess,
+    resetState,
+  } = useProfilePicture();
 
   // Update profile data when API data is available
   useEffect(() => {
     if (apiData) {
-      setProfileData(prev => ({
+      setProfileData((prev) => ({
         ...prev,
-        name: apiData.full_name || apiData.name || 'User',
+        name: apiData.full_name || apiData.name || "User",
         email: apiData.email || prev.email,
-        username: apiData.username || `@${(apiData.email || '').split('@')[0]}` || prev.username,
+        username:
+          apiData.username ||
+          `@${(apiData.email || "").split("@")[0]}` ||
+          prev.username,
         bio: apiData.bio || apiData.bio || prev.bio,
         location: apiData.location || prev.location,
         phone: apiData.phone || prev.phone,
         school: apiData.school || apiData.university || prev.school,
         major: apiData.major || apiData.field_of_study || prev.major,
         year: apiData.year || apiData.year_level || prev.year,
-        joinDate: apiData.created_at ? 
-          new Date(apiData.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 
-          prev.joinDate
-      }))
+        joinDate: apiData.created_at
+          ? new Date(apiData.created_at).toLocaleDateString("en-US", {
+              month: "long",
+              year: "numeric",
+            })
+          : prev.joinDate,
+      }));
     }
-  }, [apiData])
+  }, [apiData]);
 
   // Handle profile picture upload
   const handleUploadProfilePicture = async (file) => {
-       await uploadProfilePicture(file)
-  }
+    await uploadProfilePicture(file);
+  };
 
   // Handle remove profile picture
   const handleRemoveProfilePicture = async () => {
-    if (!window.confirm('Are you sure you want to remove your profile picture?')) return
+    if (
+      !window.confirm("Are you sure you want to remove your profile picture?")
+    )
+      return;
 
-    await removeProfilePicture()
-
-  }
+    await removeProfilePicture();
+  };
 
   // Handle save edited profile
   const handleSaveProfile = () => {
     const profileUpdate = {
-      full_name: profileData.name,
-      bio: profileData.bio,
-      location: profileData.location,
-      phone: profileData.phone,
-      school: profileData.school,
-      major: profileData.major,
-      year: profileData.year,
-    }
+      full_name: profileData.name?.trim(),
+      profile_picture: currentProfilePicture || undefined,
+    };
 
     updateProfile(profileUpdate, {
       onSuccess: () => {
-        setIsEditing(false)
-        refetch() // Refresh profile data
+        setIsEditing(false);
       },
       onError: (error) => {
-        console.error('Profile update error:', error)
-        alert(error.response?.data?.message || 'Failed to update profile')
-      }
-    })
-  }
+        console.error("Profile update error:", error);
+        alert(
+          error.response?.data?.detail ||
+            error.response?.data?.message ||
+            "Failed to update profile",
+        );
+      },
+    });
+  };
 
   // Use API data for stats if available
   const stats = [
-    { label: 'Posts', value: apiData?.post_count || 42 },
-    { label: 'Friends', value: apiData?.friends_count || 127 },
-    { label: 'Communities', value: apiData?.communities_count || 8 },
-    { label: 'Followers', value: apiData?.followers_count || 234 },
-  ]
+    { label: "Posts", value: apiData?.post_count || 42 },
+    { label: "Friends", value: apiData?.friends_count || 127 },
+    { label: "Communities", value: apiData?.communities_count || 8 },
+    { label: "Followers", value: apiData?.followers_count || 234 },
+  ];
 
   // Get current profile picture from API or auth store
-  const currentProfilePicture = apiData?.profile_picture || user?.profilePicture
+  const currentProfilePicture =
+    apiData?.profile_picture || user?.profilePicture;
 
   // Show loading skeleton
   if (isLoading) {
-    return <ProfileSkeleton />
+    return <ProfileSkeleton />;
   }
 
   // Show error display
   if (error) {
-    return <ErrorDisplay error={error} onRetry={refetch} />
+    return <ErrorDisplay error={error} onRetry={refetch} />;
   }
 
   return (
@@ -790,7 +804,7 @@ export default function Profile() {
           <span>Profile picture updated successfully!</span>
         </div>
       )}
-      
+
       {uploadError && (
         <div className="mb-3 lg:mb-4 p-2.5 lg:p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-700 text-sm lg:text-base">
           <X className="w-4 h-4 lg:w-5 lg:h-5 flex-shrink-0" />
@@ -805,7 +819,7 @@ export default function Profile() {
             <Edit className="w-3 h-3 lg:w-4 lg:h-4" />
             <span className="hidden sm:inline">Edit Cover</span>
           </button>
-          
+
           {/* Profile Picture Upload Component */}
           <div className="absolute -bottom-12 sm:-bottom-16 left-3 sm:left-6">
             <ProfilePictureUpload
@@ -826,29 +840,40 @@ export default function Profile() {
                   <input
                     type="text"
                     value={profileData.name}
-                    onChange={(e) => setProfileData({...profileData, name: e.target.value})}
+                    onChange={(e) =>
+                      setProfileData({ ...profileData, name: e.target.value })
+                    }
                     className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-1 bg-gray-50 border border-gray-300 rounded px-2 lg:px-3 py-1 w-full sm:w-auto"
                   />
                 ) : (
-                  <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-1">{profileData.name}</h1>
+                  <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-1">
+                    {profileData.name}
+                  </h1>
                 )}
-                <p className="text-sm lg:text-base text-gray-600 mb-2">{profileData.username}</p>
-                
+                <p className="text-sm lg:text-base text-gray-600 mb-2">
+                  {profileData.username}
+                </p>
+
                 {isEditing ? (
                   <textarea
                     value={profileData.bio}
-                    onChange={(e) => setProfileData({...profileData, bio: e.target.value})}
+                    onChange={(e) =>
+                      setProfileData({ ...profileData, bio: e.target.value })
+                    }
                     className="w-full text-sm lg:text-base text-gray-700 bg-gray-50 border border-gray-300 rounded px-2 lg:px-3 py-2"
                     rows={3}
                   />
                 ) : (
-                  <p className="text-sm lg:text-base text-gray-700 break-words">{profileData.bio}</p>
+                  <p className="text-sm lg:text-base text-gray-700 break-words">
+                    {profileData.bio}
+                  </p>
                 )}
-                
+
                 {/* Show user type from API if available */}
                 {apiData?.userType && (
                   <span className="inline-block mt-2 px-2 lg:px-3 py-1 bg-primary-100 text-primary-700 text-xs lg:text-sm font-medium rounded-full">
-                    {apiData.userType.charAt(0).toUpperCase() + apiData.userType.slice(1)}
+                    {apiData.userType.charAt(0).toUpperCase() +
+                      apiData.userType.slice(1)}
                   </span>
                 )}
               </div>
@@ -866,7 +891,7 @@ export default function Profile() {
               ) : (
                 <>
                   <Edit className="w-4 h-4" />
-                  <span>{isEditing ? 'Save Profile' : 'Edit Profile'}</span>
+                  <span>{isEditing ? "Save Profile" : "Edit Profile"}</span>
                 </>
               )}
             </button>
@@ -876,8 +901,12 @@ export default function Profile() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 lg:gap-4 mb-4 lg:mb-6">
             {stats.map((stat) => (
               <div key={stat.label} className="text-center p-2 lg:p-0">
-                <div className="text-xl lg:text-2xl font-bold text-gray-900">{stat.value}</div>
-                <div className="text-xs lg:text-sm text-gray-600">{stat.label}</div>
+                <div className="text-xl lg:text-2xl font-bold text-gray-900">
+                  {stat.value}
+                </div>
+                <div className="text-xs lg:text-sm text-gray-600">
+                  {stat.label}
+                </div>
               </div>
             ))}
           </div>
@@ -891,11 +920,18 @@ export default function Profile() {
                   <input
                     type="text"
                     value={profileData.location}
-                    onChange={(e) => setProfileData({...profileData, location: e.target.value})}
+                    onChange={(e) =>
+                      setProfileData({
+                        ...profileData,
+                        location: e.target.value,
+                      })
+                    }
                     className="text-sm lg:text-base text-gray-700 bg-gray-50 border border-gray-300 rounded px-2 lg:px-3 py-1 w-full"
                   />
                 ) : (
-                  <span className="text-sm lg:text-base text-gray-700 break-words">{profileData.location}</span>
+                  <span className="text-sm lg:text-base text-gray-700 break-words">
+                    {profileData.location}
+                  </span>
                 )}
               </div>
               <div className="flex items-start gap-2 lg:gap-3">
@@ -904,22 +940,30 @@ export default function Profile() {
                   <input
                     type="text"
                     value={profileData.school}
-                    onChange={(e) => setProfileData({...profileData, school: e.target.value})}
+                    onChange={(e) =>
+                      setProfileData({ ...profileData, school: e.target.value })
+                    }
                     className="text-sm lg:text-base text-gray-700 bg-gray-50 border border-gray-300 rounded px-2 lg:px-3 py-1 w-full"
                   />
                 ) : (
-                  <span className="text-sm lg:text-base text-gray-700 break-words">{profileData.school}</span>
+                  <span className="text-sm lg:text-base text-gray-700 break-words">
+                    {profileData.school}
+                  </span>
                 )}
               </div>
               <div className="flex items-center gap-2 lg:gap-3">
                 <Calendar className="w-4 h-4 lg:w-5 lg:h-5 text-gray-400 flex-shrink-0" />
-                <span className="text-sm lg:text-base text-gray-700">Joined {profileData.joinDate}</span>
+                <span className="text-sm lg:text-base text-gray-700">
+                  Joined {profileData.joinDate}
+                </span>
               </div>
             </div>
             <div className="space-y-3 lg:space-y-4">
               <div className="flex items-start gap-2 lg:gap-3">
                 <Mail className="w-4 h-4 lg:w-5 lg:h-5 text-gray-400 flex-shrink-0 mt-0.5" />
-                <span className="text-sm lg:text-base text-gray-700 break-words break-all">{profileData.email}</span>
+                <span className="text-sm lg:text-base text-gray-700 break-words break-all">
+                  {profileData.email}
+                </span>
               </div>
               <div className="flex items-start gap-2 lg:gap-3">
                 <Phone className="w-4 h-4 lg:w-5 lg:h-5 text-gray-400 flex-shrink-0 mt-0.5" />
@@ -927,11 +971,15 @@ export default function Profile() {
                   <input
                     type="tel"
                     value={profileData.phone}
-                    onChange={(e) => setProfileData({...profileData, phone: e.target.value})}
+                    onChange={(e) =>
+                      setProfileData({ ...profileData, phone: e.target.value })
+                    }
                     className="text-sm lg:text-base text-gray-700 bg-gray-50 border border-gray-300 rounded px-2 lg:px-3 py-1 w-full"
                   />
                 ) : (
-                  <span className="text-sm lg:text-base text-gray-700">{profileData.phone}</span>
+                  <span className="text-sm lg:text-base text-gray-700">
+                    {profileData.phone}
+                  </span>
                 )}
               </div>
               <div className="text-sm lg:text-base text-gray-700">
@@ -941,12 +989,19 @@ export default function Profile() {
                     <input
                       type="text"
                       value={profileData.major}
-                      onChange={(e) => setProfileData({...profileData, major: e.target.value})}
+                      onChange={(e) =>
+                        setProfileData({
+                          ...profileData,
+                          major: e.target.value,
+                        })
+                      }
                       className="text-sm lg:text-base text-gray-700 bg-gray-50 border border-gray-300 rounded px-2 lg:px-3 py-1 w-full sm:w-32"
                     />
                     <select
                       value={profileData.year}
-                      onChange={(e) => setProfileData({...profileData, year: e.target.value})}
+                      onChange={(e) =>
+                        setProfileData({ ...profileData, year: e.target.value })
+                      }
                       className="text-sm lg:text-base text-gray-700 bg-gray-50 border border-gray-300 rounded px-2 lg:px-3 py-1 w-full sm:w-auto"
                     >
                       <option value="Freshman">Freshman</option>
@@ -957,7 +1012,9 @@ export default function Profile() {
                     </select>
                   </div>
                 ) : (
-                  <span className="ml-1">{profileData.major} • {profileData.year}</span>
+                  <span className="ml-1">
+                    {profileData.major} • {profileData.year}
+                  </span>
                 )}
               </div>
             </div>
@@ -967,19 +1024,27 @@ export default function Profile() {
 
       {/* Recent Activity */}
       <div className="card">
-        <h2 className="text-lg lg:text-xl font-bold text-gray-900 mb-3 lg:mb-4">Recent Activity</h2>
+        <h2 className="text-lg lg:text-xl font-bold text-gray-900 mb-3 lg:mb-4">
+          Recent Activity
+        </h2>
         <div className="space-y-3 lg:space-y-4">
           {[1, 2, 3].map((item) => (
-            <div key={item} className="p-3 lg:p-4 border border-gray-200 rounded-lg">
+            <div
+              key={item}
+              className="p-3 lg:p-4 border border-gray-200 rounded-lg"
+            >
               <div className="flex items-start gap-2 lg:gap-3">
                 <div className="w-8 h-8 lg:w-10 lg:h-10 bg-primary-500 rounded-full flex items-center justify-center text-white font-bold text-sm lg:text-base flex-shrink-0">
                   {profileData.name.charAt(0)}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm lg:text-base text-gray-700 break-words">
-                    <span className="font-medium">{profileData.name}</span> shared a new post
+                    <span className="font-medium">{profileData.name}</span>{" "}
+                    shared a new post
                   </p>
-                  <p className="text-xs lg:text-sm text-gray-500 mt-1">2 hours ago</p>
+                  <p className="text-xs lg:text-sm text-gray-500 mt-1">
+                    2 hours ago
+                  </p>
                 </div>
               </div>
             </div>
@@ -987,5 +1052,5 @@ export default function Profile() {
         </div>
       </div>
     </div>
-  )
+  );
 }
