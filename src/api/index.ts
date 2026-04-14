@@ -1,55 +1,165 @@
 // api/index.ts
-import axios from 'axios'
+import axios from "axios";
+import { useAuthStore } from "../store/useAuthStore";
 
-const env = (import.meta as any).env
-const API_BASE_URL = env?.VITE_API_URL || 'https://talk-lgsa.onrender.com/api/v1'
+const env = (import.meta as any).env;
+const API_BASE_URL =
+  env?.VITE_API_URL || "https://campus-talk-backend-rk1j.onrender.com/api/v1";
+const AUTH_API_BASE_URL =
+  env?.VITE_AUTH_API_URL ||
+  "https://campus-talk-backend-rk1j.onrender.com/api/v1";
+const USES_SEPARATE_AUTH_BACKEND = AUTH_API_BASE_URL !== API_BASE_URL;
 
 // Create axios instance
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
   timeout: 30000,
   headers: {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json',
+    "Content-Type": "application/json",
+    Accept: "application/json",
   },
   withCredentials: true,
-})
+});
+
+export const authClient = axios.create({
+  baseURL: AUTH_API_BASE_URL,
+  timeout: 30000,
+  headers: {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+  },
+  withCredentials: true,
+});
+
+const getAuthPayload = (data: any) => {
+  if (data?.data && typeof data.data === "object") {
+    return data.data;
+  }
+
+  return data || {};
+};
+
+const getAuthUser = (data: any) => {
+  const payload = getAuthPayload(data);
+  if (payload?.user && typeof payload.user === "object") {
+    return payload.user;
+  }
+
+  return payload;
+};
+
+const getTokenFromAuthResponse = (data: any) => {
+  const payload = getAuthPayload(data);
+  const user = getAuthUser(data);
+
+  return (
+    data?.campustalk_access_token ||
+    data?.access_token ||
+    data?.token ||
+    payload?.campustalk_access_token ||
+    payload?.access_token ||
+    payload?.token ||
+    user?.campustalk_access_token ||
+    user?.access_token ||
+    user?.token ||
+    null
+  );
+};
 
 // Request interceptor for adding auth token
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('auth_token') // Or AsyncStorage for React Native
+    const token = localStorage.getItem("auth_token"); // Or AsyncStorage for React Native
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`
+      config.headers.Authorization = `Bearer ${token}`;
     }
-    return config
+    return config;
   },
-  (error) => Promise.reject(error)
-)
+  (error) => Promise.reject(error),
+);
+
+authClient.interceptors.request.use(
+  (config) => {
+    const { user } = useAuthStore.getState();
+    const token =
+      localStorage.getItem("campustalk_access_token") ||
+      user?.campustalk_access_token ||
+      localStorage.getItem("auth_token");
+
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    return config;
+  },
+  (error) => Promise.reject(error),
+);
 
 // Response interceptor for handling errors
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     // Don't intercept 401 for login endpoint - let it be handled in authApi.login
-    if (error.config?.url?.includes('/auth/login')) {
-      return Promise.reject(error)
+    if (error.config?.url?.includes("/auth/login")) {
+      return Promise.reject(error);
     }
-    
+
     if (error.response?.status === 401) {
       // Handle unauthorized - redirect to login for other endpoints
       // You might want to clear auth state here
-      localStorage.removeItem('auth_token')
+      localStorage.removeItem("auth_token");
     }
-    return Promise.reject(error)
-  }
-)
+    return Promise.reject(error);
+  },
+);
+
+authClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.config?.url?.includes("/auth/login")) {
+      return Promise.reject(error);
+    }
+
+    if (error.response?.status === 401) {
+      localStorage.removeItem("campustalk_access_token");
+    }
+
+    return Promise.reject(error);
+  },
+);
 
 // API endpoints
 export const authApi = {
-  login: (credentials: { email: string; password: string; userType?: string }) => {
-    // If endpoint doesn't support userType, we'll handle it gracefully
-    return apiClient.post('/auth/login', credentials)
+  login: async (credentials: {
+    email: string;
+    password: string;
+    userType?: string;
+  }) => {
+    const primaryResponse = await apiClient.post("/auth/login", credentials);
+
+    if (!USES_SEPARATE_AUTH_BACKEND) {
+      return primaryResponse;
+    }
+
+    try {
+      const campusAuthResponse = await authClient.post("/auth/login", credentials);
+      const campusTalkToken = getTokenFromAuthResponse(campusAuthResponse.data);
+
+      if (!campusTalkToken) {
+        return primaryResponse;
+      }
+
+      return {
+        ...primaryResponse,
+        data: {
+          ...(primaryResponse.data || {}),
+          campustalk_access_token: campusTalkToken,
+        },
+      };
+    } catch (campusAuthError) {
+      console.warn("Campus Talk token exchange failed:", campusAuthError);
+      return primaryResponse;
+    }
     //  .catch((error) => {
     //   // For testing: return dummy response if endpoint doesn't exist or returns 401/400
     //   if (error.response?.status === 404 || error.code === 'ERR_NETWORK' || error.code === 'ECONNREFUSED') {
@@ -74,10 +184,15 @@ export const authApi = {
     //   throw error
     // })
   },
-  
-  register: (userData: {full_name:string, email: string; password: string; role?: string }) => {
-    return apiClient.post('/auth/register', userData)
-    
+
+  register: (userData: {
+    full_name: string;
+    email: string;
+    password: string;
+    role?: string;
+  }) => {
+    return apiClient.post("/auth/register", userData);
+
     // .catch((error: any) => {
     //   // For testing: return dummy response if endpoint doesn't exist or returns error
     //   if (error.response?.status === 404 || error.response?.status === 400 || error.code === 'ERR_NETWORK') {
@@ -109,11 +224,13 @@ export const authApi = {
     //   throw error
     // })
   },
-  
+
   verifyEmail: (token: string) => {
     // Handle verify email with token as query param
-    return apiClient.post(`/auth/verify-email?token=${encodeURIComponent(token)}`)
-    
+    return apiClient.post(
+      `/auth/verify-email?token=${encodeURIComponent(token)}`,
+    );
+
     // .catch((error: any) => {
     //   // For testing: return dummy response if endpoint doesn't exist
     //   if (error.response?.status === 404 || error.code === 'ERR_NETWORK') {
@@ -144,91 +261,93 @@ export const authApi = {
     //   throw error
     // })
   },
-  
-  logout: () => apiClient.post('/auth/logout'),
-  
+
+  logout: () => apiClient.post("/auth/logout"),
+
   forgotPassword: (email: string) =>
-    apiClient.post('/auth/forgot-password', { email }),
-  
+    authClient.post("/auth/forgot-password", { email }),
+
   resetPassword: (token: string, newPassword: string) =>
-    apiClient.post('/auth/reset-password', { token, newPassword }),
-  
-  getProfile: () => apiClient.get('/auth/users/me'),
-  
+    apiClient.post("/auth/reset-password", { token, newPassword }),
+
+  getProfile: () => apiClient.get("/auth/users/me"),
+
   updateProfile: (profileData: any) =>
-    apiClient.put('/auth/profile', profileData),
+    authClient.put("/auth/profile/update", profileData),
 
-  resendVerification:(data : any)=>
-    apiClient.post('/auth/resend-verification-token', { email: data.email }),
+  resendVerification: (data: any) =>
+    apiClient.post("/auth/resend-verification-token", { email: data.email }),
 
-  googleAuth:(code:any)=>
-    apiClient.post('/auth/google-token', { code }).then(res => res.data),
-}
+  googleAuth: (code: any) =>
+    apiClient.post("/auth/google-token", { code }).then((res) => res.data),
+};
 
 export const schoolApi = {
-  getAllSchools: () => apiClient.get('/auth/institutions'),
-  
+  getAllSchools: () => apiClient.get("/auth/institutions"),
+
   getSchoolById: (id: string | number) => apiClient.get(`/institutions/${id}`),
-  
+
   searchSchools: (query: string) =>
-    apiClient.get('/institutions/search', { params: { q: query } }),
-  
-  createSchool: (schoolData: any) => apiClient.post('/institutions', schoolData),
-  
+    apiClient.get("/institutions/search", { params: { q: query } }),
+
+  createSchool: (schoolData: any) =>
+    apiClient.post("/institutions", schoolData),
+
   updateSchool: (id: string | number, schoolData: any) =>
     apiClient.put(`/institutions/${id}`, schoolData),
-  
-  deleteSchool: (id: string | number) => apiClient.delete(`/institutions/${id}`),
+
+  deleteSchool: (id: string | number) =>
+    apiClient.delete(`/institutions/${id}`),
 
   getSchoolsPaginated: (params: {
     page?: number;
     limit?: number;
     sortBy?: string;
-    sortOrder?: 'asc' | 'desc';
+    sortOrder?: "asc" | "desc";
     filters?: Record<string, any>;
   }) => {
     const queryParams = new URLSearchParams();
-    
-    if (params.page) queryParams.append('page', params.page.toString());
-    if (params.limit) queryParams.append('limit', params.limit.toString());
-    if (params.sortBy) queryParams.append('sortBy', params.sortBy);
-    if (params.sortOrder) queryParams.append('sortOrder', params.sortOrder);
-    
+
+    if (params.page) queryParams.append("page", params.page.toString());
+    if (params.limit) queryParams.append("limit", params.limit.toString());
+    if (params.sortBy) queryParams.append("sortBy", params.sortBy);
+    if (params.sortOrder) queryParams.append("sortOrder", params.sortOrder);
+
     // Add filters if provided
     if (params.filters) {
       Object.entries(params.filters).forEach(([key, value]) => {
-        if (value !== undefined && value !== null && value !== '') {
+        if (value !== undefined && value !== null && value !== "") {
           queryParams.append(key, value.toString());
         }
       });
     }
-    
+
     const queryString = queryParams.toString();
-    const url = queryString ? `/institutions?${queryString}` : '/institutions';
-    
+    const url = queryString ? `/institutions?${queryString}` : "/institutions";
+
     return apiClient.get(url);
   },
-}
+};
 
 export const notificationApi = {
-  getNotifications: () => apiClient.get('/notifications'),
-  
+  getNotifications: () => apiClient.get("/notifications"),
+
   markAsRead: (notificationId: string) =>
     apiClient.put(`/notifications/${notificationId}/read`),
-  
+
   deleteNotification: (notificationId: string) =>
     apiClient.delete(`/notifications/${notificationId}`),
-}
+};
 
 export const messageApi = {
-  getMessages: () => apiClient.get('/messages'),
-  
+  getMessages: () => apiClient.get("/messages"),
+
   getConversation: (userId: string) =>
     apiClient.get(`/messages/conversation/${userId}`),
-  
+
   sendMessage: (messageData: { to: string; content: string }) =>
-    apiClient.post('/messages', messageData),
-  
+    apiClient.post("/messages", messageData),
+
   markAsRead: (messageId: string) =>
     apiClient.put(`/messages/${messageId}/read`),
-}
+};

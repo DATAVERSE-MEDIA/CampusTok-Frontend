@@ -873,6 +873,7 @@ export default function Login() {
     authStoreLogin({
       userType: "general",
       name: "Guest User",
+      full_name: "Guest User",
       isGuest: true,
     });
     // Navigate to general dashboard
@@ -1036,7 +1037,7 @@ export default function Login() {
           ) {
             console.log(
               "Using dummy login for testing due to API error:",
-              error?.response?.status || error?.code
+              error?.response?.status || error?.code,
             );
             // Clear any previous errors
             setErrors({});
@@ -1071,127 +1072,128 @@ export default function Login() {
             setIsLoading(false);
           }
         },
-      }
+      },
     );
   };
 
   // In your Login component's handleSubmit function:
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  const newErrors = {
-    userType: "",
-    username: "",
-    password: "",
-  };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const newErrors = {
+      userType: "",
+      username: "",
+      password: "",
+    };
 
-  if (!formData.userType) {
-    newErrors.userType = "Please select a login type";
-  }
-  if (!formData.username.trim()) {
-    newErrors.username = "Username or email is required";
-  }
-  if (!formData.password) {
-    newErrors.password = "Password is required";
-  }
-  if (!agreedToTerms) {
-    alert("Please agree to Terms & Conditions");
-    return;
-  }
-
-  if (newErrors.userType || newErrors.username || newErrors.password) {
-    setErrors(newErrors);
-    return;
-  }
-
-  setIsLoading(true);
-
-  // Call login API with userType
-  login(
-    {
-      email: formData.username,
-      password: formData.password,
-      userType: formData.userType,
-    },
-    {
-      onSuccess: (data: any) => {
-        console.log("Login successful:", data);
-        // Ensure userType is set correctly
-        const userType =
-          data.user?.userType ||
-          data.user?.role ||
-          formData.userType ||
-          "general";
-
-        // Update auth store with correct userType if not already set
-        if (
-          data.user &&
-          !data.user.userType &&
-          !data.user.role &&
-          formData.userType
-        ) {
-          const updatedUser = {
-            ...data.user,
-            userType: formData.userType,
-            role: formData.userType,
-          };
-          authStoreLogin(updatedUser);
-        }
-
-        redirectBasedOnUserType(userType);
-      },
-      onError: (error: any) => {
-        console.error("Login failed:", error);
-        // Handle 401 and other errors properly
-        const errorMessage = error.response?.data?.message || 
-                           error.message || 
-                           "Login failed. Please check your credentials.";
-        
-        setErrors({
-          submit: errorMessage,
-        });
-        setIsLoading(false);
-        
-        // Don't use dummy login for 401 errors - show actual error
-        // Only use dummy for network errors or 404
-        // if (
-        //   error?.response?.status === 404 ||
-        //   error?.message?.includes("network") ||
-        //   error?.message?.includes("Network Error") ||
-        //   error?.code === "ERR_NETWORK" ||
-        //   error?.code === "ECONNREFUSED"
-        // ) {
-        //   console.log(
-        //     "Using dummy login for testing due to API error:",
-        //     error?.response?.status || error?.code
-        //   );
-        //   // Clear any previous errors
-        //   setErrors({});
-        //   const dummyUser = {
-        //     userType: formData.userType,
-        //     role: formData.userType,
-        //     name: formData.username.split("@")[0] || "User",
-        //     email: formData.username,
-        //     isAuthenticated: true,
-        //     school:
-        //       formData.userType === "student" ? "University of Lagos" : null,
-        //     department:
-        //       formData.userType === "student" ? "Civil Engineering" : null,
-        //   };
-        //   authStoreLogin(dummyUser);
-        //   redirectBasedOnUserType(formData.userType);
-        // }
-      },
-      onSettled: () => {
-        // This will run after both success and error
-        // Only reset loading if we haven't navigated away
-        if (isLoading) {
-          setIsLoading(false);
-        }
-      },
+    if (!formData.userType) {
+      newErrors.userType = "Please select a login type";
     }
-  );
-};
+    if (!formData.username.trim()) {
+      newErrors.username = "Username or email is required";
+    }
+    if (!formData.password) {
+      newErrors.password = "Password is required";
+    }
+    if (!agreedToTerms) {
+      alert("Please agree to Terms & Conditions");
+      return;
+    }
+
+    if (newErrors.userType || newErrors.username || newErrors.password) {
+      setErrors(newErrors);
+      return;
+    }
+
+    setIsLoading(true);
+
+    // Call login API with userType
+    login(
+      {
+        email: formData.username,
+        password: formData.password,
+        userType: formData.userType,
+      },
+      {
+        onSuccess: (data: any) => {
+          console.log("Login successful:", data);
+          // Ensure userType is set correctly
+          const userType =
+            data.user?.userType ||
+            data.user?.role ||
+            formData.userType ||
+            "general";
+
+          // Update auth store with correct userType if not already set
+          if (
+            data.user &&
+            !data.user.userType &&
+            !data.user.role &&
+            formData.userType
+          ) {
+            const updatedUser = {
+              ...data.user,
+              userType: formData.userType,
+              role: formData.userType,
+            };
+            authStoreLogin(updatedUser);
+          }
+
+          redirectBasedOnUserType(userType);
+        },
+        onError: (error: any) => {
+          console.error("Login failed:", error);
+          // Handle 401 and other errors properly
+          const errorMessage =
+            error.response?.data?.message ||
+            error.message ||
+            "Login failed. Please check your credentials.";
+
+          setErrors({
+            submit: errorMessage,
+          });
+          setIsLoading(false);
+
+          // Don't use dummy login for 401 errors - show actual error
+          // Only use dummy for network errors or 404
+          // if (
+          //   error?.response?.status === 404 ||
+          //   error?.message?.includes("network") ||
+          //   error?.message?.includes("Network Error") ||
+          //   error?.code === "ERR_NETWORK" ||
+          //   error?.code === "ECONNREFUSED"
+          // ) {
+          //   console.log(
+          //     "Using dummy login for testing due to API error:",
+          //     error?.response?.status || error?.code
+          //   );
+          //   // Clear any previous errors
+          //   setErrors({});
+          //   const dummyUser = {
+          //     userType: formData.userType,
+          //     role: formData.userType,
+          //     name: formData.username.split("@")[0] || "User",
+          //     email: formData.username,
+          //     isAuthenticated: true,
+          //     school:
+          //       formData.userType === "student" ? "University of Lagos" : null,
+          //     department:
+          //       formData.userType === "student" ? "Civil Engineering" : null,
+          //   };
+          //   authStoreLogin(dummyUser);
+          //   redirectBasedOnUserType(formData.userType);
+          // }
+        },
+        onSettled: () => {
+          // This will run after both success and error
+          // Only reset loading if we haven't navigated away
+          if (isLoading) {
+            setIsLoading(false);
+          }
+        },
+      },
+    );
+  };
 
   const redirectBasedOnUserType = (userType: string) => {
     setIsLoading(false);

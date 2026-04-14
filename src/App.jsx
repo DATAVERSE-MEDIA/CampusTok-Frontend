@@ -26,9 +26,9 @@ import StudentDashboard from './pages/StudentDashboard'
 import InstitutionDashboard from './pages/InstitutionDashboard'
 import GeneralDashboard from './pages/GeneralDashboard'
 import SentimentBank from './pages/SentimentBank'
-import AuthRequired from './pages/AuthRequired'
 import { getAuthNoticeForPath } from './utils/authNoticeContent'
 import { isUserSessionAuthenticated } from './utils/sessionAuth'
+import { useAuthInitializer } from './hooks/useAuth'
 
 function ProtectedRoute({ children }) {
   const { isAuthenticated } = useAuthStore()
@@ -39,7 +39,7 @@ function ProtectedRoute({ children }) {
     ? children
     : (
       <Navigate
-        to="/auth-required"
+        to="/login"
         replace
         state={{
           from,
@@ -49,7 +49,25 @@ function ProtectedRoute({ children }) {
     )
 }
 
+function AuthRequiredRedirect() {
+  const location = useLocation()
+
+  return <Navigate to="/login" replace state={location.state || undefined} />
+}
+
+function ProfileRoute({ children }) {
+  const { user, userType } = useAuthStore()
+
+  if (userType === 'general' || user?.isGuest) {
+    return <Navigate to="/general-dashboard" replace />
+  }
+
+  return children
+}
+
 function App() {
+  useAuthInitializer()
+
   return (
     <Routes>
       {/* Auth Routes */}
@@ -58,7 +76,7 @@ function App() {
       <Route path="/pick-profile-picture" element={<PickProfilePicture />} />
       <Route path="/welcome" element={<Welcome />} />
       <Route path="/login" element={<Login />} />
-      <Route path="/auth-required" element={<AuthRequired />} />
+      <Route path="/auth-required" element={<AuthRequiredRedirect />} />
       <Route path="/create-account" element={<CreateAccount />} />
       <Route path="/user-type" element={<UserTypeSelection />} />
       <Route path="/auth/google/callback" element={<GoogleCallback />} />
@@ -79,7 +97,7 @@ function App() {
       <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
         <Route path="/" element={<LandingPage />} />
         <Route path="/chatbot" element={<Chatbot />} />
-        <Route path="/profile" element={<Profile />} />
+        <Route path="/profile" element={<ProfileRoute><Profile /></ProfileRoute>} />
         <Route path="/messages" element={<Messages />} />
         <Route path="/community" element={<Community />} />
         <Route path="/complaints" element={<Complaints />} />

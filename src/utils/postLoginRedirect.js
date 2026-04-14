@@ -28,6 +28,14 @@ export function getDefaultPostLoginRedirect(userType) {
   return "/general-dashboard";
 }
 
+function shouldUseRoleDashboard(path, userType) {
+  if (userType === "general") {
+    return false;
+  }
+
+  return path === "/" || path === "/general-dashboard";
+}
+
 export function sanitizePostLoginRedirect(path) {
   return isSafeRedirectPath(path) ? path : null;
 }
@@ -103,11 +111,14 @@ export function clearStoredPostLoginAction() {
 }
 
 export function resolvePostLoginRedirect({ requestedPath, userType }) {
-  return (
-    sanitizePostLoginRedirect(requestedPath) ||
-    getStoredPostLoginRedirect() ||
-    getDefaultPostLoginRedirect(userType)
-  );
+  const safeRequestedPath =
+    sanitizePostLoginRedirect(requestedPath) || getStoredPostLoginRedirect();
+
+  if (!safeRequestedPath || shouldUseRoleDashboard(safeRequestedPath, userType)) {
+    return getDefaultPostLoginRedirect(userType);
+  }
+
+  return safeRequestedPath;
 }
 
 export function resolvePostLoginAction(requestedAction) {

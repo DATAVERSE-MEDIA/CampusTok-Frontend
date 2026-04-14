@@ -10,16 +10,23 @@ import { Search, Video, Users, BookOpen, Home, Menu } from "lucide-react";
 export default function TopNav({ onMenuClick }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, isAuthenticated } = useAuthStore();
+  const { user, userType, isAuthenticated } = useAuthStore();
   const [localSearchQuery, setLocalSearchQuery] = useState("");
-  const canAccessProfile = isUserSessionAuthenticated(isAuthenticated);
+  const hasAuthenticatedSession = isUserSessionAuthenticated(isAuthenticated);
+  const canAccessProfile =
+    hasAuthenticatedSession && userType !== "general" && !user?.isGuest;
 
   const handleProfileClick = () => {
-    if (!canAccessProfile) {
+    if (!hasAuthenticatedSession) {
       requestAuthNotice({
         ...getAuthNoticeForPath("/profile"),
         from: "/profile",
       });
+      return;
+    }
+
+    if (!canAccessProfile) {
+      navigate("/general-dashboard");
       return;
     }
 
@@ -33,8 +40,15 @@ export default function TopNav({ onMenuClick }) {
     }
   };
 
+  const homePath =
+    userType === "institution"
+      ? "/institution-dashboard"
+      : userType === "student"
+        ? "/student-dashboard"
+        : "/general-dashboard";
+
   const navItems = [
-    { path: "/general-dashboard", icon: Home, label: "Home" },
+    { path: homePath, icon: Home, label: "Home" },
     { path: "/video", icon: Video, label: "Video" },
     { path: "/friends", icon: Users, label: "Friends" },
     { path: "/blog", icon: BookOpen, label: "Campus Blog" },
