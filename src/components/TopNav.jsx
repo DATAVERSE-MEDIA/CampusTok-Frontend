@@ -41,10 +41,10 @@ export default function TopNav({ onMenuClick }) {
   };
 
   const homePath =
-    userType === "institution"
-      ? "/institution-dashboard"
-      : userType === "student"
-        ? "/student-dashboard"
+    userType === "student"
+      ? "/student-dashboard"
+      : userType === "institution"
+        ? "/institution-home"
         : "/general-dashboard";
 
   const navItems = [

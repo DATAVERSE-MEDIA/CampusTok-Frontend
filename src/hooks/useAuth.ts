@@ -28,12 +28,12 @@
 //         isAuthenticated: true
 //       }
 //       loginStore(userData)
-      
+
 //       // Save token (adjust for React Native)
 //       if (data.token) {
 //         localStorage.setItem('auth_token', data.token)
 //       }
-      
+
 //       // Invalidate user profile query
 //       queryClient.invalidateQueries({ queryKey: authKeys.profile() })
 //     },
@@ -79,7 +79,7 @@
 //     mutationFn: (token: string | { token: string }) => {
 //       // Handle both string and object parameter formats
 //       const verificationToken = typeof token === 'string' ? token : token.token
-      
+
 //       return authApi.verifyEmail(verificationToken).then(res => res.data).catch((error: any) => {
 //         // For testing: return dummy success response if endpoint doesn't exist
 //         if (error.response?.status === 404 || error.code === 'ERR_NETWORK') {
@@ -105,12 +105,12 @@
 //     onSuccess: (data: any) => {
 //       // Mark email as verified
 //       verifyEmailStore()
-      
+
 //       // Save token if provided
 //       if (data?.data?.token || data?.token) {
 //         localStorage.setItem('auth_token', data?.data?.token || data?.token)
 //       }
-      
+
 //       // Invalidate queries
 //       queryClient.invalidateQueries({ queryKey: authKeys.profile() })
 //     },
@@ -189,7 +189,7 @@
 
 // export const useResendVerification = () => {
 //   return useMutation({
-//     mutationFn: (data: { email: string }) => 
+//     mutationFn: (data: { email: string }) =>
 //       authApi.resendVerification(data).then(res => res.data)
 //   })
 // }
@@ -205,15 +205,15 @@
 //     onSuccess: (data) => {
 //       // Update Zustand store
 //       loginStore(data.user)
-      
+
 //       // Save token if provided
 //       if (data.token) {
 //         localStorage.setItem('auth_token', data.token)
 //       }
-      
+
 //       // Invalidate user profile query
 //       queryClient.invalidateQueries({ queryKey: authKeys.profile() })
-      
+
 //       return data
 //     },
 //     onError: (error) => {
@@ -229,137 +229,185 @@
 //   })
 // }
 
-
 // hooks/useAuth.ts
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { apiClient, authApi } from '../api'
-import { useAuthStore } from '../store/useAuthStore'
-import { useEffect } from 'react'
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { apiClient, authApi, schoolApi } from "../api";
+import { useAuthStore } from "../store/useAuthStore";
+import { useAppStore } from "../store/useAppStore";
+import { useEffect, useRef } from "react";
+import {
+  findMatchingInstitution,
+  getInstitutionSelectionFromAuthSource,
+  getPendingInstitutionSignup,
+  institutionsMatch,
+  mergeInstitutionRecords,
+  normalizeInstitutionRecord,
+} from "../utils/institutionContext";
 
 // Auth keys for query cache
 export const authKeys = {
-  all: ['auth'] as const,
-  profile: () => [...authKeys.all, 'profile'] as const,
-  currentUser: () => [...authKeys.all, 'current-user'] as const,
-  userProfile: (userId?: string) => [...authKeys.all, 'user-profile', userId] as const,
-}
+  all: ["auth"] as const,
+  profile: () => [...authKeys.all, "profile"] as const,
+  currentUser: () => [...authKeys.all, "current-user"] as const,
+  userProfile: (userId?: string) =>
+    [...authKeys.all, "user-profile", userId] as const,
+};
 
 // Types for the response
 export interface CurrentUserResponse {
   user: {
-    full_name: string
-    email: string
-    id: string
-    is_verified: boolean
-    role: 'institution' | 'student' | 'general' | 'admin'
-    campustalk_access_token: string
-    token_type: string
-  }
-  profile_picture: string | null
+    full_name: string;
+    email: string;
+    id: string;
+    is_verified: boolean;
+    role: "institution" | "student" | "general" | "admin";
+    campustalk_access_token: string;
+    token_type: string;
+  };
+  profile_picture: string | null;
   institution_profile?: {
-    id: string
-    institution_name: string
-    institution_email: string
-  }
+    id: string;
+    institution_name: string;
+    institution_email: string;
+  };
   student_profile?: {
-    id: string
-    institution_name: string
-    institution_id: string
-    department: string
-    educational_level: string
-    faculty: string
-    matric_number: string
-  }
+    id: string;
+    institution_name: string;
+    institution_id: string;
+    department: string;
+    educational_level: string;
+    faculty: string;
+    matric_number: string;
+  };
 }
 
 const getAuthPayload = (data: any) => {
-  if (data?.data && typeof data.data === 'object') {
-    return data.data
+  if (data?.data && typeof data.data === "object") {
+    return data.data;
   }
 
-  return data || {}
-}
+  return data || {};
+};
 
 const getAuthUser = (data: any) => {
-  const payload = getAuthPayload(data)
+  const payload = getAuthPayload(data);
 
-  if (payload?.user && typeof payload.user === 'object') {
-    return payload.user
+  if (payload?.user && typeof payload.user === "object") {
+    return payload.user;
   }
 
-  return payload
-}
+  return payload;
+};
 
 const getPrimaryAuthToken = (data: any) => {
-  const payload = getAuthPayload(data)
-  const user = getAuthUser(data)
+  const payload = getAuthPayload(data);
+  const user = getAuthUser(data);
 
   return (
+    data?.auth_token ||
+    data?.authToken ||
     data?.token ||
     data?.access_token ||
+    payload?.auth_token ||
+    payload?.authToken ||
     payload?.token ||
     payload?.access_token ||
+    user?.auth_token ||
+    user?.authToken ||
     user?.token ||
     user?.access_token ||
     null
-  )
-}
+  );
+};
 
 const getCampusTalkAuthToken = (data: any) => {
-  const payload = getAuthPayload(data)
-  const user = getAuthUser(data)
+  const payload = getAuthPayload(data);
+  const user = getAuthUser(data);
 
   return (
     data?.campustalk_access_token ||
     payload?.campustalk_access_token ||
     user?.campustalk_access_token ||
     null
-  )
-}
+  );
+};
+
+const getAuthToken = (data: any) => {
+  return getPrimaryAuthToken(data) || getCampusTalkAuthToken(data);
+};
 
 const getNormalizedAppUserType = (
   rawRole: string | undefined,
   fallbackUserType?: string,
-  currentUserData?: CurrentUserResponse | any
+  currentUserData?: CurrentUserResponse | any,
 ) => {
-  if (['institution', 'student', 'general'].includes(String(rawRole))) {
-    return rawRole as 'institution' | 'student' | 'general'
+  if (["institution", "student", "general"].includes(String(rawRole))) {
+    return rawRole as "institution" | "student" | "general";
   }
 
   if (currentUserData?.institution_profile) {
-    return 'institution'
+    return "institution";
   }
 
   if (currentUserData?.student_profile) {
-    return 'student'
+    return "student";
   }
 
-  if (['institution', 'student', 'general'].includes(String(fallbackUserType))) {
-    return fallbackUserType as 'institution' | 'student' | 'general'
+  if (
+    ["institution", "student", "general"].includes(String(fallbackUserType))
+  ) {
+    return fallbackUserType as "institution" | "student" | "general";
   }
 
-  return 'general'
-}
+  return "general";
+};
+
+const formatInstitutionRecord = (institution: any) =>
+  normalizeInstitutionRecord({
+    id: institution?.id || institution?._id || institution?.institution_id,
+    name:
+      institution?.name ||
+      institution?.institution_name ||
+      institution?.full_name,
+    code:
+      institution?.code ||
+      institution?.abbreviation ||
+      institution?.short_name,
+    logo:
+      institution?.logo ||
+      institution?.institution_profile_picture ||
+      institution?.image_url ||
+      institution?.profile_picture,
+    address:
+      institution?.address ||
+      institution?.location ||
+      institution?.institution_location,
+    email: institution?.email || institution?.institution_email,
+    type: institution?.type,
+  });
 
 // Authentication hooks
 export const useLogin = () => {
-  const queryClient = useQueryClient()
-  const loginStore = useAuthStore(state => state.login)
-  const updateUser = useAuthStore(state => state.updateUser)
+  const queryClient = useQueryClient();
+  const loginStore = useAuthStore((state) => state.login);
+  const updateUser = useAuthStore((state) => state.updateUser);
 
   return useMutation({
-    mutationFn: (credentials: { email: string; password: string; userType?: string }) => 
-      authApi.login(credentials).then(res => res.data),
+    mutationFn: (credentials: {
+      email: string;
+      password: string;
+      userType?: string;
+    }) => authApi.login(credentials).then((res) => res.data),
     onSuccess: async (data, variables) => {
-      const responseUser = getAuthUser(data)
-      let campustalkToken = getCampusTalkAuthToken(data)
+      const responseUser = getAuthUser(data);
+      let campustalkToken = getCampusTalkAuthToken(data);
       const normalizedUserType =
         responseUser?.userType ||
-        (['student', 'institution', 'general'].includes(responseUser?.role)
+        (["student", "institution", "general"].includes(responseUser?.role)
           ? responseUser.role
           : undefined) ||
         variables.userType ||
-        'general'
+        "general";
 
       const userData = {
         ...responseUser,
@@ -370,20 +418,21 @@ export const useLogin = () => {
         ...(campustalkToken
           ? { campustalk_access_token: campustalkToken }
           : {}),
-      }
-      loginStore(userData)
-      
-      const authToken = getPrimaryAuthToken(data)
+      };
+      loginStore(userData);
+
+      const authToken = getAuthToken(data);
 
       if (authToken) {
-        localStorage.setItem('auth_token', authToken)
-        apiClient.defaults.headers.common['Authorization'] = `Bearer ${authToken}`
+        localStorage.setItem("auth_token", authToken);
+        apiClient.defaults.headers.common["Authorization"] =
+          `Bearer ${authToken}`;
       }
 
       if (!campustalkToken && authToken) {
         try {
-          const currentUserResponse = await apiClient.get('/auth/users/me')
-          campustalkToken = getCampusTalkAuthToken(currentUserResponse.data)
+          const currentUserResponse = await apiClient.get("/auth/users/me");
+          campustalkToken = getCampusTalkAuthToken(currentUserResponse.data);
 
           if (campustalkToken) {
             updateUser({
@@ -391,151 +440,186 @@ export const useLogin = () => {
               token_type:
                 currentUserResponse.data?.user?.token_type ||
                 currentUserResponse.data?.token_type,
-            })
+            });
           }
         } catch (currentUserError) {
-          console.warn('Unable to backfill Campus Talk token from current user:', currentUserError)
+          console.warn(
+            "Unable to backfill Campus Talk token from current user:",
+            currentUserError,
+          );
         }
       }
 
       if (campustalkToken) {
-        localStorage.setItem('campustalk_access_token', campustalkToken)
+        localStorage.setItem("campustalk_access_token", campustalkToken);
       } else {
-        localStorage.removeItem('campustalk_access_token')
+        localStorage.removeItem("campustalk_access_token");
       }
-      
+
       // Invalidate user profile queries
-      queryClient.invalidateQueries({ queryKey: authKeys.currentUser() })
-      queryClient.invalidateQueries({ queryKey: authKeys.profile() })
+      queryClient.invalidateQueries({ queryKey: authKeys.currentUser() });
+      queryClient.invalidateQueries({ queryKey: authKeys.profile() });
     },
     onError: (error: any) => {
-      console.error('Login mutation error:', error)
-    }
-  })
-}
+      console.error("Login mutation error:", error);
+    },
+  });
+};
 
 export const useRegister = () => {
-  const signupStore = useAuthStore(state => state.signup)
+  const signupStore = useAuthStore((state) => state.signup);
 
   return useMutation({
-    mutationFn: (userData: {full_name:string, email: string; password: string; role?: string }) =>
-      authApi.register(userData).then(res => res.data),
+    mutationFn: (userData: {
+      full_name: string;
+      email: string;
+      password: string;
+      role?: string;
+    }) => authApi.register(userData).then((res) => res.data),
     onSuccess: (data: any) => {
-      const email = data?.data?.email || data?.email || data?.user?.email
+      const email = data?.data?.email || data?.email || data?.user?.email;
       if (email) {
-        signupStore(email)
+        signupStore(email);
       } else {
-        console.warn('Email not found in registration response')
+        console.warn("Email not found in registration response");
       }
     },
     onError: (error: any) => {
-      console.error('Registration error:', error)
-      throw error
-    }
-  })
-}
+      console.error("Registration error:", error);
+      throw error;
+    },
+  });
+};
+
+export const useAuthRoles = () => {
+  return useQuery<string[]>({
+    queryKey: ["auth", "roles"],
+    queryFn: async () => {
+      const response = await authApi.getRoles();
+      return response.data;
+    },
+    staleTime: 5 * 60 * 1000,
+    retry: 1,
+  });
+};
 
 export const useVerifyEmail = () => {
-  const verifyEmailStore = useAuthStore(state => state.verifyEmail)
-  const queryClient = useQueryClient()
+  const verifyEmailStore = useAuthStore((state) => state.verifyEmail);
+  const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (token: string | { token: string }) => {
-      const verificationToken = typeof token === 'string' ? token : token.token
-      
-      return authApi.verifyEmail(verificationToken).then(res => res.data).catch((error: any) => {
-        if (error.response?.status === 404 || error.code === 'ERR_NETWORK') {
-          const testTokens = ['1234', '0000', '1111', '9999']
-          if (testTokens.includes(verificationToken)) {
-            return Promise.resolve({
-              status: true,
-              message: "Email verified successfully",
-              data: {
-                verified: true,
-                token: 'dummy-verified-token-' + Date.now()
-              }
-            })
-          } else {
-            return Promise.reject(new Error('Invalid verification code. Try 1234, 0000, 1111, or 9999 for testing.'))
+      const verificationToken = typeof token === "string" ? token : token.token;
+
+      return authApi
+        .verifyEmail(verificationToken)
+        .then((res) => res.data)
+        .catch((error: any) => {
+          if (error.response?.status === 404 || error.code === "ERR_NETWORK") {
+            const testTokens = ["1234", "0000", "1111", "9999"];
+            if (testTokens.includes(verificationToken)) {
+              return Promise.resolve({
+                status: true,
+                message: "Email verified successfully",
+                data: {
+                  verified: true,
+                  token: "dummy-verified-token-" + Date.now(),
+                },
+              });
+            } else {
+              return Promise.reject(
+                new Error(
+                  "Invalid verification code. Try 1234, 0000, 1111, or 9999 for testing.",
+                ),
+              );
+            }
           }
-        }
-        throw error
-      })
+          throw error;
+        });
     },
     onSuccess: (data: any) => {
-      verifyEmailStore()
-      
-      if (data?.data?.token || data?.token) {
-        const token = data?.data?.token || data?.token
-        localStorage.setItem('auth_token', token)
-        apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`
+      verifyEmailStore();
+
+      const token = getAuthToken(data);
+      if (token) {
+        localStorage.setItem("auth_token", token);
+        apiClient.defaults.headers.common["Authorization"] = `Bearer ${token}`;
       }
-      
-      queryClient.invalidateQueries({ queryKey: authKeys.currentUser() })
+
+      queryClient.invalidateQueries({ queryKey: authKeys.currentUser() });
     },
-  })
-}
+  });
+};
 
 export const useLogout = () => {
-  const logoutStore = useAuthStore(state => state.logout)
-  const queryClient = useQueryClient()
+  const logoutStore = useAuthStore((state) => state.logout);
+  const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: () => authApi.logout().then(res => res.data),
+    mutationFn: () => authApi.logout().then((res) => res.data),
     onSuccess: () => {
-      logoutStore()
-      localStorage.removeItem('auth_token')
-      localStorage.removeItem('campustalk_access_token')
-      delete apiClient.defaults.headers.common['Authorization']
-      queryClient.clear()
-      queryClient.removeQueries()
+      logoutStore();
+      localStorage.removeItem("auth_token");
+      localStorage.removeItem("campustalk_access_token");
+      delete apiClient.defaults.headers.common["Authorization"];
+      queryClient.clear();
+      queryClient.removeQueries();
     },
-  })
-}
+  });
+};
 
 // New: Get current user with full profile
 export const useCurrentUser = () => {
-  const { isAuthenticated } = useAuthStore()
+  const { isAuthenticated, user } = useAuthStore();
   const hasStoredToken =
-    typeof window !== 'undefined' && Boolean(window.localStorage.getItem('auth_token'))
-  
+    typeof window !== "undefined" &&
+    Boolean(window.localStorage.getItem("auth_token"));
+  const isGuestSession = Boolean(user?.isGuest);
+
   return useQuery<CurrentUserResponse>({
     queryKey: authKeys.currentUser(),
     queryFn: async () => {
-      const response = await apiClient.get('/auth/users/me');
-      return response.data
+      const response = await apiClient.get("/auth/users/me");
+      return response.data;
     },
-    enabled: isAuthenticated || hasStoredToken,
+    enabled: !isGuestSession && (isAuthenticated || hasStoredToken),
     staleTime: 5 * 60 * 1000,
     retry: 1,
-  })
-}
+  });
+};
 
 // Legacy: Get basic profile (for backward compatibility)
 export const useProfile = () => {
-  const isAuthenticated = useAuthStore(state => state.isAuthenticated)
+  const { isAuthenticated, user } = useAuthStore();
 
   return useQuery({
     queryKey: authKeys.profile(),
-    queryFn: () => authApi.getProfile().then(res => res.data),
-    enabled: isAuthenticated,
+    queryFn: () => authApi.getProfile().then((res) => res.data),
+    enabled: isAuthenticated && !user?.isGuest,
     staleTime: 5 * 60 * 1000,
     retry: 1,
-  })
-}
+  });
+};
 
 // Hook to sync current user with Zustand store
 export const useCurrentUserWithSync = () => {
-  const { setUser, user } = useAuthStore()
-  const query = useCurrentUser()
+  const { setUser, user } = useAuthStore();
+  const query = useCurrentUser();
 
   useEffect(() => {
     if (query.data && query.isSuccess) {
       const normalizedUserType = getNormalizedAppUserType(
         query.data.user.role,
         user?.userType || user?.role,
-        query.data
-      )
+        query.data,
+      );
+      const institutionSelection = getInstitutionSelectionFromAuthSource({
+        role: normalizedUserType,
+        email: query.data.user.email,
+        profile_picture: query.data.profile_picture,
+        institution_profile: query.data.institution_profile,
+        student_profile: query.data.student_profile,
+      });
 
       const userData = {
         id: query.data.user.id,
@@ -550,70 +634,91 @@ export const useCurrentUserWithSync = () => {
         profile_picture: query.data.profile_picture,
         institution_profile: query.data.institution_profile,
         student_profile: query.data.student_profile,
+        institution_id:
+          institutionSelection?.id ||
+          query.data.institution_profile?.id ||
+          query.data.student_profile?.institution_id,
+        institution_name:
+          institutionSelection?.name ||
+          query.data.institution_profile?.institution_name ||
+          query.data.student_profile?.institution_name,
+        institution_code: institutionSelection?.code || undefined,
+        institution_location: institutionSelection?.address || undefined,
+        institution_email:
+          institutionSelection?.email ||
+          query.data.institution_profile?.institution_email,
+        school:
+          query.data.student_profile?.institution_name ||
+          institutionSelection?.name,
         campustalk_access_token: query.data.user.campustalk_access_token,
-        token_type: query.data.user.token_type
-      }
-      
+        token_type: query.data.user.token_type,
+      };
+
       // Only update if data has changed
       if (JSON.stringify(user) !== JSON.stringify(userData)) {
-        setUser(userData)
+        setUser(userData);
       }
-      
+
       // Update API client token if available
       if (query.data.user.campustalk_access_token) {
-        localStorage.setItem('campustalk_access_token', query.data.user.campustalk_access_token)
+        localStorage.setItem(
+          "campustalk_access_token",
+          query.data.user.campustalk_access_token,
+        );
       }
     }
-  }, [query.data, query.isSuccess, setUser, user])
+  }, [query.data, query.isSuccess, setUser, user]);
 
-  return query
-}
+  return query;
+};
 
 // Hook to check if user has completed their profile
 export const useProfileStatus = () => {
-  const { user } = useAuthStore()
-  const { data: currentUser, isLoading, isError } = useCurrentUser()
+  const { user } = useAuthStore();
+  const { data: currentUser, isLoading, isError } = useCurrentUser();
 
   return {
     isLoading,
     isError,
-    hasProfile: user?.role === 'institution' 
-      ? !!currentUser?.institution_profile
-      : user?.role === 'student'
-      ? !!currentUser?.student_profile
-      : false,
-    profileData: user?.role === 'institution'
-      ? currentUser?.institution_profile
-      : currentUser?.student_profile,
-    currentUserData: currentUser
-  }
-}
+    hasProfile:
+      user?.role === "institution"
+        ? !!currentUser?.institution_profile
+        : user?.role === "student"
+          ? !!currentUser?.student_profile
+          : false,
+    profileData:
+      user?.role === "institution"
+        ? currentUser?.institution_profile
+        : currentUser?.student_profile,
+    currentUserData: currentUser,
+  };
+};
 
 export const useUpdateProfile = () => {
-  const queryClient = useQueryClient()
-  const updateUser = useAuthStore(state => state.updateUser)
-  const currentUser = useAuthStore(state => state.user)
-  const currentUserType = useAuthStore(state => state.userType)
+  const queryClient = useQueryClient();
+  const updateUser = useAuthStore((state) => state.updateUser);
+  const currentUser = useAuthStore((state) => state.user);
+  const currentUserType = useAuthStore((state) => state.userType);
 
   return useMutation({
     mutationFn: (profileData: any) =>
-      authApi.updateProfile(profileData).then(res => res.data),
+      authApi.updateProfile(profileData).then((res) => res.data),
     onSuccess: (response) => {
-      const updatedUser = response?.data || response
+      const updatedUser = response?.data || response;
       const normalizedUserType =
         updatedUser?.userType ||
-        (['institution', 'student', 'general'].includes(updatedUser?.role)
+        (["institution", "student", "general"].includes(updatedUser?.role)
           ? updatedUser.role
           : undefined) ||
         currentUserType ||
         currentUser?.userType ||
-        'general'
+        "general";
       const normalizedRole =
-        (['institution', 'student', 'general'].includes(updatedUser?.role)
+        (["institution", "student", "general"].includes(updatedUser?.role)
           ? updatedUser.role
           : undefined) ||
         currentUser?.role ||
-        normalizedUserType
+        normalizedUserType;
 
       if (updatedUser) {
         updateUser({
@@ -627,18 +732,18 @@ export const useUpdateProfile = () => {
           profile_picture: updatedUser.profile_picture,
           profilePicture: updatedUser.profile_picture,
           updated_at: updatedUser.updated_at,
-        })
+        });
 
         queryClient.setQueryData(authKeys.profile(), (previousData: any) => ({
           ...(previousData || {}),
           ...updatedUser,
-        }))
+        }));
 
         queryClient.setQueryData(
           authKeys.currentUser(),
           (previousData: CurrentUserResponse | undefined) => {
             if (!previousData) {
-              return previousData
+              return previousData;
             }
 
             return {
@@ -657,90 +762,112 @@ export const useUpdateProfile = () => {
               },
               profile_picture:
                 updatedUser.profile_picture ?? previousData.profile_picture,
-            }
-          }
-        )
+            };
+          },
+        );
       }
     },
     onError: (error) => {
-      console.error('Profile update failed:', error)
+      console.error("Profile update failed:", error);
     },
-  })
-}
+  });
+};
 
 export const useForgotPassword = () => {
   return useMutation({
     mutationFn: (email: string) =>
-      authApi.forgotPassword(email).then(res => res.data),
-  })
-}
+      authApi.forgotPassword(email).then((res) => res.data),
+  });
+};
 
 export const useResetPassword = () => {
   return useMutation({
-    mutationFn: ({ token, newPassword }: { token: string; newPassword: string }) =>
-      authApi.resetPassword(token, newPassword).then(res => res.data),
-  })
-}
+    mutationFn: ({
+      token,
+      newPassword,
+    }: {
+      token: string;
+      newPassword: string;
+    }) => authApi.resetPassword(token, newPassword).then((res) => res.data),
+  });
+};
 
 export const useResendVerification = () => {
   return useMutation({
-    mutationFn: (data: { email: string }) => 
-      authApi.resendVerification(data).then(res => res.data)
-  })
-}
+    mutationFn: (data: { email: string }) =>
+      authApi.resendVerification(data).then((res) => res.data),
+  });
+};
 
 export const useGoogleAuth = () => {
-  const queryClient = useQueryClient()
-  const loginStore = useAuthStore(state => state.login)
+  const queryClient = useQueryClient();
+  const loginStore = useAuthStore((state) => state.login);
 
   return useMutation({
     mutationFn: (code: string) =>
-       authApi.googleAuth(code).then(res => res.data),
+      authApi.googleAuth(code).then((res) => res.data),
     onSuccess: (data) => {
-      loginStore(data.user)
-      
+      loginStore(data.user);
+
       if (data.token) {
-        localStorage.setItem('auth_token', data.token)
-        apiClient.defaults.headers.common['Authorization'] = `Bearer ${data.token}`
+        localStorage.setItem("auth_token", data.token);
+        apiClient.defaults.headers.common["Authorization"] =
+          `Bearer ${data.token}`;
       }
-      
-      queryClient.invalidateQueries({ queryKey: authKeys.currentUser() })
-      
-      return data
+
+      queryClient.invalidateQueries({ queryKey: authKeys.currentUser() });
+
+      return data;
     },
     onError: (error) => {
-      console.error('Google authentication failed:', error)
-      console.error('Error details:', {
+      console.error("Google authentication failed:", error);
+      console.error("Error details:", {
         message: error.message,
         response: error.response?.data,
         status: error.response?.status,
-        url: error.config?.url
-      })
-      throw error
-    }
-  })
-}
+        url: error.config?.url,
+      });
+      throw error;
+    },
+  });
+};
 
 // Hook to check authentication status on app load
 export const useAuthInitializer = () => {
-  const { user, isAuthenticated, setUser } = useAuthStore()
-  const { data: currentUser, isLoading, isError } = useCurrentUser()
+  const { user, isAuthenticated, setUser } = useAuthStore();
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
 
-  useEffect(() => {
-    // Check for token in localStorage on initial load
-    const token = localStorage.getItem('auth_token')
-    if (token && !isAuthenticated) {
-      apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`
-    }
-  }, [])
+  if (token && !apiClient.defaults.headers.common["Authorization"]) {
+    apiClient.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+  }
+
+  const { data: currentUser, isLoading, isError } = useCurrentUser();
+  const {
+    selectedSchool,
+    setSelectedSchool,
+    clearSelectedSchool,
+    contentSchool,
+    clearContentSchool,
+    schools,
+    setSchools,
+  } = useAppStore();
+  const institutionSyncRequestRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (currentUser && !isLoading && !isError) {
       const normalizedUserType = getNormalizedAppUserType(
         currentUser.user.role,
         user?.userType || user?.role,
-        currentUser
-      )
+        currentUser,
+      );
+      const institutionSelection = getInstitutionSelectionFromAuthSource({
+        role: normalizedUserType,
+        email: currentUser.user.email,
+        profile_picture: currentUser.profile_picture,
+        institution_profile: currentUser.institution_profile,
+        student_profile: currentUser.student_profile,
+      });
 
       const userData = {
         id: currentUser.user.id,
@@ -755,17 +882,131 @@ export const useAuthInitializer = () => {
         profile_picture: currentUser.profile_picture,
         institution_profile: currentUser.institution_profile,
         student_profile: currentUser.student_profile,
+        institution_id:
+          institutionSelection?.id ||
+          currentUser.institution_profile?.id ||
+          currentUser.student_profile?.institution_id,
+        institution_name:
+          institutionSelection?.name ||
+          currentUser.institution_profile?.institution_name ||
+          currentUser.student_profile?.institution_name,
+        institution_code: institutionSelection?.code || undefined,
+        institution_location: institutionSelection?.address || undefined,
+        institution_email:
+          institutionSelection?.email ||
+          currentUser.institution_profile?.institution_email,
+        school:
+          currentUser.student_profile?.institution_name ||
+          institutionSelection?.name,
         campustalk_access_token: currentUser.user.campustalk_access_token,
-        token_type: currentUser.user.token_type
-      }
-      
-      setUser(userData)
+        token_type: currentUser.user.token_type,
+      };
+
+      setUser(userData);
 
       if (currentUser.user.campustalk_access_token) {
-        localStorage.setItem('campustalk_access_token', currentUser.user.campustalk_access_token)
+        localStorage.setItem(
+          "campustalk_access_token",
+          currentUser.user.campustalk_access_token,
+        );
       }
     }
-  }, [currentUser, isLoading, isError, setUser])
+  }, [currentUser, isLoading, isError, setUser, user?.role, user?.userType]);
 
-  return { isLoading, isAuthenticated: !!user }
-}
+  useEffect(() => {
+    if (!user && !isAuthenticated) {
+      institutionSyncRequestRef.current = null;
+      clearSelectedSchool();
+      clearContentSchool();
+    }
+  }, [clearContentSchool, clearSelectedSchool, isAuthenticated, user]);
+
+  useEffect(() => {
+    if (user && user.role !== "institution" && contentSchool) {
+      clearContentSchool();
+    }
+  }, [clearContentSchool, contentSchool, user]);
+
+  useEffect(() => {
+    const authInstitution = getInstitutionSelectionFromAuthSource(user);
+    const pendingInstitution = getPendingInstitutionSignup(user?.email);
+    const fallbackInstitution = authInstitution || pendingInstitution;
+
+    if (!fallbackInstitution) {
+      return;
+    }
+
+    let didCancel = false;
+
+    const syncSelectedInstitution = async () => {
+      let nextInstitution = fallbackInstitution;
+      const matchedSchool =
+        findMatchingInstitution(schools, fallbackInstitution) ||
+        findMatchingInstitution(selectedSchool ? [selectedSchool] : [], fallbackInstitution);
+
+      if (matchedSchool) {
+        nextInstitution = mergeInstitutionRecords(fallbackInstitution, matchedSchool);
+      } else if (
+        institutionSyncRequestRef.current !== fallbackInstitution.id &&
+        (!fallbackInstitution.address || !fallbackInstitution.logo || !fallbackInstitution.code)
+      ) {
+        institutionSyncRequestRef.current = fallbackInstitution.id;
+
+        try {
+          const response = await schoolApi.getAllSchools();
+          const schoolRecords = response.data?.data || response.data || [];
+          const formattedSchools = schoolRecords
+            .map((school: any) => formatInstitutionRecord(school))
+            .filter(Boolean);
+
+          if (!didCancel && formattedSchools.length > 0) {
+            setSchools(formattedSchools);
+          }
+
+          const matchedInstitution = findMatchingInstitution(
+            formattedSchools,
+            fallbackInstitution,
+          );
+
+          if (matchedInstitution) {
+            nextInstitution = mergeInstitutionRecords(
+              fallbackInstitution,
+              matchedInstitution,
+            );
+          }
+        } catch (institutionSyncError) {
+          console.warn(
+            "Unable to hydrate institution context from institutions list:",
+            institutionSyncError,
+          );
+        }
+      }
+
+      if (!didCancel) {
+        const shouldUpdateSelectedSchool =
+          !institutionsMatch(selectedSchool, nextInstitution) ||
+          selectedSchool?.address !== nextInstitution?.address ||
+          selectedSchool?.logo !== nextInstitution?.logo ||
+          selectedSchool?.code !== nextInstitution?.code;
+
+        if (shouldUpdateSelectedSchool) {
+          setSelectedSchool(nextInstitution);
+        }
+      }
+    };
+
+    syncSelectedInstitution();
+
+    return () => {
+      didCancel = true;
+    };
+  }, [
+    schools,
+    selectedSchool,
+    setSchools,
+    setSelectedSchool,
+    user,
+  ]);
+
+  return { isLoading, isAuthenticated: !!user };
+};

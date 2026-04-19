@@ -15,6 +15,14 @@ import {
   Settings,
   TrendingUp,
 } from "lucide-react";
+import {
+  getInstitutionDisplayName,
+  getInstitutionInitials,
+  getInstitutionSelectionFromAuthSource,
+  institutionsMatch,
+  mergeInstitutionRecords,
+  normalizeInstitutionRecord,
+} from "../utils/institutionContext";
 
 // Animated counter component
 const Counter = ({ value, duration = 2 }) => {
@@ -55,7 +63,7 @@ const QUICK_ACTIONS = [
     description: "Track how your posts are performing.",
     icon: Eye,
     color: "from-blue-500 to-blue-600",
-    route: "/campus-blog",
+    route: "/institution-home",
   },
   {
     id: 2,
@@ -79,7 +87,7 @@ const QUICK_ACTIONS = [
     description: "Share important updates with students.",
     icon: Megaphone,
     color: "from-green-500 to-green-600",
-    route: "/campus-blog",
+    route: "/institution-home",
   },
 ];
 
@@ -122,33 +130,46 @@ export default function InstitutionDashboard() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const { selectedSchool } = useAppStore();
+  const authenticatedInstitution = getInstitutionSelectionFromAuthSource(user);
+  const normalizedSelectedSchool = normalizeInstitutionRecord(selectedSchool);
+  const institutionContext =
+    authenticatedInstitution &&
+    normalizedSelectedSchool &&
+    institutionsMatch(normalizedSelectedSchool, authenticatedInstitution)
+      ? mergeInstitutionRecords(normalizedSelectedSchool, authenticatedInstitution)
+      : authenticatedInstitution || normalizedSelectedSchool;
 
-  const institutionName =
-    selectedSchool?.name || user?.institution_name || "University of Lagos";
+  const institutionName = getInstitutionDisplayName(
+    institutionContext,
+    user?.institution_name || user?.name || user?.full_name || "Institution",
+  );
   const institutionAddress =
-    selectedSchool?.address ||
-    "University Road, Lagos Mainland, Akoka, Yaba, Lagos";
+    institutionContext?.address || "Institution address not available";
+  const institutionInitials = getInstitutionInitials(institutionName);
+  const institutionLogo =
+    institutionContext?.logo || user?.profile_picture || null;
 
   const [coverImageError, setCoverImageError] = useState(false);
 
-  // Cover image: use school logo from API when available, else static image by school id
-  const getCoverImage = (): string => {
-    if (selectedSchool?.logo) return selectedSchool.logo;
-    const id = selectedSchool?.id?.toLowerCase() || "";
-    const name = selectedSchool?.name?.toLowerCase() || "";
+  // Prefer institution imagery when available. Fall back to a gradient when none exists.
+  const getCoverImage = (): string | null => {
+    if (institutionLogo) return institutionLogo;
+    const id = institutionContext?.id?.toLowerCase() || "";
+    const name = institutionContext?.name?.toLowerCase() || "";
     if (id === "unilag" || name.includes("unilag") || name.includes("lagos"))
       return "/blog-images/UNILAG%20Campus%20Blog%20Images/image%2014.svg";
     if (id === "yabatech" || name.includes("yabatech") || name.includes("yaba"))
       return "/blog-images/Yabatech%20Campus%20blog%20images/image%206.svg";
     if (id === "ileife" || name.includes("oau") || name.includes("obafemi") || name.includes("ile-ife"))
       return "/blog-images/OAU%20Campus%20Blog%20images/image%2028.svg";
-    return "/blog-images/UNILAG%20Campus%20Blog%20Images/image%2014.svg";
+    return null;
   };
+  const coverImage = getCoverImage();
 
   // Reset cover error when school changes so we try the new image
   useEffect(() => {
     setCoverImageError(false);
-  }, [selectedSchool?.id, selectedSchool?.logo]);
+  }, [institutionContext?.id, institutionLogo]);
 
   const container = {
     hidden: { opacity: 0 },
@@ -175,9 +196,9 @@ export default function InstitutionDashboard() {
           transition={{ duration: 0.5 }}
           className="relative h-48 md:h-64 w-full overflow-hidden bg-gray-200"
         >
-          {!coverImageError ? (
+          {coverImage && !coverImageError ? (
             <img
-              src={getCoverImage()}
+              src={coverImage}
               alt={`${institutionName} cover`}
               className="w-full h-full object-cover"
               onError={() => setCoverImageError(true)}
@@ -185,7 +206,7 @@ export default function InstitutionDashboard() {
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-primary-500/80 to-primary-700/80 flex items-center justify-center">
               <span className="text-white/90 text-6xl font-bold">
-                {institutionName.charAt(0).toUpperCase()}
+                {institutionInitials}
               </span>
             </div>
           )}
@@ -205,15 +226,15 @@ export default function InstitutionDashboard() {
           >
             {/* Institution Logo */}
             <div className="w-28 h-28 md:w-32 md:h-32 rounded-full border-4 border-white bg-white shadow-lg overflow-hidden flex-shrink-0">
-              {selectedSchool?.logo ? (
+              {institutionLogo ? (
                 <img
-                  src={selectedSchool.logo}
+                  src={institutionLogo}
                   alt={institutionName}
                   className="w-full h-full object-cover"
                 />
               ) : (
                 <div className="w-full h-full bg-gradient-to-br from-primary-600 to-primary-800 flex items-center justify-center text-white text-3xl font-bold">
-                  {institutionName.charAt(0)}
+                  {institutionInitials}
                 </div>
               )}
             </div>

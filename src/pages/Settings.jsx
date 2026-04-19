@@ -2,6 +2,10 @@ import { useState } from 'react'
 import { useAuthStore } from '../store/useAuthStore'
 import { useAppStore } from '../store/useAppStore'
 import {
+  getInstitutionDisplayName,
+  getInstitutionSelectionFromAuthSource,
+} from '../utils/institutionContext'
+import {
   User,
   Bell,
   Lock,
@@ -16,8 +20,13 @@ import {
 } from 'lucide-react'
 
 export default function Settings() {
-  const { user } = useAuthStore()
+  const { user, userType } = useAuthStore()
   const { selectedSchool, setSelectedSchool, schools } = useAppStore()
+  const institutionContext = getInstitutionSelectionFromAuthSource(user)
+  const institutionName = getInstitutionDisplayName(
+    institutionContext,
+    user?.name || user?.full_name || 'Institution'
+  )
   const [activeTab, setActiveTab] = useState('profile')
   const [showPassword, setShowPassword] = useState(false)
   const [settings, setSettings] = useState({
@@ -157,22 +166,38 @@ export default function Settings() {
                     rows="4"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Default School</label>
-                  <select
-                    value={selectedSchool?.id || ''}
-                    onChange={(e) => {
-                      const school = schools.find(s => s.id === parseInt(e.target.value))
-                      setSelectedSchool(school)
-                    }}
-                    className="input-field"
-                  >
-                    <option value="">Select a school</option>
-                    {schools.map((school) => (
-                      <option key={school.id} value={school.id}>{school.name}</option>
-                    ))}
-                  </select>
-                </div>
+                {userType === 'institution' ? (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Affiliated Institution
+                    </label>
+                    <div className="input-field bg-gray-50 text-gray-700">
+                      {institutionName}
+                    </div>
+                    <p className="mt-2 text-xs text-gray-500">
+                      Institution accounts are fixed to their verified institution.
+                    </p>
+                  </div>
+                ) : (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Default School</label>
+                    <select
+                      value={selectedSchool?.id || ''}
+                      onChange={(e) => {
+                        const school = schools.find(
+                          (school) => String(school.id) === e.target.value
+                        )
+                        setSelectedSchool(school)
+                      }}
+                      className="input-field"
+                    >
+                      <option value="">Select a school</option>
+                      {schools.map((school) => (
+                        <option key={school.id} value={school.id}>{school.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
                 <button
                   onClick={() => handleSave('Profile')}
                   className="btn-primary flex items-center gap-2"
@@ -398,4 +423,3 @@ export default function Settings() {
     </div>
   )
 }
-

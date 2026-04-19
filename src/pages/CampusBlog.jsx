@@ -149,24 +149,21 @@ import { apiClient } from "../api";
 import { requestAuthNotice } from "../utils/authNotice";
 import { CREATE_POST_AUTH_NOTICE } from "../utils/authNoticeContent";
 import { isUserSessionAuthenticated } from "../utils/sessionAuth";
+import {
+  getInstitutionDisplayName,
+  normalizeInstitutionRecord,
+  resolveInstitutionFeedId,
+} from "../utils/institutionContext";
 
 /* =========================================================
    Institution blog API: /posts/institution/{id}?post_type=blog&skip=0&limit=100
    Schools: unilag, yabatech, ileife
 ========================================================= */
 
-const INSTITUTION_IDS = ["unilag", "yabatech", "ileife"];
 const PAGE_SIZE = 6;
 
 const FALLBACK_IMAGE =
   "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=1200&q=80";
-
-function getInstitutionId(selectedSchool) {
-  if (selectedSchool?.id && INSTITUTION_IDS.includes(selectedSchool.id)) {
-    return selectedSchool.id;
-  }
-  return "unilag";
-}
 
 function mapBlogFromApi(post) {
   const images =
@@ -296,9 +293,16 @@ const MOCK_SOURCE = [
 ========================================================= */
 
 export default function CampusBlog() {
-  const { selectedSchool } = useAppStore();
-  const { isAuthenticated } = useAuthStore();
-  const institutionId = getInstitutionId(selectedSchool);
+  const { selectedSchool, contentSchool } = useAppStore();
+  const { isAuthenticated, userType } = useAuthStore();
+  const feedSchool =
+    userType === "institution" ? contentSchool || selectedSchool : selectedSchool;
+  const browseInstitution = normalizeInstitutionRecord(feedSchool);
+  const browseInstitutionName = getInstitutionDisplayName(
+    browseInstitution,
+    "Campus feed",
+  );
+  const institutionId = resolveInstitutionFeedId(feedSchool);
   const canCreatePost = isUserSessionAuthenticated(isAuthenticated);
 
   const [posts, setPosts] = useState([]);
@@ -435,7 +439,17 @@ export default function CampusBlog() {
     <div className="max-w-3xl mx-auto space-y-6 pb-24">
       {/* Top bar */}
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold text-gray-900">Campus Feed</h1>
+        <div>
+          <h1 className="text-xl font-bold text-gray-900">Campus Feed</h1>
+          {browseInstitution && (
+            <p className="mt-1 text-sm text-gray-500">
+              Showing blog posts from{" "}
+              <span className="font-medium text-gray-700">
+                {browseInstitutionName}
+              </span>
+            </p>
+          )}
+        </div>
 
         <button
           onClick={handleCreatePostClick}
@@ -445,6 +459,33 @@ export default function CampusBlog() {
           New Post
         </button>
       </div>
+
+      {browseInstitution && (
+        <div className="rounded-2xl border border-gray-200 bg-white px-4 py-3 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+            {userType === "institution"
+              ? "Browse Institution Posts"
+              : "Selected Institution"}
+          </p>
+          <div className="mt-1 flex items-center justify-between gap-3">
+            <div>
+              <p className="font-semibold text-gray-900">
+                {browseInstitutionName}
+              </p>
+              {browseInstitution.address && (
+                <p className="text-sm text-gray-500">
+                  {browseInstitution.address}
+                </p>
+              )}
+            </div>
+            {browseInstitution.code && (
+              <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium uppercase tracking-wide text-gray-600">
+                {browseInstitution.code}
+              </span>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Error: failed to load */}
       {!loading && fetchError && (
