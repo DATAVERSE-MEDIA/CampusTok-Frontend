@@ -1,72 +1,96 @@
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
-import { useAuthStore } from './store/useAuthStore'
-import Layout from './components/Layout'
-import Signup from './pages/auth/Signup'
-import VerifyEmail from './pages/auth/VerifyEmail'
-import PickProfilePicture from './pages/auth/PickProfilePicture'
-import Welcome from './pages/auth/Welcome'
-import Login from './pages/auth/Login'
-import CreateAccount from './pages/auth/CreateAccount'
-import UserTypeSelection from './pages/auth/UserTypeSelection'
-import LandingPage from './pages/LandingPage'
-import Chatbot from './pages/Chatbot'
-import CampusBlog from './pages/CampusBlog'
-import Video from './pages/Video'
-import Friends from './pages/Friends'
-import Search from './pages/Search'
-import Profile from './pages/Profile'
-import Messages from './pages/Messages'
-import Community from './pages/Community'
-import Complaints from './pages/Complaints'
-import Notifications from './pages/Notifications'
-import StudentPortal from './pages/StudentPortal'
-import Settings from './pages/Settings'
-import GoogleCallback from './pages/auth/GoogleCallback'
-import StudentDashboard from './pages/StudentDashboard'
-import InstitutionDashboard from './pages/InstitutionDashboard'
-import GeneralDashboard from './pages/GeneralDashboard'
-import SentimentBank from './pages/SentimentBank'
-import { getAuthNoticeForPath } from './utils/authNoticeContent'
-import { isUserSessionAuthenticated } from './utils/sessionAuth'
-import { useAuthInitializer } from './hooks/useAuth'
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { useAuthStore } from "./store/useAuthStore";
+import Layout from "./components/Layout";
+import Signup from "./pages/auth/Signup";
+import VerifyEmail from "./pages/auth/VerifyEmail";
+import PickProfilePicture from "./pages/auth/PickProfilePicture";
+import Welcome from "./pages/auth/Welcome";
+import Login from "./pages/auth/Login";
+import CreateAccount from "./pages/auth/CreateAccount";
+import UserTypeSelection from "./pages/auth/UserTypeSelection";
+import LandingPage from "./pages/LandingPage";
+import Chatbot from "./pages/Chatbot";
+import CampusBlog from "./pages/CampusBlog";
+import Video from "./pages/Video";
+import Friends from "./pages/Friends";
+import Search from "./pages/Search";
+import Profile from "./pages/Profile";
+import Messages from "./pages/Messages";
+import Community from "./pages/Community";
+import Complaints from "./pages/Complaints";
+import Notifications from "./pages/Notifications";
+import StudentPortal from "./pages/StudentPortal";
+import Settings from "./pages/Settings";
+import GoogleCallback from "./pages/auth/GoogleCallback";
+import StudentDashboard from "./pages/StudentDashboard";
+import InstitutionDashboard from "./pages/InstitutionDashboard";
+import GeneralDashboard from "./pages/GeneralDashboard";
+import SentimentBank from "./pages/SentimentBank";
+import { getAuthNoticeForPath } from "./utils/authNoticeContent";
+import { isUserSessionAuthenticated } from "./utils/sessionAuth";
+import { useAuthInitializer } from "./hooks/useAuth";
 
 function ProtectedRoute({ children }) {
-  const { isAuthenticated } = useAuthStore()
-  const location = useLocation()
-  const from = `${location.pathname}${location.search}${location.hash}`
+  const { isAuthenticated } = useAuthStore();
+  const location = useLocation();
+  const from = `${location.pathname}${location.search}${location.hash}`;
 
-  return isUserSessionAuthenticated(isAuthenticated)
-    ? children
-    : (
-      <Navigate
-        to="/login"
-        replace
-        state={{
-          from,
-          notice: getAuthNoticeForPath(location.pathname),
-        }}
-      />
-    )
+  return isUserSessionAuthenticated(isAuthenticated) ? (
+    children
+  ) : (
+    <Navigate
+      to="/login"
+      replace
+      state={{
+        from,
+        notice: getAuthNoticeForPath(location.pathname),
+      }}
+    />
+  );
 }
 
 function AuthRequiredRedirect() {
-  const location = useLocation()
+  const location = useLocation();
 
-  return <Navigate to="/login" replace state={location.state || undefined} />
+  return <Navigate to="/login" replace state={location.state || undefined} />;
 }
 
 function ProfileRoute({ children }) {
-  const { user, userType } = useAuthStore()
+  const { user, userType } = useAuthStore();
 
-  if (userType === 'general' || user?.isGuest) {
-    return <Navigate to="/general-dashboard" replace />
+  if (userType === "general" || user?.isGuest) {
+    return <Navigate to="/general-dashboard" replace />;
   }
 
-  return children
+  return children;
 }
 
 function App() {
-  useAuthInitializer()
+  const { isLoading } = useAuthInitializer();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 text-gray-700">
+        <div className="text-center">
+          <div className="mb-4 rounded-full bg-white p-4 shadow-md inline-flex items-center justify-center">
+            <svg
+              className="w-8 h-8 text-primary animate-spin"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <circle cx="12" cy="12" r="10" opacity="0.25" />
+              <path d="M22 12a10 10 0 0 1-10 10" />
+            </svg>
+          </div>
+          <p className="text-sm font-medium">Loading application...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <Routes>
@@ -80,11 +104,15 @@ function App() {
       <Route path="/create-account" element={<CreateAccount />} />
       <Route path="/user-type" element={<UserTypeSelection />} />
       <Route path="/auth/google/callback" element={<GoogleCallback />} />
-      
+
       {/* Dashboard Routes - Allow guest access without full auth */}
       <Route element={<Layout />}>
         <Route path="/student-dashboard" element={<StudentDashboard />} />
-        <Route path="/institution-dashboard" element={<InstitutionDashboard />} />
+        <Route
+          path="/institution-dashboard"
+          element={<InstitutionDashboard />}
+        />
+        <Route path="/institution-home" element={<GeneralDashboard />} />
         <Route path="/general-dashboard" element={<GeneralDashboard />} />
         <Route path="/sentiment-bank" element={<SentimentBank />} />
         <Route path="/blog" element={<CampusBlog />} />
@@ -92,12 +120,25 @@ function App() {
         <Route path="/friends" element={<Friends />} />
         <Route path="/search" element={<Search />} />
       </Route>
-      
+
       {/* Main App Routes with Layout */}
-      <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
+      <Route
+        element={
+          <ProtectedRoute>
+            <Layout />
+          </ProtectedRoute>
+        }
+      >
         <Route path="/" element={<LandingPage />} />
         <Route path="/chatbot" element={<Chatbot />} />
-        <Route path="/profile" element={<ProfileRoute><Profile /></ProfileRoute>} />
+        <Route
+          path="/profile"
+          element={
+            <ProfileRoute>
+              <Profile />
+            </ProfileRoute>
+          }
+        />
         <Route path="/messages" element={<Messages />} />
         <Route path="/community" element={<Community />} />
         <Route path="/complaints" element={<Complaints />} />
@@ -105,10 +146,10 @@ function App() {
         <Route path="/student-portal" element={<StudentPortal />} />
         <Route path="/settings" element={<Settings />} />
       </Route>
-      
+
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
-  )
+  );
 }
 
-export default App
+export default App;

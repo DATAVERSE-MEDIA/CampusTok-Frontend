@@ -289,14 +289,41 @@
 //   );
 // }
 
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../store/useAuthStore";
-import { Mail, Lock, User, ArrowLeft, ChevronDown, Building2, GraduationCap, Users } from "lucide-react";
-import { useRegister } from "../../hooks/useAuth";
-import { useSchools } from "../../hooks/useSchools";
-import { useCreateInstitutionProfile, useCreateStudentProfile } from '../../hooks/useProfile'
+import {
+  Mail,
+  Lock,
+  User,
+  ArrowLeft,
+  ChevronDown,
+  Building2,
+  GraduationCap,
+  Users,
+} from "lucide-react";
+import { useRegister, useAuthRoles } from "../../hooks/useAuth";
+import { schoolApi } from "../../api";
+import SchoolDropdown from "../../components/SchoolDropdown";
+import { savePendingInstitutionSignup } from "../../utils/institutionContext";
+
+const ROLE_METADATA = {
+  general: {
+    label: "General User",
+    icon: Users,
+    description: "Browse campus content without an institution account",
+  },
+  student: {
+    label: "Student",
+    icon: GraduationCap,
+    description: "Join as a student from any institution",
+  },
+  institution: {
+    label: "Institution",
+    icon: Building2,
+    description: "Represent your school or organization",
+  },
+};
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -306,57 +333,37 @@ export default function Signup() {
     email: "",
     password: "",
     confirmPassword: "",
-    role: "general", // Default role
+    role: "general",
+    institution: "",
   });
   const [errors, setErrors] = useState({});
   const [showRoleDropdown, setShowRoleDropdown] = useState(false);
+  const [schools, setSchools] = useState([]);
+  const [selectedInstitution, setSelectedInstitution] = useState(null);
+  const [isLoadingSchools, setIsLoadingSchools] = useState(false);
+  const [schoolsError, setSchoolsError] = useState(null);
   const { mutate: register, isPending, error: apiError } = useRegister();
-  const [institutionName , setInstitutionName] = useState('');//
+  const {
+    data: roles = ["general", "student", "institution"],
+    isLoading: isLoadingRoles,
+    error: rolesError,
+  } = useAuthRoles();
 
-   // Use the useSchools hook to fetch institutions from API
-  const { 
-    data: institutions = [], 
-    isLoading: isLoadingSchools, 
-    error: schoolsError 
-  } = useSchools();
+  const allowedRoles = roles.filter((role) =>
+    ["general", "student", "institution"].includes(role),
+  );
 
-   const { mutate: createProfile, isPending:institutionIsPending, isSuccess, error } = useCreateInstitutionProfile();
-   const { mutate: createProfile2, isPending:studentIsPending } = useCreateStudentProfile()
-
-  // Transform schools data to institution options
-  const institutionOptions = institutions.map(school => ({
-    id: school.id,
-    name: school.institution_name,
-    code: school.code,
-    logo: school.institution_profile_picture,
-    website:school.institution_website,
-    email: school.institution_email,
-    location:school.institution_location
+  const roleOptions = allowedRoles.map((role) => ({
+    value: role,
+    label: ROLE_METADATA[role]?.label || role,
+    icon: ROLE_METADATA[role]?.icon || Users,
+    description: ROLE_METADATA[role]?.description || "Select your account type",
   }));
 
-  // Role options with icons and descriptions
-  const roleOptions = [
-    { 
-      value: "general", 
-      label: "General User", 
-      icon: Users,
-      description: "Explore campus content as a visitor"
-    },
-    { 
-      value: "student", 
-      label: "Student", 
-      icon: GraduationCap,
-      description: "Join as a student from any institution"
-    },
-    { 
-      value: "institution", 
-      label: "Institution", 
-      icon: Building2,
-      description: "Represent your school or organization"
-    },
-  ];
-
-  const selectedRole = roleOptions.find(role => role.value === formData.role) || roleOptions[0];
+  const selectedRole =
+    roleOptions.find((roleOption) => roleOption.value === formData.role) ||
+    roleOptions[0];
+  const isGeneralUser = formData.role === "general";
 
   const handleChange = (e) => {
     setFormData({
@@ -369,15 +376,60 @@ export default function Signup() {
   };
 
   const handleRoleSelect = (role) => {
-    setFormData(prev => ({ ...prev, role }));
+    setFormData((prev) => ({ ...prev, role }));
     setShowRoleDropdown(false);
     if (errors.role) {
       setErrors({ ...errors, role: "" });
     }
+    if (role === "general") {
+      setSelectedInstitution(null);
+    }
   };
+
+  useEffect(() => {
+    if (formData.role === "student" || formData.role === "institution") {
+      const fetchSchools = async () => {
+        setIsLoadingSchools(true);
+        setSchoolsError(null);
+
+        try {
+          const response = await schoolApi.getAllSchools();
+          const schoolsData = response.data.data || response.data || [];
+          const formattedSchools = schoolsData.map((school) => ({
+            id: school.id || school._id,
+            name: school.institution_name || school.name || school.full_name,
+            code: school.code || school.abbreviation || school.short_name,
+            logo:
+              school.logo ||
+              school.institution_profile_picture ||
+              school.image_url,
+            address:
+              school.address || school.location || school.institution_location,
+            type: school.type || "university",
+          }));
+
+          setSchools(formattedSchools);
+        } catch (error) {
+          console.error("Error fetching schools:", error);
+          setSchoolsError("Unable to load institutions. Please try again.");
+        } finally {
+          setIsLoadingSchools(false);
+        }
+      };
+
+      if (schools.length === 0) {
+        fetchSchools();
+      }
+    }
+  }, [formData.role, schools.length]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (isGeneralUser) {
+      navigate("/general-dashboard");
+      return;
+    }
+
     const newErrors = {};
 
     if (!formData.name.trim()) {
@@ -399,6 +451,12 @@ export default function Signup() {
     if (!formData.role) {
       newErrors.role = "Please select a role";
     }
+    if (!selectedInstitution) {
+      newErrors.institution =
+        formData.role === "student"
+          ? "Please select your institution"
+          : "Please select your institution";
+    }
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -417,6 +475,11 @@ export default function Signup() {
     register(reqBody, {
       onSuccess: (data) => {
         console.log("Registration successful:", data);
+        savePendingInstitutionSignup({
+          email: formData.email,
+          role: formData.role,
+          institution: selectedInstitution,
+        });
         // Save email to auth store for OTP verification
         const email = data?.data?.email || data?.email || formData.email;
         if (email) {
@@ -434,7 +497,8 @@ export default function Signup() {
         console.error("Registration failed:", error);
         // Handle API errors
         setErrors({
-          submit:  error.response?.data?.detail ||
+          submit:
+            error.response?.data?.detail ||
             error?.response?.data?.message ||
             error?.message ||
             "Registration failed. Please try again.",
@@ -442,68 +506,6 @@ export default function Signup() {
       },
     });
   };
-
-
-  const handleCreateInstitutionProfile= () => {
-    const profileData = {
-      institution_email: formData.email , //"admin@unilag.edu.ng",
-      institution_id:  institutionName,
-      institution_name: institutionName
-    }
-    
-    createProfile(profileData, {
-      onSuccess: (data) => {
-        console.log('Profile created:', data)
-        navigate("/verify-email");
-      },
-      onError: (error) => {
-        console.error('Failed:', error)
-      }
-    })
-  }
-
-  const handleCreateStudentProfile= () => {
-    const profileData = {
-      department: '',
-      educational_level: "Undergraduate",
-      faculty: "Faculty of Science and Technology",
-      institution_id: "unilag",
-      institution_name: "University of Lagos",
-      matric_number: "150150150FG"
-    }
-    
-    createProfile2(profileData)
-  }
-
-
-  const InstitutionsComponent=institutions.length > 0 && <div className="relative">
-        <Building2 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-        <select
-          name="institution"
-          value={institutionName}
-          onChange={(e)=> setInstitutionName(institutionOptions[e.target.value].name)}
-          disabled={isLoadingSchools}
-          className={`w-full pl-10 pr-4 py-3 bg-white rounded-lg border text-sm appearance-none ${
-            errors.institutionName ? "border-red-500" : "border-gray-300"
-          } focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50`}
-        >
-          <option value="">Select Institution</option>
-          {isLoadingSchools ? (
-            <option value="" disabled>Loading institutions...</option>
-          ) : schoolsError ? (
-            <option value="" disabled>Error loading institutions</option>
-          ) : institutionOptions.length > 0 ? (
-            institutionOptions.map((institution,index) => (
-              <option key={institution.id} value={index}>
-                {institution.name}
-              </option>
-            ))
-          ) : (
-            <option value="" disabled>No institutions available</option>
-          )}
-        </select>
-      </div>
-
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-gray-50">
@@ -563,79 +565,117 @@ export default function Signup() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4 lg:space-y-5">
-            <div className="relative">
-              <User className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                disabled={isPending}
-                className={`w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-2.5 sm:py-3 bg-white rounded-lg border text-sm sm:text-base ${
-                  errors.name ? "border-red-500" : "border-gray-300"
-                } focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed`}
-                placeholder="Full Name"
-              />
-            </div>
-            {errors.name && (
-              <p className="text-xs sm:text-sm text-red-600 mt-1">
-                {errors.name}
-              </p>
+            {!isGeneralUser && (
+              <>
+                <div className="relative">
+                  <User className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
+                  <input
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    disabled={isPending}
+                    className={`w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-2.5 sm:py-3 bg-white rounded-lg border text-sm sm:text-base ${
+                      errors.name ? "border-red-500" : "border-gray-300"
+                    } focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed`}
+                    placeholder="Full Name"
+                  />
+                </div>
+                {errors.name && (
+                  <p className="text-xs sm:text-sm text-red-600 mt-1">
+                    {errors.name}
+                  </p>
+                )}
+
+                <div className="relative">
+                  <Mail className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    disabled={isPending}
+                    className={`w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-2.5 sm:py-3 bg-white rounded-lg border text-sm sm:text-base ${
+                      errors.email ? "border-red-500" : "border-gray-300"
+                    } focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed`}
+                    placeholder="Email"
+                  />
+                </div>
+                {errors.email && (
+                  <p className="text-xs sm:text-sm text-red-600 mt-1">
+                    {errors.email}
+                  </p>
+                )}
+              </>
             )}
 
-            <div className="relative">
-              <Mail className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                disabled={isPending}
-                className={`w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-2.5 sm:py-3 bg-white rounded-lg border text-sm sm:text-base ${
-                  errors.email ? "border-red-500" : "border-gray-300"
-                } focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed`}
-                placeholder="Email"
-              />
-            </div>
-            {errors.email && (
-              <p className="text-xs sm:text-sm text-red-600 mt-1">
-                {errors.email}
-              </p>
-            )}
-
-            {/* Role Selection Dropdown */}
-            {/* <div className="space-y-2">
+            <div className="space-y-2">
               <div className="relative">
                 <button
                   type="button"
                   onClick={() => setShowRoleDropdown(!showRoleDropdown)}
-                  disabled={isPending}
+                  disabled={isPending || isLoadingRoles}
                   className={`w-full flex items-center justify-between px-4 py-2.5 sm:py-3 bg-white rounded-lg border text-left ${
                     errors.role ? "border-red-500" : "border-gray-300"
                   } hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50`}
                 >
                   <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg ${
-                      formData.role === "student" ? "bg-blue-100 text-blue-600" :
-                      formData.role === "institution" ? "bg-green-100 text-green-600" :
-                      "bg-gray-100 text-gray-600"
-                    }`}>
-                      {selectedRole.icon && <selectedRole.icon className="w-4 h-4 sm:w-5 sm:h-5" />}
+                    <div
+                      className={`p-2 rounded-lg ${
+                        formData.role === "student"
+                          ? "bg-blue-100 text-blue-600"
+                          : formData.role === "institution"
+                            ? "bg-green-100 text-green-600"
+                            : "bg-gray-100 text-gray-600"
+                      }`}
+                    >
+                      {selectedRole.icon && (
+                        <selectedRole.icon className="w-4 h-4 sm:w-5 sm:h-5" />
+                      )}
                     </div>
                     <div>
-                      <div className="font-medium text-sm sm:text-base">{selectedRole.label}</div>
+                      <div className="font-medium text-sm sm:text-base">
+                        {selectedRole.label}
+                      </div>
                       <div className="text-xs text-gray-500 truncate max-w-[200px]">
                         {selectedRole.description}
                       </div>
                     </div>
                   </div>
-                  <ChevronDown className={`w-4 h-4 sm:w-5 sm:h-5 text-gray-400 transition-transform ${
-                    showRoleDropdown ? "transform rotate-180" : ""
-                  }`} />
+                  <ChevronDown
+                    className={`w-4 h-4 sm:w-5 sm:h-5 text-gray-400 transition-transform ${
+                      showRoleDropdown ? "transform rotate-180" : ""
+                    }`}
+                  />
                 </button>
+
                 {showRoleDropdown && (
                   <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                    {roleOptions.map((option) => {
+                    {(isLoadingRoles
+                      ? [
+                          {
+                            value: "general",
+                            label: "General User",
+                            icon: Users,
+                            description: "Explore campus content as a visitor",
+                          },
+                          {
+                            value: "student",
+                            label: "Student",
+                            icon: GraduationCap,
+                            description:
+                              "Join as a student from any institution",
+                          },
+                          {
+                            value: "institution",
+                            label: "Institution",
+                            icon: Building2,
+                            description:
+                              "Represent your school or organization",
+                          },
+                        ]
+                      : roleOptions
+                    ).map((option) => {
                       const Icon = option.icon;
                       const isSelected = formData.role === option.value;
                       return (
@@ -647,16 +687,24 @@ export default function Signup() {
                             isSelected ? "bg-primary-50" : ""
                           }`}
                         >
-                          <div className={`p-2 rounded-lg ${
-                            option.value === "student" ? "bg-blue-100 text-blue-600" :
-                            option.value === "institution" ? "bg-green-100 text-green-600" :
-                            "bg-gray-100 text-gray-600"
-                          }`}>
+                          <div
+                            className={`p-2 rounded-lg ${
+                              option.value === "student"
+                                ? "bg-blue-100 text-blue-600"
+                                : option.value === "institution"
+                                  ? "bg-green-100 text-green-600"
+                                  : "bg-gray-100 text-gray-600"
+                            }`}
+                          >
                             <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
                           </div>
                           <div className="flex-1">
-                            <div className="font-medium text-sm sm:text-base">{option.label}</div>
-                            <div className="text-xs text-gray-500">{option.description}</div>
+                            <div className="font-medium text-sm sm:text-base">
+                              {option.label}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {option.description}
+                            </div>
                           </div>
                           {isSelected && (
                             <div className="w-2 h-2 bg-primary-600 rounded-full"></div>
@@ -672,78 +720,133 @@ export default function Signup() {
                   {errors.role}
                 </p>
               )}
-            </div> */}
-
-
-            {/* {
-              selectedRole.value === "institution" && InstitutionsComponent
-            } */}
-            
-
-            <div className="relative">
-              <Lock className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
-              <input
-                type="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                disabled={isPending}
-                className={`w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-2.5 sm:py-3 bg-white rounded-lg border text-sm sm:text-base ${
-                  errors.password ? "border-red-500" : "border-gray-300"
-                } focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed`}
-                placeholder="Password"
-              />
+              {rolesError && (
+                <p className="text-xs sm:text-sm text-gray-500 mt-1">
+                  Unable to load role options, defaulting to core account types.
+                </p>
+              )}
             </div>
-            {errors.password && (
-              <p className="text-xs sm:text-sm text-red-600 mt-1">
-                {errors.password}
-              </p>
-            )}
 
-            <div className="relative">
-              <Lock className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
-              <input
-                type="password"
-                name="confirmPassword"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                disabled={isPending}
-                className={`w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-2.5 sm:py-3 bg-white rounded-lg border text-sm sm:text-base ${
-                  errors.confirmPassword ? "border-red-500" : "border-gray-300"
-                } focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed`}
-                placeholder="Confirm Password"
-              />
-            </div>
-            {errors.confirmPassword && (
-              <p className="text-xs sm:text-sm text-red-600 mt-1">
-                {errors.confirmPassword}
-              </p>
-            )}
+            {!isGeneralUser ? (
+              <>
+                {formData.role !== "general" && (
+                  <div className="relative">
+                    <SchoolDropdown
+                      schools={schools}
+                      selectedSchool={selectedInstitution}
+                      onSelectSchool={setSelectedInstitution}
+                      isLoading={isLoadingSchools}
+                      placeholder={
+                        isLoadingSchools
+                          ? "Loading institutions..."
+                          : formData.role === "institution"
+                            ? "Select your institution"
+                            : "Select your institution"
+                      }
+                      className="w-full"
+                    />
+                    {isLoadingSchools && (
+                      <p className="mt-2 text-xs sm:text-sm text-gray-500">
+                        Loading institutions...
+                      </p>
+                    )}
+                  </div>
+                )}
+                {errors.institution && (
+                  <p className="text-xs sm:text-sm text-red-600 mt-1">
+                    {errors.institution}
+                  </p>
+                )}
 
-            {/* Role-specific additional fields could be added here conditionally */}
-            {formData.role === "student" && (
-              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                <p className="text-xs text-blue-700">
-                  As a student, you'll have access to institution-specific content and features.
+                <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                  <p className="text-xs text-gray-600">
+                    Selected role:{" "}
+                    <span className="font-semibold">{selectedRole.label}</span>.
+                    {selectedRole.description
+                      ? ` ${selectedRole.description}`
+                      : ""}
+                  </p>
+                </div>
+
+                <div className="relative">
+                  <Lock className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
+                  <input
+                    type="password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    disabled={isPending}
+                    className={`w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-2.5 sm:py-3 bg-white rounded-lg border text-sm sm:text-base ${
+                      errors.password ? "border-red-500" : "border-gray-300"
+                    } focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed`}
+                    placeholder="Password"
+                  />
+                </div>
+                {errors.password && (
+                  <p className="text-xs sm:text-sm text-red-600 mt-1">
+                    {errors.password}
+                  </p>
+                )}
+
+                <div className="relative">
+                  <Lock className="absolute left-3 sm:left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
+                  <input
+                    type="password"
+                    name="confirmPassword"
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    disabled={isPending}
+                    className={`w-full pl-10 sm:pl-12 pr-3 sm:pr-4 py-2.5 sm:py-3 bg-white rounded-lg border text-sm sm:text-base ${
+                      errors.confirmPassword
+                        ? "border-red-500"
+                        : "border-gray-300"
+                    } focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed`}
+                    placeholder="Confirm Password"
+                  />
+                </div>
+                {errors.confirmPassword && (
+                  <p className="text-xs sm:text-sm text-red-600 mt-1">
+                    {errors.confirmPassword}
+                  </p>
+                )}
+
+                {formData.role === "student" && (
+                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-xs text-blue-700">
+                      As a student, you'll have access to institution-specific
+                      content and features.
+                    </p>
+                  </div>
+                )}
+
+                {formData.role === "institution" && (
+                  <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <p className="text-xs text-green-700">
+                      As an institution, you'll be able to create and manage
+                      content for your campus.
+                    </p>
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={isPending}
+                  className="w-full bg-primary hover:bg-primary-800 text-white py-2.5 sm:py-3 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
+                >
+                  {isPending ? "Creating account..." : "Sign Up"}
+                </button>
+              </>
+            ) : (
+              <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-sm text-yellow-900">
+                <p className="font-semibold mb-2">
+                  General users do not need to sign up.
+                </p>
+                <p className="leading-relaxed">
+                  Use the button below to explore CampusTOK as a visitor without
+                  creating an account.
                 </p>
               </div>
             )}
-
-            {formData.role === "institution" && (
-              <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-                <p className="text-xs text-green-700">
-                  As an institution, you'll be able to create and manage content for your campus.
-                </p>
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={isPending}
-              className="w-full bg-primary hover:bg-primary-800 text-white py-2.5 sm:py-3 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
-            >
-              {isPending ? "Creating account..." : "Sign Up"}
-            </button>
           </form>
 
           <div className="relative my-6">

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/useAuthStore";
 import { useAppStore } from "../store/useAppStore";
 import { Heart, MessageCircle, Share2 } from "lucide-react";
@@ -7,12 +7,25 @@ import { apiClient } from "../api";
 import { usePostMutations } from "../hooks/usePosts";
 import PostActionsMenu from "../components/PostActionsMenu";
 import { canDeletePost } from "../utils/postPermissions";
+import {
+  getInstitutionDisplayName,
+  normalizeInstitutionRecord,
+} from "../utils/institutionContext";
 
 export default function GeneralDashboard() {
   const navigate = useNavigate();
-  const { selectedSchool, feedRefreshToken, lastCreatedPost } = useAppStore();
-  const { user } = useAuthStore();
-  const selectedSchoolId = selectedSchool?.id || null;
+  const location = useLocation();
+  const { selectedSchool, contentSchool, feedRefreshToken, lastCreatedPost } =
+    useAppStore();
+  const { user, userType } = useAuthStore();
+  const feedSchool =
+    userType === "institution" ? contentSchool || selectedSchool : selectedSchool;
+  const selectedSchoolId = feedSchool?.id || null;
+  const browseInstitution = normalizeInstitutionRecord(feedSchool);
+  const browseInstitutionName = getInstitutionDisplayName(
+    browseInstitution,
+    "All institutions",
+  );
   const [posts, setPosts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -21,6 +34,20 @@ export default function GeneralDashboard() {
   const [deletingPostId, setDeletingPostId] = useState(null);
   const { deletePost } = usePostMutations();
   const previousSchoolIdRef = useRef(selectedSchoolId);
+
+  useEffect(() => {
+    if (userType === "institution" && location.pathname === "/general-dashboard") {
+      navigate("/institution-home", { replace: true });
+      return;
+    }
+
+    if (
+      userType !== "institution" &&
+      location.pathname === "/institution-home"
+    ) {
+      navigate("/general-dashboard", { replace: true });
+    }
+  }, [location.pathname, navigate, userType]);
 
   // Fetch posts for general dashboard
   useEffect(() => {
@@ -236,6 +263,33 @@ export default function GeneralDashboard() {
       {/* Main Content Area - Feed */}
       <div className="flex-1 overflow-y-auto w-full lg:w-auto">
         <div className="max-w-3xl mx-auto p-3 sm:p-4 lg:p-6 pb-20 lg:pb-6">
+          {browseInstitution && (
+            <div className="mb-4 rounded-2xl border border-gray-200 bg-white px-4 py-3 shadow-sm">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                {userType === "institution"
+                  ? "Browse Institution Posts"
+                  : "Selected Institution"}
+              </p>
+              <div className="mt-1 flex items-center justify-between gap-3">
+                <div>
+                  <p className="font-semibold text-gray-900">
+                    {browseInstitutionName}
+                  </p>
+                  {browseInstitution.address && (
+                    <p className="text-sm text-gray-500">
+                      {browseInstitution.address}
+                    </p>
+                  )}
+                </div>
+                {browseInstitution.code && (
+                  <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium uppercase tracking-wide text-gray-600">
+                    {browseInstitution.code}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+
           {posts.length === 0 && !isLoading ? (
             <div className="text-center py-12">
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
@@ -253,8 +307,8 @@ export default function GeneralDashboard() {
                     <span className="inline-block h-3 w-3 rounded-full border-2 border-primary border-t-transparent animate-spin" />
                     <span>
                       Updating feed
-                      {selectedSchool?.name
-                        ? ` for ${selectedSchool.name}`
+                      {feedSchool?.name
+                        ? ` for ${feedSchool.name}`
                         : ""}
                       ...
                     </span>

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Lock,
   ArrowLeft,
@@ -15,8 +16,10 @@ import {
   useLogin,
   useGoogleAuth,
   useForgotPassword,
+  authKeys,
 } from "../../hooks/useAuth";
 import { useAuthStore } from "../../store/useAuthStore";
+import { apiClient } from "../../api";
 import {
   clearStoredPostLoginAction,
   clearStoredPostLoginRedirect,
@@ -27,6 +30,7 @@ import {
   storePostLoginAction,
   storePostLoginRedirect,
 } from "../../utils/postLoginRedirect";
+import { GOOGLE_AUTH_ENABLED } from "../../config/features";
 
 const userTypes = [
   {
@@ -52,6 +56,7 @@ const userTypes = [
 export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
+  const queryClient = useQueryClient();
   const { login: authStoreLogin } = useAuthStore();
   const requestedRedirect = sanitizePostLoginRedirect(location.state?.from);
   const requestedPostLoginAction = sanitizePostLoginAction(
@@ -129,13 +134,24 @@ export default function Login() {
     return () => window.clearTimeout(timeoutId);
   }, [successMessage]);
 
-  const handleContinueWithoutLogin = () => {
+  const startGuestSession = () => {
+    localStorage.removeItem("auth_token");
+    localStorage.removeItem("campustalk_access_token");
+    delete apiClient.defaults.headers.common["Authorization"];
+    queryClient.removeQueries({ queryKey: authKeys.currentUser() });
+    queryClient.removeQueries({ queryKey: authKeys.profile() });
+
     authStoreLogin({
       userType: "general",
+      role: "general",
       name: "Guest User",
       full_name: "Guest User",
       isGuest: true,
     });
+  };
+
+  const handleContinueWithoutLogin = () => {
+    startGuestSession();
     clearStoredPostLoginAction();
     clearStoredPostLoginRedirect();
     navigate("/general-dashboard", { replace: true });
@@ -153,12 +169,7 @@ export default function Login() {
           redirectBasedOnUserType(userType);
         },
         onError: () => {
-          const dummyUser = {
-            userType: "general",
-            name: "Google User",
-            email: "user@gmail.com",
-          };
-          authStoreLogin(dummyUser);
+          startGuestSession();
           redirectBasedOnUserType("general");
         },
         onSettled: () => {
@@ -166,12 +177,7 @@ export default function Login() {
         },
       });
     } catch (error) {
-      const dummyUser = {
-        userType: "general",
-        name: "Google User",
-        email: "user@gmail.com",
-      };
-      authStoreLogin(dummyUser);
+      startGuestSession();
       redirectBasedOnUserType("general");
       setGoogleAuthLoading(false);
     }
@@ -643,47 +649,48 @@ export default function Login() {
             </form>
           </div>
 
-          {/* Divider */}
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-3 bg-gray-50 text-gray-500 font-medium">
-                OR
-              </span>
-            </div>
-          </div>
+          {GOOGLE_AUTH_ENABLED && (
+            <>
+              <div className="relative my-6">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-300"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-3 bg-gray-50 text-gray-500 font-medium">
+                    OR
+                  </span>
+                </div>
+              </div>
 
-          {/* Google Login */}
-          <div className="flex justify-center mb-6">
-            <div
-              className={
-                isLoading || googleAuthLoading
-                  ? "opacity-50 pointer-events-none"
-                  : ""
-              }
-            >
-              <GoogleLogin
-                onSuccess={handleGoogleSuccess}
-                onError={handleGoogleError}
-                size="large"
-                text="continue_with"
-                shape="rectangular"
-                theme="outline"
-                logo_alignment="left"
-              />
-            </div>
-          </div>
+              <div className="flex justify-center mb-6">
+                <div
+                  className={
+                    isLoading || googleAuthLoading
+                      ? "opacity-50 pointer-events-none"
+                      : ""
+                  }
+                >
+                  <GoogleLogin
+                    onSuccess={handleGoogleSuccess}
+                    onError={handleGoogleError}
+                    size="large"
+                    text="continue_with"
+                    shape="rectangular"
+                    theme="outline"
+                    logo_alignment="left"
+                  />
+                </div>
+              </div>
 
-          {/* Google Loading */}
-          {googleAuthLoading && (
-            <div className="mb-6 text-center">
-              <div className="w-6 h-6 border-2 border-gray-300 border-t-primary rounded-full animate-spin mx-auto mb-2"></div>
-              <p className="text-sm text-gray-500">
-                Authenticating with Google...
-              </p>
-            </div>
+              {googleAuthLoading && (
+                <div className="mb-6 text-center">
+                  <div className="w-6 h-6 border-2 border-gray-300 border-t-primary rounded-full animate-spin mx-auto mb-2"></div>
+                  <p className="text-sm text-gray-500">
+                    Authenticating with Google...
+                  </p>
+                </div>
+              )}
+            </>
           )}
 
           {/* Continue Without Login */}

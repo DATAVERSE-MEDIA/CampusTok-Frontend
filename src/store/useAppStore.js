@@ -2,9 +2,13 @@ import { create } from "zustand";
 
 export const useAppStore = create((set) => ({
   selectedSchool: null,
+  contentSchool: null,
   schools: [],
 
   setSelectedSchool: (school) => set({ selectedSchool: school }),
+  clearSelectedSchool: () => set({ selectedSchool: null }),
+  setContentSchool: (school) => set({ contentSchool: school }),
+  clearContentSchool: () => set({ contentSchool: null }),
 
   searchQuery: "",
   setSearchQuery: (query) => set({ searchQuery: query }),

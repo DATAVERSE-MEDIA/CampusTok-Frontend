@@ -7,6 +7,14 @@ import { protectedRouteNotices } from "../utils/authNoticeContent";
 import { schoolApi } from "../api";
 import { isUserSessionAuthenticated } from "../utils/sessionAuth";
 import {
+  getInstitutionDisplayName,
+  getInstitutionInitials,
+  getInstitutionSelectionFromAuthSource,
+  institutionsMatch,
+  mergeInstitutionRecords,
+  normalizeInstitutionRecord,
+} from "../utils/institutionContext";
+import {
   User,
   MessageSquare,
   Users,
@@ -64,11 +72,37 @@ const institutionMenuItems = [
   // { path: "/notifications", icon: Bell, label: "Notification" },
 ];
 
+const getInstitutionAddressLines = (address) => {
+  if (!address) {
+    return ["Institution account", null];
+  }
+
+  const parts = address
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  if (parts.length <= 1) {
+    return [parts[0], null];
+  }
+
+  return [parts[0], parts.slice(1).join(", ")];
+};
+
 export default function Sidebar({ isOpen, setIsOpen, onCreatePostClick }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { logout, user, userType, isAuthenticated } = useAuthStore();
-  const { selectedSchool, setSelectedSchool, schools, setSchools } =
+  const {
+    selectedSchool,
+    contentSchool,
+    setSelectedSchool,
+    clearSelectedSchool,
+    setContentSchool,
+    clearContentSchool,
+    schools,
+    setSchools,
+  } =
     useAppStore();
   const [showSchoolDropdown, setShowSchoolDropdown] = useState(false);
   const [showSettingsDropdown, setShowSettingsDropdown] = useState(false);
@@ -102,7 +136,8 @@ export default function Sidebar({ isOpen, setIsOpen, onCreatePostClick }) {
         code: school.code || school.abbreviation || school.short_name,
         logo:
           school.logo || school.institution_profile_picture || school.image_url,
-        address: school.address || school.location,
+        address:
+          school.address || school.location || school.institution_location,
         type: school.type || "university",
       }));
 
@@ -173,11 +208,59 @@ export default function Sidebar({ isOpen, setIsOpen, onCreatePostClick }) {
       : effectiveUserType === "student"
         ? studentMenuItems
         : generalMenuItems;
-  const schoolOrUserLogo = selectedSchool?.logo || user?.logo || null;
+  const authenticatedInstitution = getInstitutionSelectionFromAuthSource(user);
+  const normalizedSelectedSchool = normalizeInstitutionRecord(selectedSchool);
+  const activeBrowseSchool =
+    effectiveUserType === "institution"
+      ? normalizeInstitutionRecord(contentSchool) || normalizedSelectedSchool
+      : normalizedSelectedSchool;
+  const shouldMergeInstitutionIdentity =
+    authenticatedInstitution &&
+    normalizedSelectedSchool &&
+    institutionsMatch(normalizedSelectedSchool, authenticatedInstitution);
+  const institutionContext = shouldMergeInstitutionIdentity
+    ? mergeInstitutionRecords(normalizedSelectedSchool, authenticatedInstitution)
+    : authenticatedInstitution || normalizedSelectedSchool;
+  const institutionName = getInstitutionDisplayName(
+    institutionContext,
+    user?.name || user?.full_name || "Institution",
+  );
+  const [institutionAddressLineOne, institutionAddressLineTwo] =
+    getInstitutionAddressLines(institutionContext?.address);
+  const institutionInitials = getInstitutionInitials(institutionName);
+  const dropdownSchoolContext =
+    effectiveUserType === "institution"
+      ? activeBrowseSchool || institutionContext
+      : activeBrowseSchool;
+  const dropdownSchoolName = getInstitutionDisplayName(
+    dropdownSchoolContext,
+    institutionName,
+  );
+  const dropdownSchoolInitials = getInstitutionInitials(dropdownSchoolName);
+  const schoolOrUserLogo =
+    dropdownSchoolContext?.logo ||
+    (effectiveUserType === "institution" ? institutionContext?.logo : null) ||
+    user?.logo ||
+    user?.profile_picture ||
+    null;
   const institutionProfileImage =
-    user?.profile_picture || selectedSchool?.logo || null;
+    institutionContext?.logo || user?.profile_picture || null;
+  const activeSchoolSelection =
+    effectiveUserType === "institution"
+      ? activeBrowseSchool || institutionContext
+      : activeBrowseSchool;
+  const schoolOptions =
+    schools.length > 0
+      ? schools
+      : activeSchoolSelection
+        ? [activeSchoolSelection]
+        : institutionContext
+          ? [institutionContext]
+        : [];
 
   const handleLogout = () => {
+    clearSelectedSchool();
+    clearContentSchool();
     logout();
     navigate("/login");
   };
@@ -234,12 +317,14 @@ export default function Sidebar({ isOpen, setIsOpen, onCreatePostClick }) {
                 {schoolOrUserLogo ? (
                   <img
                     src={schoolOrUserLogo}
-                    alt={selectedSchool?.name || "University"}
+                    alt={dropdownSchoolName}
                     className="w-full h-full object-cover"
                   />
                 ) : (
                   <div className="w-full h-full bg-blue-100 flex items-center justify-center">
-                    <div className="text-xs font-bold text-blue-600">UL</div>
+                    <div className="text-xs font-bold text-blue-600">
+                      {dropdownSchoolInitials}
+                    </div>
                   </div>
                 )}
               </div>
@@ -271,12 +356,22 @@ export default function Sidebar({ isOpen, setIsOpen, onCreatePostClick }) {
                         Loading schools...
                       </p>
                     </div>
-                  ) : schools.length > 0 ? (
-                    schools.map((school) => (
+                  ) : schoolOptions.length > 0 ? (
+                    schoolOptions.map((school) => (
                       <button
                         key={school.id}
                         onClick={() => {
-                          setSelectedSchool(school);
+                          if (effectiveUserType === "institution") {
+                            setContentSchool(school);
+                            if (
+                              location.pathname === "/institution-dashboard" ||
+                              location.pathname === "/profile"
+                            ) {
+                              navigate("/institution-home");
+                            }
+                          } else {
+                            setSelectedSchool(school);
+                          }
                           setShowSchoolDropdown(false);
                           setIsOpen(false);
                           // Navigate to dashboard for the selected school
@@ -287,7 +382,7 @@ export default function Sidebar({ isOpen, setIsOpen, onCreatePostClick }) {
                           // }
                         }}
                         className={`w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100 transition-colors flex items-center gap-3 ${
-                          selectedSchool?.id === school.id
+                          activeSchoolSelection?.id === school.id
                             ? "bg-gray-100 text-gray-900"
                             : "text-gray-900"
                         }`}
@@ -365,33 +460,30 @@ export default function Sidebar({ isOpen, setIsOpen, onCreatePostClick }) {
                 {institutionProfileImage ? (
                   <img
                     src={institutionProfileImage}
-                    alt={user?.name || selectedSchool?.name || "Institution"}
+                    alt={institutionName}
                     className="w-full h-full object-cover"
                   />
                 ) : (
                   <div className="w-full h-full bg-blue-50 flex items-center justify-center">
-                    <div className="text-center p-1">
-                      <div className="text-xs lg:text-sm font-bold text-blue-700">
-                        UNIVERSITY
-                      </div>
-                      <div className="text-xs lg:text-sm font-bold text-blue-700">
-                        OF LAGOS
-                      </div>
+                    <div className="text-lg lg:text-xl font-bold text-blue-700">
+                      {institutionInitials}
                     </div>
                   </div>
                 )}
               </div>
               <div className="flex-1 min-w-0 pt-1">
                 <h3 className="font-bold text-gray-900 text-base lg:text-lg truncate mb-1">
-                  {user?.name || selectedSchool?.name || "University of Lagos"}
+                  {institutionName}
                 </h3>
                 {/* Address in two lines - Matching Figma */}
                 <p className="text-xs lg:text-sm text-gray-600 leading-tight">
-                  University Road
+                  {institutionAddressLineOne}
                 </p>
-                <p className="text-xs lg:text-sm text-gray-600 leading-tight truncate">
-                  Lagos Mainland A...
-                </p>
+                {institutionAddressLineTwo && (
+                  <p className="text-xs lg:text-sm text-gray-600 leading-tight truncate">
+                    {institutionAddressLineTwo}
+                  </p>
+                )}
               </div>
             </div>
           ) : effectiveUserType === "general" || !effectiveUserType ? (

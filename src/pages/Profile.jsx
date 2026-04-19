@@ -410,6 +410,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useAuthStore } from "../store/useAuthStore";
+import { useAppStore } from "../store/useAppStore";
 import {
   Edit,
   MapPin,
@@ -425,6 +426,12 @@ import {
 } from "lucide-react";
 import { useProfile, useUpdateProfile } from "../hooks/useAuth";
 import { useProfilePicture } from "../hooks/useProfilePicture";
+import {
+  getInstitutionDisplayName,
+  getInstitutionSelectionFromAuthSource,
+  mergeInstitutionRecords,
+  normalizeInstitutionRecord,
+} from "../utils/institutionContext";
 
 // Skeleton Loading Component
 const ProfileSkeleton = () => (
@@ -494,6 +501,176 @@ const ErrorDisplay = ({ error, onRetry }) => (
     </div>
   </div>
 );
+
+const formatJoinDate = (value, fallback = "Recently") => {
+  if (!value) {
+    return fallback;
+  }
+
+  const parsedDate = new Date(value);
+  if (Number.isNaN(parsedDate.getTime())) {
+    return fallback;
+  }
+
+  return parsedDate.toLocaleDateString("en-US", {
+    month: "long",
+    year: "numeric",
+  });
+};
+
+const formatUsername = (username, email) => {
+  if (typeof username === "string" && username.trim()) {
+    return username.startsWith("@") ? username : `@${username}`;
+  }
+
+  const emailHandle = typeof email === "string" ? email.split("@")[0] : "";
+  return emailHandle ? `@${emailHandle}` : "@user";
+};
+
+const getEffectiveUserType = (apiData, user) => {
+  const explicitUserType =
+    user?.userType ||
+    user?.role ||
+    apiData?.user?.userType ||
+    apiData?.user?.role ||
+    apiData?.role;
+
+  if (["institution", "student", "general"].includes(explicitUserType)) {
+    return explicitUserType;
+  }
+
+  if (apiData?.institution_profile || user?.institution_profile) {
+    return "institution";
+  }
+
+  if (apiData?.student_profile || user?.student_profile) {
+    return "student";
+  }
+
+  return "general";
+};
+
+const buildProfileViewModel = ({ apiData, user, selectedSchool }) => {
+  const effectiveUserType = getEffectiveUserType(apiData, user);
+  const apiUser = apiData?.user || apiData || {};
+  const institutionProfile =
+    apiData?.institution_profile || user?.institution_profile || null;
+  const studentProfile = apiData?.student_profile || user?.student_profile || null;
+  const currentProfilePicture =
+    apiData?.profile_picture ||
+    user?.profile_picture ||
+    user?.profilePicture ||
+    null;
+
+  const institutionContext =
+    mergeInstitutionRecords(
+      getInstitutionSelectionFromAuthSource({
+        ...user,
+        role: effectiveUserType,
+        userType: effectiveUserType,
+        profile_picture: currentProfilePicture,
+        institution_profile: institutionProfile || user?.institution_profile,
+        student_profile: studentProfile || user?.student_profile,
+      }),
+      getInstitutionSelectionFromAuthSource({
+        ...apiUser,
+        email: apiUser?.email || user?.email,
+        role: effectiveUserType,
+        userType: effectiveUserType,
+        profile_picture: currentProfilePicture,
+        institution_profile: institutionProfile,
+        student_profile: studentProfile,
+        institution_id: user?.institution_id,
+        institution_name: user?.institution_name,
+        institution_location: user?.institution_location,
+        institution_email: user?.institution_email,
+        school: user?.school,
+      }),
+    ) ||
+    normalizeInstitutionRecord(selectedSchool) ||
+    null;
+
+  const institutionName = getInstitutionDisplayName(
+    institutionContext,
+    user?.institution_name ||
+      apiUser?.institution_name ||
+      apiUser?.full_name ||
+      user?.full_name ||
+      user?.name ||
+      "User",
+  );
+
+  const joinDate = formatJoinDate(
+    apiUser?.created_at || user?.created_at,
+    "Recently",
+  );
+
+  if (effectiveUserType === "institution") {
+    const institutionEmail =
+      institutionContext?.email ||
+      institutionProfile?.institution_email ||
+      apiUser?.email ||
+      user?.email ||
+      "No email provided";
+
+    return {
+      userType: effectiveUserType,
+      currentProfilePicture: currentProfilePicture || institutionContext?.logo || null,
+      name: institutionName,
+      username: formatUsername(apiUser?.username, institutionEmail),
+      bio:
+        apiUser?.bio ||
+        `${institutionName} official institution account.`,
+      location:
+        institutionContext?.address ||
+        user?.institution_location ||
+        "Institution address not available",
+      email: institutionEmail,
+      phone: apiUser?.phone || user?.phone || "Not provided",
+      school: institutionName,
+      major: "Institution",
+      year: "Account",
+      joinDate,
+    };
+  }
+
+  const displayName =
+    apiUser?.full_name || user?.full_name || user?.name || "User";
+  const displayEmail = apiUser?.email || user?.email || "No email provided";
+
+  return {
+    userType: effectiveUserType,
+    currentProfilePicture,
+    name: displayName,
+    username: formatUsername(apiUser?.username, displayEmail),
+    bio:
+      apiUser?.bio ||
+      user?.bio ||
+      "Computer Science student passionate about technology and innovation.",
+    location: apiUser?.location || user?.location || "Location not provided",
+    email: displayEmail,
+    phone: apiUser?.phone || user?.phone || "Not provided",
+    school:
+      studentProfile?.institution_name ||
+      institutionContext?.name ||
+      user?.school ||
+      "Institution not set",
+    major:
+      studentProfile?.department ||
+      apiUser?.major ||
+      apiUser?.field_of_study ||
+      user?.department ||
+      user?.major ||
+      "Not provided",
+    year:
+      studentProfile?.educational_level ||
+      apiUser?.year ||
+      apiUser?.year_level ||
+      user?.year ||
+      "Not provided",
+    joinDate,
+  };
+};
 
 // Profile Picture Upload Component
 const ProfilePictureUpload = ({
@@ -679,7 +856,8 @@ const ProfilePictureUpload = ({
 
 // Main Profile Component
 export default function Profile() {
-  const { user, updateUser } = useAuthStore();
+  const { user } = useAuthStore();
+  const { selectedSchool } = useAppStore();
   const [isEditing, setIsEditing] = useState(false);
   const [profileData, setProfileData] = useState({
     name: "John Doe",
@@ -694,47 +872,60 @@ export default function Profile() {
     joinDate: "September 2022",
   });
 
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadError, setUploadError] = useState(null);
-  const [uploadSuccess, setUploadSuccess] = useState(false);
-
   const { data: apiData, isLoading, error, refetch } = useProfile();
   const { mutate: updateProfile } = useUpdateProfile();
   const {
     uploadProfilePicture,
     removeProfilePicture,
-    isUploading: isPictureUploading,
-    error: pictureError,
-    success: pictureSuccess,
+    isUploading,
+    error: uploadError,
+    success: uploadSuccess,
     resetState,
   } = useProfilePicture();
+  const profileViewModel = buildProfileViewModel({
+    apiData,
+    user,
+    selectedSchool,
+  });
+  const storedProfilePicture =
+    apiData?.profile_picture ||
+    user?.profile_picture ||
+    user?.profilePicture ||
+    null;
+  const currentProfilePicture = profileViewModel.currentProfilePicture;
+  const effectiveUserType = profileViewModel.userType;
 
   // Update profile data when API data is available
   useEffect(() => {
-    if (apiData) {
-      setProfileData((prev) => ({
+    const nextProfileData = buildProfileViewModel({
+      apiData,
+      user,
+      selectedSchool,
+    });
+
+    setProfileData((prev) => {
+      const mergedProfileData = {
         ...prev,
-        name: apiData.full_name || apiData.name || "User",
-        email: apiData.email || prev.email,
-        username:
-          apiData.username ||
-          `@${(apiData.email || "").split("@")[0]}` ||
-          prev.username,
-        bio: apiData.bio || apiData.bio || prev.bio,
-        location: apiData.location || prev.location,
-        phone: apiData.phone || prev.phone,
-        school: apiData.school || apiData.university || prev.school,
-        major: apiData.major || apiData.field_of_study || prev.major,
-        year: apiData.year || apiData.year_level || prev.year,
-        joinDate: apiData.created_at
-          ? new Date(apiData.created_at).toLocaleDateString("en-US", {
-              month: "long",
-              year: "numeric",
-            })
-          : prev.joinDate,
-      }));
+        ...nextProfileData,
+      };
+
+      return JSON.stringify(prev) === JSON.stringify(mergedProfileData)
+        ? prev
+        : mergedProfileData;
+    });
+  }, [apiData, selectedSchool, user]);
+
+  useEffect(() => {
+    if (!uploadSuccess && !uploadError) {
+      return undefined;
     }
-  }, [apiData]);
+
+    const timeoutId = window.setTimeout(() => {
+      resetState();
+    }, 3000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [resetState, uploadError, uploadSuccess]);
 
   // Handle profile picture upload
   const handleUploadProfilePicture = async (file) => {
@@ -755,7 +946,7 @@ export default function Profile() {
   const handleSaveProfile = () => {
     const profileUpdate = {
       full_name: profileData.name?.trim(),
-      profile_picture: currentProfilePicture || undefined,
+      profile_picture: storedProfilePicture || undefined,
     };
 
     updateProfile(profileUpdate, {
@@ -780,10 +971,6 @@ export default function Profile() {
     { label: "Communities", value: apiData?.communities_count || 8 },
     { label: "Followers", value: apiData?.followers_count || 234 },
   ];
-
-  // Get current profile picture from API or auth store
-  const currentProfilePicture =
-    apiData?.profile_picture || user?.profilePicture;
 
   // Show loading skeleton
   if (isLoading) {
@@ -869,11 +1056,10 @@ export default function Profile() {
                   </p>
                 )}
 
-                {/* Show user type from API if available */}
-                {apiData?.userType && (
+                {effectiveUserType && (
                   <span className="inline-block mt-2 px-2 lg:px-3 py-1 bg-primary-100 text-primary-700 text-xs lg:text-sm font-medium rounded-full">
-                    {apiData.userType.charAt(0).toUpperCase() +
-                      apiData.userType.slice(1)}
+                    {effectiveUserType.charAt(0).toUpperCase() +
+                      effectiveUserType.slice(1)}
                   </span>
                 )}
               </div>
@@ -983,8 +1169,12 @@ export default function Profile() {
                 )}
               </div>
               <div className="text-sm lg:text-base text-gray-700">
-                <span className="font-medium">Major:</span>
-                {isEditing ? (
+                <span className="font-medium">
+                  {effectiveUserType === "institution" ? "Account Type:" : "Major:"}
+                </span>
+                {effectiveUserType === "institution" ? (
+                  <span className="ml-1">Institution</span>
+                ) : isEditing ? (
                   <div className="flex flex-col sm:flex-row gap-2 mt-1">
                     <input
                       type="text"

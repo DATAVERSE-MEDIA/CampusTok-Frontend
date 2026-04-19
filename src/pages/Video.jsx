@@ -9,20 +9,17 @@ import {
   ArrowDown,
 } from "lucide-react";
 import { useAppStore } from "../store/useAppStore";
+import { useAuthStore } from "../store/useAuthStore";
 import { apiClient } from "../api";
-
-const INSTITUTION_IDS = ["unilag", "yabatech", "ileife"];
+import {
+  getInstitutionDisplayName,
+  normalizeInstitutionRecord,
+  resolveInstitutionFeedId,
+} from "../utils/institutionContext";
 
 // scroll / swipe settings
 const WHEEL_COOLDOWN_MS = 600;
 const TOUCH_THRESHOLD_PX = 60;
-
-function getInstitutionId(selectedSchool) {
-  if (selectedSchool?.id && INSTITUTION_IDS.includes(selectedSchool.id)) {
-    return selectedSchool.id;
-  }
-  return "unilag";
-}
 
 function mapReelFromApi(post) {
   const videoMedia = post.media?.find((m) => m.media_type === "video");
@@ -47,7 +44,8 @@ function mapReelFromApi(post) {
 }
 
 export default function Video() {
-  const { selectedSchool } = useAppStore();
+  const { selectedSchool, contentSchool } = useAppStore();
+  const { userType } = useAuthStore();
 
   const [reels, setReels] = useState([]);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -56,7 +54,14 @@ export default function Video() {
   // ✅ computed horizontal offset so the reel aligns to "Campus Blog" END
   const [offsetX, setOffsetX] = useState(0);
 
-  const institutionId = getInstitutionId(selectedSchool);
+  const feedSchool =
+    userType === "institution" ? contentSchool || selectedSchool : selectedSchool;
+  const browseInstitution = normalizeInstitutionRecord(feedSchool);
+  const browseInstitutionName = getInstitutionDisplayName(
+    browseInstitution,
+    "Campus reels",
+  );
+  const institutionId = resolveInstitutionFeedId(feedSchool);
 
   const cardRef = useRef(null);
   const pageRef = useRef(null);
@@ -230,6 +235,33 @@ export default function Video() {
 
   return (
     <div ref={pageRef} className="w-full">
+      {browseInstitution && (
+        <div className="mx-auto mb-2 max-w-md rounded-2xl border border-gray-200 bg-white px-4 py-3 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+            {userType === "institution"
+              ? "Browse Institution Reels"
+              : "Selected Institution"}
+          </p>
+          <div className="mt-1 flex items-center justify-between gap-3">
+            <div>
+              <p className="font-semibold text-gray-900">
+                {browseInstitutionName}
+              </p>
+              {browseInstitution.address && (
+                <p className="text-sm text-gray-500">
+                  {browseInstitution.address}
+                </p>
+              )}
+            </div>
+            {browseInstitution.code && (
+              <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium uppercase tracking-wide text-gray-600">
+                {browseInstitution.code}
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="flex justify-center items-center px-3 sm:px-4 lg:px-8 py-4 lg:py-6">
         <div
           className="w-full max-w-md"
